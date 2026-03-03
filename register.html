@@ -658,10 +658,16 @@
                             this.classList.toggle('active');
                             document.getElementById('hostelInput_' + mPrefix).value = this.classList.contains('active') ? 'Yes' : 'No';
                         });
-                        const ph = document.getElementById(mPrefix + '_phone');
-                        if (ph) ph.addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); });
                         const em = document.getElementById(mPrefix + '_email');
-                        if (em) em.addEventListener('input', updateFeeDisplay);
+                        if (em) em.addEventListener('input', () => {
+                            updateFeeDisplay();
+                            validateMemberContact(mPrefix, sectionPrefix, ev.event, 'email');
+                        });
+                        const ph = document.getElementById(mPrefix + '_phone');
+                        if (ph) ph.addEventListener('input', function () {
+                            this.value = this.value.replace(/\D/g, '');
+                            validateMemberContact(mPrefix, sectionPrefix, ev.event, 'phone');
+                        });
                     }
                     if (ev.teamSize > 1) {
                         const tnEl = document.getElementById(`teamName_${sectionPrefix}`);
@@ -671,6 +677,61 @@
 
                 updateFeeDisplay();
                 document.getElementById('registerForm').addEventListener('submit', submitForm);
+            }
+
+            // Real-time intra-form and DB duplicate check
+            async function validateMemberContact(mPrefix, sectionPrefix, eventName, type) {
+                const input = document.getElementById(`${mPrefix}_${type}`);
+                const group = document.getElementById(`${mPrefix}_${type}Group`);
+                const errEl = document.getElementById(`${mPrefix}_${type}Error`);
+                if (!input || !group) return true;
+
+                const val = input.value.trim().toLowerCase();
+                if (!val) { group.classList.remove('has-error'); return true; }
+
+                // 1. Intra-form check (within the same section/event)
+                const currentEv = eventsArr.find((_, i) => `evSection_${i}` === sectionPrefix);
+                if (currentEv) {
+                    for (let i = 1; i <= currentEv.teamSize; i++) {
+                        const otherMPrefix = `${sectionPrefix}_m${i}`;
+                        if (otherMPrefix === mPrefix) continue;
+                        const otherInput = document.getElementById(`${otherMPrefix}_${type}`);
+                        if (otherInput && otherInput.value.trim().toLowerCase() === val) {
+                            group.classList.add('has-error');
+                            if (errEl) errEl.textContent = `⚠️ This ${type === 'email' ? 'email' : 'phone'} is already used by another member in this team`;
+                            return false;
+                        }
+                    }
+                }
+
+                // 2. Database check (across all registrations for THIS event)
+                const existing = await getRegistrations();
+                const alreadyRegistered = existing.some(r => {
+                    // Check main registration contact
+                    if (r.event.toLowerCase().includes(eventName.toLowerCase())) {
+                        if (type === 'email' && r.email.toLowerCase() === val) return true;
+                        if (type === 'phone' && String(r.phone) === val) return true;
+                    }
+                    // Check team members if they exist
+                    if (r.teamMembersByEvent && r.teamMembersByEvent[eventName]) {
+                        return r.teamMembersByEvent[eventName].members.some(m => {
+                            if (type === 'email' && m.email.toLowerCase() === val) return true;
+                            if (type === 'phone' && String(m.phone) === val) return true;
+                            return false;
+                        });
+                    }
+                    return false;
+                });
+
+                if (alreadyRegistered) {
+                    group.classList.add('has-error');
+                    if (errEl) errEl.textContent = `⚠️ This ${type === 'email' ? 'email' : 'phone'} is already registered for ${eventName}`;
+                    return false;
+                }
+
+                group.classList.remove('has-error');
+                if (errEl) errEl.textContent = `Please enter valid ${type}`;
+                return true;
             }
 
             // Team name duplicate check (live)
@@ -750,6 +811,11 @@
                         if (!validateField(`${mPrefix}_email`, `${mPrefix}_emailGroup`, me && emailRx.test(me))) valid = false;
                         if (!validateField(`${mPrefix}_phone`, `${mPrefix}_phoneGroup`, mp && phoneRx.test(mp))) valid = false;
                         if (!mf) valid = false;
+
+                        // Extra cross-check on submit
+                        const emailOk = await validateMemberContact(mPrefix, sectionPrefix, ev.event, 'email');
+                        const phoneOk = await validateMemberContact(mPrefix, sectionPrefix, ev.event, 'phone');
+                        if (!emailOk || !phoneOk) valid = false;
 
                         sectionData.members.push({ name: mn, email: me, phone: mp, food: mf || '', hostel: mh });
                         if (me) globalEmails.add(me.toLowerCase());
