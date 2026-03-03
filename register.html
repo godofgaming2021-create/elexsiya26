@@ -1,0 +1,811 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register – Elexsiya 26</title>
+    <meta name="description" content="Register for Elexsiya 26 – National Level Technical Symposium." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        /* ── Page layout ── */
+        .page-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 100px 20px 80px;
+            background: var(--bg-warm);
+            position: relative;
+        }
+
+        .page-wrap::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .form-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 560px;
+            animation: fadeInUp .6s ease-out;
+        }
+
+        .form-container.team-mode {
+            max-width: 740px;
+        }
+
+        /* ── Header ── */
+        .form-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .form-header h1 {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            color: var(--text-muted);
+            font-size: .95rem;
+        }
+
+        /* ── Form card ── */
+        .form-card {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .04);
+        }
+
+        /* Used when formContainer is the card itself */
+        #formContainer {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .04);
+        }
+
+        /* ── Event badge ── */
+        .event-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+
+        .event-badge-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 18px;
+            border-radius: 50px;
+            font-size: .82rem;
+            font-weight: 600;
+            font-family: var(--font-body);
+        }
+
+        .event-badge-item.ev {
+            background: rgba(198, 12, 48, .08);
+            border: 1px solid rgba(198, 12, 48, .22);
+            color: var(--emirates-red);
+        }
+
+        .event-badge-item.mode {
+            background: rgba(200, 169, 81, .08);
+            border: 1px solid rgba(200, 169, 81, .3);
+            color: var(--gold-dark);
+        }
+
+        /* ── Member section titles ── */
+        .member-section {
+            margin-bottom: 4px;
+        }
+
+        .member-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--emirates-red);
+            margin: 28px 0 18px;
+            letter-spacing: .03em;
+            font-family: var(--font-body);
+            text-transform: uppercase;
+        }
+
+        .member-title.nt {
+            color: var(--gold-dark);
+        }
+
+        .member-title.sp {
+            color: var(--gold);
+        }
+
+        .member-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-light);
+        }
+
+        /* Leader event label pill */
+        .leader-ev-label {
+            background: rgba(198, 12, 48, .06);
+            border: 1px solid rgba(198, 12, 48, .18);
+            border-radius: 10px;
+            padding: 8px 14px;
+            margin-bottom: 14px;
+            font-size: .82rem;
+            color: var(--emirates-red);
+            font-family: var(--font-body);
+        }
+
+        /* ── Member data grid ── */
+        .member-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 20px;
+        }
+
+        .member-grid .form-group {
+            grid-column: span 1;
+        }
+
+        /* ── Food options ── */
+        .food-options {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .food-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .food-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .food-option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 14px;
+            background: var(--white);
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: .9rem;
+            font-weight: 500;
+            font-family: var(--font-body);
+            color: var(--text-body);
+        }
+
+        .food-option input[type="radio"]:checked+label {
+            border-color: var(--emirates-red);
+            background: rgba(198, 12, 48, .04);
+            color: var(--emirates-red);
+            font-weight: 600;
+        }
+
+        .food-option label:hover {
+            border-color: var(--gray-light);
+        }
+
+        /* ── Hostel toggle ── */
+        .hostel-toggle {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 8px;
+            padding: 14px 18px;
+            background: var(--white);
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .hostel-toggle:hover {
+            border-color: var(--gray-light);
+        }
+
+        .hostel-toggle.active {
+            border-color: var(--emirates-red);
+            background: rgba(198, 12, 48, .04);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: var(--border-light);
+            border-radius: 50px;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: var(--white);
+            border-radius: 50%;
+            transition: var(--transition);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .15);
+        }
+
+        .hostel-toggle.active .toggle-switch {
+            background: var(--emirates-red);
+        }
+
+        .hostel-toggle.active .toggle-switch::after {
+            transform: translateX(20px);
+        }
+
+        .toggle-text {
+            font-size: .9rem;
+            font-weight: 500;
+            color: var(--text-body);
+            font-family: var(--font-body);
+        }
+
+        .hostel-toggle.active .toggle-text {
+            color: var(--emirates-red);
+        }
+
+        /* ── Paste button ── */
+        .input-paste-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-paste-wrap input {
+            flex: 1;
+            padding-right: 72px !important;
+        }
+
+        .btn-paste {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 5px 10px;
+            font-size: .72rem;
+            font-weight: 700;
+            font-family: var(--font-body);
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            background: rgba(198, 12, 48, .06);
+            color: var(--emirates-red);
+            cursor: pointer;
+            transition: all .18s;
+            letter-spacing: .02em;
+            white-space: nowrap;
+        }
+
+        .btn-paste:hover {
+            background: rgba(198, 12, 48, .14);
+            border-color: rgba(198, 12, 48, .4);
+        }
+
+        .btn-paste.pasted {
+            background: rgba(22, 163, 74, .12);
+            border-color: rgba(22, 163, 74, .4);
+            color: #16a34a;
+        }
+
+        .btn-paste.denied {
+            background: rgba(198, 12, 48, .12);
+            border-color: rgba(198, 12, 48, .4);
+            color: var(--emirates-red);
+        }
+
+        /* ── Submit & fee ── */
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+            margin-top: 28px;
+            letter-spacing: .1em;
+        }
+
+        .fee-note {
+            text-align: center;
+            margin-top: 12px;
+            color: var(--text-muted);
+            font-size: .85rem;
+        }
+
+        .fee-note strong {
+            color: var(--emirates-red);
+        }
+
+        /* ── Form footer ── */
+        .form-footer {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .form-footer a {
+            font-size: .88rem;
+            color: var(--text-muted);
+        }
+
+        .form-footer a:hover {
+            color: var(--emirates-red);
+        }
+
+        /* Team name label override in JS-built HTML */
+        label[style*="color:var(--neon-cyan)"] {
+            color: var(--emirates-red) !important;
+        }
+
+        /* Inline event label pills in JS HTML */
+        div[style*="rgba(0,240,255"] {
+            background: rgba(198, 12, 48, .06) !important;
+            border-color: rgba(198, 12, 48, .2) !important;
+            color: var(--emirates-red) !important;
+        }
+
+        /* Member-title overrides inside JS HTML */
+        .member-title[style*="color:var(--neon-cyan)"] {
+            color: var(--emirates-red) !important;
+        }
+
+        .member-title[style*="color:var(--neon-purple)"] {
+            color: var(--gold-dark) !important;
+        }
+
+        @media (max-width: 580px) {
+            .member-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #formContainer {
+                padding: 28px 18px;
+            }
+        }
+
+        /* ── Event Section Styling ── */
+        .event-registration-section {
+            background: #fff;
+            border: 1.5px solid var(--border-light);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 40px;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .event-registration-section:hover {
+            border-color: rgba(198, 12, 48, .2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .03);
+        }
+
+        .section-number {
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--emirates-red);
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar scrolled" id="mainNav">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="logo.jpg" alt="Elexsiya 26" class="logo-img" />
+                <span class="logo-text">Elexsiya</span>
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#events">Events</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="form-container" id="formContainer">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="shared.js"></script>
+    <script>
+
+        async function pasteToField(inputId, btnEl) {
+            if (!navigator.clipboard || !navigator.clipboard.readText) { alert('Please paste manually (Ctrl+V).'); return; }
+            try {
+                const text = await navigator.clipboard.readText();
+                const el = document.getElementById(inputId);
+                if (el) { el.value = text.trim(); el.dispatchEvent(new Event('input')); el.focus(); }
+                if (btnEl) { btnEl.textContent = '&#10003; Pasted'; btnEl.classList.add('pasted'); setTimeout(() => { btnEl.textContent = '&#128203; Paste'; btnEl.classList.remove('pasted'); }, 2000); }
+            } catch (err) {
+                if (btnEl) { btnEl.textContent = '&#128683; Denied'; btnEl.classList.add('denied'); setTimeout(() => { btnEl.textContent = '&#128203; Paste'; btnEl.classList.remove('denied'); }, 2200); }
+            }
+        }
+
+        (async function () {
+            const PRICE_PER_PERSON = 250;
+
+            let eventsArr = [];
+            const raw = sessionStorage.getItem('selectedEvents');
+            if (raw) { try { eventsArr = JSON.parse(raw); } catch (e) { } }
+            if (!eventsArr.length) {
+                const ev = sessionStorage.getItem('selectedEvent');
+                if (ev) eventsArr = [{ event: ev, participationMode: sessionStorage.getItem('participationMode') || 'Individual', teamSize: parseInt(sessionStorage.getItem('teamSize') || '1') }];
+            }
+            if (!eventsArr.length) { window.location.href = 'events.html'; return; }
+
+            // Priority Sort: Individual (1), then Team of 2, then Team of 3
+            eventsArr.sort((a, b) => (a.teamSize || 1) - (b.teamSize || 1));
+
+            const indEvents = eventsArr.filter(e => e.teamSize === 1);
+            const teamEvents = eventsArr.filter(e => e.teamSize > 1);
+
+            const firstTeam = teamEvents[0] || null;
+            const participationMode = firstTeam ? (eventsArr.length === 1 ? firstTeam.participationMode : 'Multiple Events') : 'Individual';
+            const selectedEvent = eventsArr.map(e => e.event).join(', ');
+
+            const maxPossiblePersons = teamEvents.length
+                ? teamEvents.reduce((sum, e) => sum + (e.teamSize || 1), 0)
+                : 1;
+
+            function getFeeInfo() {
+                const emails = new Set();
+
+                eventsArr.forEach((ev, evIdx) => {
+                    const sectionPrefix = `evSection_${evIdx}`;
+                    for (let i = 1; i <= ev.teamSize; i++) {
+                        const el = document.getElementById(`${sectionPrefix}_m${i}_email`);
+                        if (el && el.value.trim()) emails.add(el.value.trim().toLowerCase());
+                    }
+                });
+
+                const filledCount = emails.size;
+                const totalSlots = eventsArr.reduce((sum, e) => sum + e.teamSize, 0);
+                const uniquePersons = filledCount > 0 ? filledCount : totalSlots;
+
+                const isChessSelected = eventsArr.some(e => e.event.toLowerCase() === 'chess');
+                const baseFee = PRICE_PER_PERSON * uniquePersons;
+                const extraChessFee = isChessSelected ? 30 : 0;
+
+                return {
+                    unique: uniquePersons,
+                    baseFee,
+                    extraChessFee,
+                    totalFee: baseFee + extraChessFee,
+                    isChessSelected
+                };
+            }
+
+            function updateFeeDisplay() {
+                const info = getFeeInfo();
+                const noteEl = document.getElementById('liveFeeNote');
+                if (noteEl) {
+                    let html = `&#8377;${PRICE_PER_PERSON} &times; <strong>${info.unique} unique person${info.unique !== 1 ? 's' : ''}</strong> = <strong>&#8377;${info.baseFee.toLocaleString('en-IN')}</strong>`;
+                    if (info.isChessSelected) {
+                        html += ` <br><span style="color:var(--gold-dark);">+ &#8377;30 Chess Entry Fee</span>`;
+                        html += ` <br><strong style="font-size:1.1em;color:var(--emirates-red);">Total: &#8377;${info.totalFee.toLocaleString('en-IN')}</strong>`;
+                    }
+                    html += `<span style="font-size:.78rem;color:var(--text-muted);display:block;margin-top:4px;">Emails across events are counted as one person</span>`;
+                    noteEl.innerHTML = html;
+                }
+            }
+
+            const container = document.getElementById('formContainer');
+            if (teamEvents.length) container.classList.add('team-mode');
+
+            const badgesHTML = eventsArr.map(e =>
+                `<span class="event-badge-item ev" title="${e.participationMode}">&#127919; ${e.event}</span>`
+            ).join('');
+
+            /* ── Food HTML helper ── */
+            function foodHTML(prefix) {
+                return `<div class="food-options">
+                    <div class="food-option"><input type="radio" name="food_${prefix}" id="foodVeg_${prefix}" value="Veg"/><label for="foodVeg_${prefix}">&#129382; Veg</label></div>
+                    <div class="food-option"><input type="radio" name="food_${prefix}" id="foodNonVeg_${prefix}" value="Non-Veg"/><label for="foodNonVeg_${prefix}">&#127829; Non-Veg</label></div>
+                </div><div class="error-msg" id="foodError_${prefix}">Please select food preference</div>`;
+            }
+
+            /* ── Hostel toggle HTML helper ── */
+            function hostelHTML(id) {
+                return `<div class="form-group">
+                    <label>Need Hostel Accommodation?</label>
+                    <div class="hostel-toggle" id="hostelToggle_${id}">
+                        <div class="toggle-switch"></div>
+                        <span class="toggle-text">&#127976; Yes, I need accommodation</span>
+                    </div>
+                    <input type="hidden" id="hostelInput_${id}" value="No"/>
+                </div>`;
+            }
+
+            /* ── Member fields HTML ── */
+            function eventMemberFormHTML(sectionPrefix, memberIdx, isFirstMember = false) {
+                const prefix = `${sectionPrefix}_m${memberIdx}`;
+                const titleText = isFirstMember ? (memberIdx === 1 ? 'Participant / Leader Details' : `Member ${memberIdx}`) : `Member ${memberIdx}`;
+
+                return `<div class="member-section">
+                    <div class="member-title">${titleText}</div>
+                    <div class="member-grid">
+                        <div class="form-group" id="${prefix}_nameGroup"><label for="${prefix}_name">Full Name *</label><input type="text" id="${prefix}_name" placeholder="Full name"/><div class="error-msg" id="${prefix}_nameError">Please enter name</div></div>
+                        <div class="form-group" id="${prefix}_emailGroup"><label for="${prefix}_email">Email *</label><div class="input-paste-wrap"><input type="email" id="${prefix}_email" class="email-input" placeholder="email@example.com"/><button type="button" class="btn-paste" onclick="pasteToField('${prefix}_email',this)">&#128203; Paste</button></div><div class="error-msg" id="${prefix}_emailError">Please enter valid email</div></div>
+                        <div class="form-group" id="${prefix}_phoneGroup"><label for="${prefix}_phone">Phone *</label><div class="input-paste-wrap"><input type="tel" id="${prefix}_phone" class="phone-input" placeholder="10-digit mobile" maxlength="10"/><button type="button" class="btn-paste" onclick="pasteToField('${prefix}_phone',this)">&#128203; Paste</button></div><div class="error-msg" id="${prefix}_phoneError">Please enter valid phone</div></div>
+                        <div class="form-group" id="foodGroup_${prefix}"><label>Food Preference *</label>${foodHTML(prefix)}</div>
+                    </div>
+                    ${hostelHTML(prefix)}
+                </div>`;
+            }
+
+            /* ── Build form ── */
+            function buildForm() {
+                let sectionsHTML = '';
+
+                // Shared College Name & Location Group
+                const sharedGroupHTML = `
+                <div class="shared-shared-fields" style="margin-bottom: 30px; border-bottom: 2px solid var(--border-light); padding-bottom: 20px;">
+                    <div class="form-group" id="collegeGroup" style="margin-bottom: 15px;">
+                        <label for="college">College Name * <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(Shared for all)</span></label>
+                        <input type="text" id="college" placeholder="Enter your college name"/>
+                        <div class="error-msg" id="collegeError">Please enter your college name</div>
+                    </div>
+                    <div class="form-group" id="locationGroup">
+                        <label for="startingLocation">Starting Location (City/Area) * <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(Used for directions)</span></label>
+                        <input type="text" id="startingLocation" placeholder="e.g. Arapalayam, Madurai"/>
+                        <div class="error-msg" id="locationError">Please enter your starting location</div>
+                    </div>
+                </div>`;
+
+                eventsArr.forEach((ev, idx) => {
+                    const sectionPrefix = `evSection_${idx}`;
+                    const isTeam = ev.teamSize > 1;
+                    const typeLabel = isTeam ? `Team of ${ev.teamSize}` : 'Individual';
+                    const titleColor = isTeam ? 'var(--emirates-red)' : 'var(--gold-dark)';
+
+                    let memberForms = '';
+                    for (let i = 1; i <= ev.teamSize; i++) {
+                        memberForms += eventMemberFormHTML(sectionPrefix, i, i === 1);
+                    }
+
+                    const teamNameField = isTeam ? `
+                        <div class="form-group" id="teamNameGroup_${sectionPrefix}" style="margin-bottom:20px;">
+                            <label for="teamName_${sectionPrefix}" style="color:var(--emirates-red); font-weight:700;">&#128101; Team Name for ${ev.event} *</label>
+                            <input type="text" id="teamName_${sectionPrefix}" placeholder="e.g. Dream Team" style="font-weight:600;"/>
+                            <div class="error-msg" id="teamNameError_${sectionPrefix}">Please enter a team name</div>
+                        </div>` : '';
+
+                    sectionsHTML += `
+                        <div class="event-registration-section">
+                            <div class="section-number">SECTION ${idx + 1}</div>
+                            <div class="member-title" style="color:${titleColor}; font-size: 1.1rem; margin-top:5px; margin-bottom: 25px;">
+                                &#127919; ${ev.event.toUpperCase()}
+                                <span style="font-size:.78rem; font-weight:400; color:var(--text-muted); margin-left:10px;">(${typeLabel})</span>
+                            </div>
+                            ${teamNameField}
+                            ${memberForms}
+                        </div>
+                    `;
+                });
+
+                container.classList.add('team-mode');
+                container.innerHTML = `<div class="form-header"><h1>&#128221; Registration</h1><p>Separate forms for each selected event in priority order</p></div>
+                    <div class="event-badge" style="flex-wrap:wrap;">${badgesHTML}</div>
+                    <form id="registerForm" novalidate>
+                        ${sharedGroupHTML}
+                        ${sectionsHTML}
+                        <button type="submit" class="btn btn-red btn-submit" id="submitBtn">&#128640; Proceed to Payment</button>
+                        <p class="fee-note">Registration Fee: <span id="liveFeeNote">calculating...</span></p>
+                    </form>
+                    <div class="form-footer"><a href="events.html">&#8592; Change Event</a></div>`;
+
+                // Setup listeners
+                eventsArr.forEach((ev, idx) => {
+                    const sectionPrefix = `evSection_${idx}`;
+                    for (let i = 1; i <= ev.teamSize; i++) {
+                        const mPrefix = `${sectionPrefix}_m${i}`;
+                        const t = document.getElementById('hostelToggle_' + mPrefix);
+                        if (t) t.addEventListener('click', function () {
+                            this.classList.toggle('active');
+                            document.getElementById('hostelInput_' + mPrefix).value = this.classList.contains('active') ? 'Yes' : 'No';
+                        });
+                        const ph = document.getElementById(mPrefix + '_phone');
+                        if (ph) ph.addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); });
+                        const em = document.getElementById(mPrefix + '_email');
+                        if (em) em.addEventListener('input', updateFeeDisplay);
+                    }
+                    if (ev.teamSize > 1) {
+                        const tnEl = document.getElementById(`teamName_${sectionPrefix}`);
+                        if (tnEl) tnEl.addEventListener('input', () => checkTeamNameDuplicate(sectionPrefix, ev.event));
+                    }
+                });
+
+                updateFeeDisplay();
+                document.getElementById('registerForm').addEventListener('submit', submitForm);
+            }
+
+            // Team name duplicate check (live)
+            async function checkTeamNameDuplicate(sectionPrefix, eventName) {
+                const input = document.getElementById(`teamName_${sectionPrefix}`);
+                const group = document.getElementById(`teamNameGroup_${sectionPrefix}`);
+                const errEl = document.getElementById(`teamNameError_${sectionPrefix}`);
+                if (!input || !group) return;
+                const val = input.value.trim().toLowerCase();
+                if (!val) { group.classList.remove('has-error'); return; }
+                const existing = await getRegistrations();
+                const taken = existing.some(r => {
+                    if (!r.teamMembersByEvent) return false;
+                    const evData = r.teamMembersByEvent[eventName];
+                    if (!evData) return false;
+                    const tn = evData.teamName;
+                    return tn && tn.trim().toLowerCase() === val;
+                });
+                if (taken) {
+                    group.classList.add('has-error');
+                    if (errEl) errEl.textContent = '⚠️ Team name already taken — choose a different name';
+                } else {
+                    group.classList.remove('has-error');
+                    if (errEl) errEl.textContent = 'Please enter a team name';
+                }
+            }
+
+            /* ── Validation helpers ── */
+            function validateField(id, groupId, ok) {
+                const g = document.getElementById(groupId);
+                if (!ok) { g.classList.add('has-error'); return false; }
+                g.classList.remove('has-error'); return true;
+            }
+            function validateFood(prefix, groupId) {
+                const c = document.querySelector(`input[name="food_${prefix}"]:checked`);
+                const g = document.getElementById(groupId);
+                if (!c) { g.classList.add('has-error'); return null; }
+                g.classList.remove('has-error'); return c.value;
+            }
+            const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRx = /^\d{10}$/;
+
+            /* ── Submit ── */
+            async function submitForm(e) {
+                e.preventDefault();
+                let valid = true;
+
+                const college = document.getElementById('college').value.trim();
+                const startingLocation = document.getElementById('startingLocation').value.trim();
+                if (!validateField('college', 'collegeGroup', college)) valid = false;
+                if (!validateField('startingLocation', 'locationGroup', startingLocation)) valid = false;
+
+                const allSectionData = [];
+                const globalEmails = new Set();
+
+                for (let idx = 0; idx < eventsArr.length; idx++) {
+                    const ev = eventsArr[idx];
+                    const sectionPrefix = `evSection_${idx}`;
+                    const sectionData = { event: ev.event, teamSize: ev.teamSize, members: [] };
+
+                    if (ev.teamSize > 1) {
+                        const tnEl = document.getElementById(`teamName_${sectionPrefix}`);
+                        const tnVal = tnEl ? tnEl.value.trim() : '';
+                        if (!validateField(`teamName_${sectionPrefix}`, `teamNameGroup_${sectionPrefix}`, tnVal)) valid = false;
+                        sectionData.teamName = tnVal;
+                    }
+
+                    for (let i = 1; i <= ev.teamSize; i++) {
+                        const mPrefix = `${sectionPrefix}_m${i}`;
+                        const mn = document.getElementById(`${mPrefix}_name`).value.trim();
+                        const me = document.getElementById(`${mPrefix}_email`).value.trim();
+                        const mp = document.getElementById(`${mPrefix}_phone`).value.trim();
+                        const mf = validateFood(mPrefix, `foodGroup_${mPrefix}`);
+                        const mh = document.getElementById(`hostelInput_${mPrefix}`).value;
+
+                        if (!validateField(`${mPrefix}_name`, `${mPrefix}_nameGroup`, mn)) valid = false;
+                        if (!validateField(`${mPrefix}_email`, `${mPrefix}_emailGroup`, me && emailRx.test(me))) valid = false;
+                        if (!validateField(`${mPrefix}_phone`, `${mPrefix}_phoneGroup`, mp && phoneRx.test(mp))) valid = false;
+                        if (!mf) valid = false;
+
+                        sectionData.members.push({ name: mn, email: me, phone: mp, food: mf || '', hostel: mh });
+                        if (me) globalEmails.add(me.toLowerCase());
+                    }
+                    allSectionData.push(sectionData);
+                }
+
+                if (!valid) return;
+
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Saving...'; }
+
+                try {
+                    const feeInfo = getFeeInfo();
+                    const regId = await generateRegId();
+
+                    // Root data for compatibility
+                    const firstMember = allSectionData[0].members[0];
+                    const teamMembersByEvent = {};
+                    allSectionData.forEach(sd => {
+                        teamMembersByEvent[sd.event] = { teamName: sd.teamName || '', members: sd.members };
+                    });
+
+                    await addRegistration({
+                        regId,
+                        name: firstMember.name,
+                        email: firstMember.email,
+                        phone: firstMember.phone,
+                        college: college,
+                        startingLocation: startingLocation,
+                        event: eventsArr.map(e => e.event).join(', '),
+                        events: eventsArr.map(e => ({
+                            event: e.event,
+                            participationMode: e.teamSize > 1 ? `Team of ${e.teamSize}` : 'Individual',
+                            teamSize: e.teamSize
+                        })),
+                        teamMembersByEvent,
+                        members: allSectionData.flatMap(s => s.members),
+                        teamSize: feeInfo.unique,
+                        amount: feeInfo.totalFee,
+                        paymentStatus: 'Pending',
+                        registeredAt: new Date().toISOString()
+                    });
+
+                    sessionStorage.setItem('currentRegId', regId);
+                    window.location.href = 'payment.html';
+                } catch (error) {
+                    console.error("Submission failed:", error);
+                    alert("⚠️ Registration failed. Please try again.");
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🚀 Proceed to Payment'; }
+                }
+            }
+
+            buildForm();
+        })();
+    </script>
+</body>
+
+</html>

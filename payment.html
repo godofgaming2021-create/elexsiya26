@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Payment – Elexsiya 26</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .page-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 20px 60px;
+      background: var(--bg-warm);
+      position: relative;
+    }
+
+    .page-wrap::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    }
+
+    .payment-card {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 520px;
+      background: var(--white);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 48px 40px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, .05);
+      animation: fadeInUp .6s ease-out;
+    }
+
+    .payment-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .payment-header h1 {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .payment-header p {
+      color: var(--text-muted);
+    }
+
+    .summary-table {
+      width: 100%;
+      margin-bottom: 32px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .summary-row:last-child {
+      border-bottom: none;
+    }
+
+    .summary-label {
+      color: var(--text-muted);
+      font-size: .95rem;
+    }
+
+    .summary-value {
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    .total-row {
+      background: rgba(198, 12, 48, .04);
+      border: 1px solid rgba(198, 12, 48, .12);
+      border-radius: var(--radius);
+      padding: 16px 20px !important;
+      margin-top: 8px;
+    }
+
+    .total-row .summary-value {
+      font-size: 1.3rem;
+      color: var(--emirates-red);
+      font-family: var(--font-heading);
+    }
+
+    .btn-pay {
+      width: 100%;
+      padding: 18px;
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+    }
+
+    .btn-simulate {
+      width: 100%;
+      padding: 16px;
+      font-size: 1rem;
+    }
+
+    .or-divider {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .85rem;
+      margin: 12px 0;
+    }
+
+    .upi-box {
+      background: rgba(200, 169, 81, .06);
+      border: 1px solid rgba(200, 169, 81, .25);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .upi-box-label {
+      font-size: .8rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .upi-id {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gold-dark);
+      letter-spacing: .03em;
+      font-family: var(--font-heading);
+    }
+
+    .upi-note {
+      font-size: .78rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .upi-warn {
+      font-size: .75rem;
+      color: var(--emirates-red);
+      margin-top: 8px;
+    }
+
+    .payment-note {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .82rem;
+      margin-top: 20px;
+      line-height: 1.65;
+    }
+
+    .no-reg {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .no-reg h2 {
+      margin-bottom: 16px;
+      color: var(--emirates-red);
+    }
+
+    @media (max-width: 560px) {
+      .payment-card {
+        padding: 32px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="navbar scrolled" id="mainNav">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <img src="logo.jpg" alt="Elexsiya 26" class="logo-img" />
+        <span class="logo-text">Elexsiya</span>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+      </ul>
+      <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="page-wrap">
+    <div class="payment-card" id="paymentCard">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="shared.js"></script>
+  <script>
+    (async function () {
+      const card = document.getElementById('paymentCard');
+
+      card.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-muted);">&#9203; Loading your registration...</div>';
+
+      const regId = sessionStorage.getItem('currentRegId');
+
+      if (!regId) {
+        card.innerHTML = `
+          <div class="no-reg">
+            <h2>&#9888;&#65039; No Registration Found</h2>
+            <p style="color:var(--text-muted);margin-bottom:24px;">Please register first before proceeding to payment.</p>
+            <a href="register.html" class="btn btn-red">Go to Registration</a>
+          </div>`;
+        return;
+      }
+
+      const regs = await getRegistrations();
+      const reg = regs.find(r => r.regId === regId);
+
+      if (!reg) {
+        card.innerHTML = `
+          <div class="no-reg">
+            <h2>⚠️ Registration Not Found</h2>
+            <p style="color:var(--text-muted);margin-bottom:24px;">Something went wrong. Please register again.</p>
+            <a href="register.html" class="btn btn-red">Register Again</a>
+          </div>`;
+        return;
+      }
+
+      card.innerHTML = `
+        <div class="payment-header">
+          <h1>💳 Payment</h1>
+          <p>Complete your registration by paying the fee</p>
+        </div>
+
+        <div class="summary-table">
+          <div class="summary-row">
+            <span class="summary-label">Registration ID</span>
+            <span class="summary-value" style="color:var(--emirates-red);font-family:var(--font-heading);">${reg.regId}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Name</span>
+            <span class="summary-value">${reg.name}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">College</span>
+            <span class="summary-value">${reg.college}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Email</span>
+            <span class="summary-value">${reg.email}</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Email</span>
+            <span class="summary-value">${reg.email}</span>
+          </div>
+
+          <!-- Event Breakdown -->
+          <div style="margin: 20px 0 10px; padding-top: 15px; border-top: 1.5px dashed var(--border-light);">
+            <p style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 12px;">Selected Event Details</p>
+            ${Object.entries(reg.teamMembersByEvent || {}).map(([evName, data], i) => `
+              <div style="background: rgba(0,0,0,0.02); border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border-light);">
+                <div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+                  <span style="font-weight: 700; color: var(--emirates-red); font-size: 0.95rem;">&#127919; ${evName}</span>
+                  <span style="font-size: 0.75rem; background: var(--emirates-red); color: #fff; padding: 2px 8px; border-radius: 10px;">SECTION ${i + 1}</span>
+                </div>
+                ${data.teamName ? `<div style="font-size: 0.85rem; margin-bottom: 8px; color: var(--text-dark);"><strong>Team:</strong> ${data.teamName}</div>` : ''}
+                <div style="font-size: 0.82rem; color: var(--text-muted);">
+                  <strong>Members:</strong> ${data.members.map(m => m.name).join(', ')}
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+                  <strong>Accommodations:</strong> ${data.members.filter(m => m.hostel === 'Yes').length > 0
+          ? data.members.filter(m => m.hostel === 'Yes').map(m => m.name).join(', ')
+          : 'None'}
+                </div>
+              </div>
+            `).join('') || `
+              <div class="summary-row">
+                <span class="summary-label">Event</span>
+                <span class="summary-value">${reg.event || '—'}</span>
+              </div>
+            `}
+          </div>
+
+          <div class="summary-row total-row">
+            <span class="summary-label" style="font-weight:700;color:var(--text-dark);font-size:1rem;">Total Fee</span>
+            <span class="summary-value" style="font-size:1.4rem;color:var(--emirates-red);">&#8377;${reg.amount}</span>
+          </div>
+        </div>
+
+        <a href="#" class="btn btn-red btn-pay" id="phonepeBtn">
+          &#128241; Pay &#8377;${reg.amount} via PhonePe
+        </a>
+
+        <div class="or-divider">— or pay via UPI —</div>
+
+        <div class="upi-box">
+          <div class="upi-box-label">UPI ID</div>
+          <div class="upi-id">YOUR_UPI_ID@bank</div>
+          <div class="upi-note">Pay &#8377;${reg.amount} · Use Reg ID <strong style="color:var(--text-dark);">${reg.regId}</strong> as remark</div>
+          <div class="upi-warn">&#9888;&#65039; Bring payment screenshot to the event desk for confirmation</div>
+        </div>
+
+        <p class="payment-note">
+          &#128274; Pay via UPI and bring your payment screenshot to the event desk.<br/>
+          After paying, click the button below to view your confirmation.
+        </p>
+
+        <button class="btn btn-outline-dark btn-simulate" id="checkStatusBtn" style="width:100%;padding:14px;font-size:.95rem;margin-top:12px;">
+          &#10003; I've Paid &mdash; View Confirmation
+        </button>
+      `;
+
+      const PHONEPE_URL = ''; // ← PASTE YOUR REAL PAYMENT LINK HERE
+
+      const phonepeBtn = document.getElementById('phonepeBtn');
+      if (PHONEPE_URL) {
+        phonepeBtn.href = PHONEPE_URL;
+        phonepeBtn.removeAttribute('onclick');
+      } else {
+        phonepeBtn.href = '#';
+        phonepeBtn.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          alert('💳 Online payment gateway will be set up soon.\n\nFor now, please pay via UPI using the ID shown below and show your receipt at the event desk.');
+        });
+      }
+
+      sessionStorage.setItem('allowSuccessView', regId);
+
+      document.getElementById('checkStatusBtn').addEventListener('click', function () {
+        window.location.href = 'success.html';
+      });
+
+    })();
+  </script>
+</body>
+
+</html>

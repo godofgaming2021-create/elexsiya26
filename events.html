@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Select Event – Elexsiya 26</title>
+    <meta name="description" content="Choose your event for Elexsiya 26 – National Level Technical Symposium." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        /* ── Page layout ── */
+        .page-wrap {
+            min-height: 100vh;
+            padding: 100px 20px 140px;
+            background: var(--bg-light);
+            position: relative;
+        }
+
+        .page-wrap::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .events-page-container {
+            position: relative;
+            z-index: 2;
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeInUp .6s ease-out;
+        }
+
+        /* ── Header ── */
+        .events-page-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .events-page-header h1 {
+            font-family: var(--font-heading);
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .events-page-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .reg-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(198, 12, 48, .07);
+            border: 1px solid rgba(198, 12, 48, .22);
+            border-radius: 50px;
+            padding: 10px 22px;
+            margin: 18px auto 36px;
+            font-size: .9rem;
+            color: var(--emirates-red);
+            font-weight: 600;
+        }
+
+        .reg-badge-wrap {
+            text-align: center;
+        }
+
+        /* ── Category divider ── */
+        .category-title {
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 40px 0 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        .category-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-light);
+        }
+
+        /* ── Events grid ── */
+        .events-select-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 18px;
+        }
+
+        /* ── Event card ── */
+        .event-select-card {
+            background: var(--white);
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 26px 22px 20px;
+            cursor: pointer;
+            transition: all .25s;
+            position: relative;
+            user-select: none;
+        }
+
+        .event-select-card:hover {
+            border-color: rgba(198, 12, 48, .4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(198, 12, 48, .08);
+        }
+
+        .event-select-card.selected {
+            border-color: var(--emirates-red);
+            background: rgba(198, 12, 48, .03);
+            box-shadow: 0 0 0 3px rgba(198, 12, 48, .12), 0 8px 32px rgba(198, 12, 48, .08);
+            transform: translateY(-3px);
+        }
+
+        /* NT card colours */
+        .nt-card:hover {
+            border-color: rgba(200, 169, 81, .5);
+            box-shadow: 0 8px 32px rgba(200, 169, 81, .12);
+        }
+
+        .nt-card.selected {
+            border-color: var(--gold);
+            background: rgba(200, 169, 81, .04);
+            box-shadow: 0 0 0 3px rgba(200, 169, 81, .18), 0 8px 32px rgba(200, 169, 81, .12);
+        }
+
+        /* Special card colours */
+        .sp-card:hover {
+            border-color: rgba(200, 169, 81, .6);
+            box-shadow: 0 8px 32px rgba(200, 169, 81, .14);
+        }
+
+        .sp-card.selected {
+            border-color: var(--gold-light);
+            background: rgba(200, 169, 81, .05);
+            box-shadow: 0 0 0 3px rgba(200, 169, 81, .2), 0 8px 32px rgba(200, 169, 81, .14);
+        }
+
+        /* ── Card check badge ── */
+        .card-check {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--bg-light);
+            border: 1.5px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            transition: all .2s;
+            color: transparent;
+        }
+
+        .event-select-card.selected .card-check {
+            background: var(--emirates-red);
+            border-color: var(--emirates-red);
+            color: #fff;
+        }
+
+        .nt-card.selected .card-check {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: #fff;
+        }
+
+        .sp-card.selected .card-check {
+            background: var(--gold);
+            border-color: var(--gold);
+            color: #fff;
+        }
+
+        /* ── Card content ── */
+        .event-icon-lg {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .event-select-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .event-select-card .card-desc {
+            font-size: .85rem;
+            color: var(--text-body);
+            line-height: 1.55;
+            margin-bottom: 14px;
+        }
+
+        .event-tag {
+            display: inline-block;
+            font-size: .75rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 50px;
+            background: rgba(198, 12, 48, .08);
+            color: var(--emirates-red);
+            border: 1px solid rgba(198, 12, 48, .18);
+            letter-spacing: .02em;
+        }
+
+        .event-tag.nt {
+            background: rgba(200, 169, 81, .09);
+            color: var(--gold-dark);
+            border-color: rgba(200, 169, 81, .25);
+        }
+
+        .event-tag.sp {
+            background: rgba(200, 169, 81, .1);
+            color: var(--gold-dark);
+            border-color: rgba(200, 169, 81, .3);
+        }
+
+        /* ── Participation panel ── */
+        .participation-panel {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-light);
+            animation: fadeInUp .2s ease-out;
+        }
+
+        .event-select-card.selected .participation-panel {
+            display: flex;
+        }
+
+        .participation-label {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .participation-toggle {
+            display: flex;
+            gap: 8px;
+        }
+
+        .part-btn {
+            flex: 1;
+            padding: 9px 10px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-light);
+            background: var(--white);
+            color: var(--text-muted);
+            font-size: .85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: var(--font-body);
+        }
+
+        .part-btn:hover {
+            border-color: rgba(198, 12, 48, .4);
+            color: var(--text-dark);
+        }
+
+        .part-btn.active {
+            border-color: var(--emirates-red);
+            background: rgba(198, 12, 48, .07);
+            color: var(--emirates-red);
+            box-shadow: 0 0 0 2px rgba(198, 12, 48, .08);
+        }
+
+        .nt-card .part-btn.active {
+            border-color: var(--gold);
+            background: rgba(200, 169, 81, .08);
+            color: var(--gold-dark);
+        }
+
+        .sp-card .part-btn.active {
+            border-color: var(--gold);
+            background: rgba(200, 169, 81, .08);
+            color: var(--gold-dark);
+        }
+
+        /* ── Conflict-disabled ── */
+        .event-select-card.conflict-disabled {
+            opacity: .35;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(.6);
+        }
+
+        .event-select-card.conflict-disabled::after {
+            content: '⏱ Time Conflict';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--emirates-red);
+            background: rgba(255, 255, 255, .7);
+            border-radius: inherit;
+            letter-spacing: .04em;
+            pointer-events: none;
+        }
+
+        /* ── Team size picker ── */
+        .team-size-row {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .team-size-row.show {
+            display: flex;
+        }
+
+        .team-size-label {
+            font-size: .82rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .size-pills {
+            display: flex;
+            gap: 6px;
+        }
+
+        .size-pill {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border-light);
+            background: var(--white);
+            color: var(--text-muted);
+            font-size: .88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .18s;
+            font-family: var(--font-body);
+        }
+
+        .size-pill:hover {
+            border-color: rgba(198, 12, 48, .4);
+            color: var(--text-dark);
+        }
+
+        .size-pill.active {
+            border-color: var(--emirates-red);
+            background: rgba(198, 12, 48, .1);
+            color: var(--emirates-red);
+        }
+
+        .nt-card .size-pill.active {
+            border-color: var(--gold);
+            background: rgba(200, 169, 81, .12);
+            color: var(--gold-dark);
+        }
+
+        .sp-card .size-pill.active {
+            border-color: var(--gold);
+            background: rgba(200, 169, 81, .12);
+            color: var(--gold-dark);
+        }
+
+        /* ── Sticky proceed bar ── */
+        .proceed-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, .97);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid var(--border-light);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, .06);
+            padding: 14px 24px;
+            transform: translateY(100%);
+            transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .proceed-bar.visible {
+            transform: translateY(0);
+        }
+
+        .proceed-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .proceed-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .proceed-event-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .proceed-mode {
+            font-size: .82rem;
+            color: var(--emirates-red);
+            font-weight: 600;
+        }
+
+        .proceed-fee {
+            font-size: .82rem;
+            color: var(--text-muted);
+        }
+
+        .proceed-fee strong {
+            color: var(--emirates-red);
+        }
+
+        .btn-proceed {
+            padding: 13px 34px;
+            font-size: 1rem;
+            white-space: nowrap;
+        }
+
+        /* ── No-reg message ── */
+        .no-reg-msg {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .no-reg-msg h2 {
+            color: var(--emirates-red);
+            margin-bottom: 16px;
+        }
+
+        .no-reg-msg p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .events-page-header h1 {
+                font-size: 1.7rem;
+            }
+
+            .events-select-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .proceed-inner {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-proceed {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar scrolled" id="mainNav">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="logo.jpg" alt="Elexsiya 26" class="logo-img" />
+                <span class="logo-text">Elexsiya</span>
+            </a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#events">Events</a></li>
+                <li><a href="index.html#contact">Contact</a></li>
+            </ul>
+            <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="events-page-container" id="pageContent">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Sticky proceed bar -->
+    <div class="proceed-bar" id="proceedBar">
+        <div class="proceed-inner">
+            <div class="proceed-info">
+                <span class="proceed-event-name" id="proceedEventName">—</span>
+                <span class="proceed-mode" id="proceedMode"></span>
+                <span class="proceed-fee">Registration Fee: <strong>₹250/person</strong></span>
+            </div>
+            <button class="btn btn-red btn-proceed" id="proceedBtn">
+                Proceed to Register →
+            </button>
+        </div>
+    </div>
+
+    <script src="shared.js"></script>
+    <script>
+        (function () {
+            const container = document.getElementById('pageContent');
+
+            /* ── Event catalogue ── */
+            const EVENTS = {
+                technical: [
+                    { id: 'project-expo', icon: '🧑‍💻', name: 'Project Expo', desc: 'Showcase your innovative projects to a panel of expert judges. Bring your ideas to life and impress!', maxTeam: 3, teamOnly: false },
+                    { id: 'idea-forge', icon: '🌐', name: 'Idea Forge', desc: 'Pitch your groundbreaking ideas and turn concepts into reality. Innovation starts here.', maxTeam: 3, teamOnly: false },
+                    { id: 'tazky-among-uz', icon: '🤖', name: 'Tazky Among Uz', desc: 'Complete tasks, find the impostor, and survive! A thrilling strategy-based team challenge.', maxTeam: 3, teamOnly: true },
+                    { id: 'currentclash', icon: '📊', name: 'CurrentClash', desc: 'Battle it out in electrifying circuit and electronics challenges. Only the sharpest minds prevail.', maxTeam: 3, teamOnly: true },
+                    { id: 'clever-hunt', icon: '🔐', name: 'Clever Hunt', desc: 'Solve riddles, decode clues, and race against time in this ultimate treasure hunt challenge.', maxTeam: 3, teamOnly: true },
+                    { id: 'bug-arena', icon: '📱', name: 'Bug Arena', desc: 'Find and fix bugs in tricky code snippets. The fastest debugger wins the crown!', maxTeam: 3, teamOnly: true },
+                ],
+                nonTechnical: [
+                    { id: 'upside-down', icon: '🎤', name: 'Upside Down', desc: 'Everything you know is flipped! Think backwards, act fast, and conquer this topsy-turvy challenge.', maxTeam: 2, teamOnly: true },
+                    { id: 'mindfusion', icon: '🎨', name: 'Mindfusion', desc: 'Fuse logic, creativity, and teamwork to crack mind-bending puzzles and brain teasers.', maxTeam: 3, teamOnly: true },
+                    { id: 'unmuted', icon: '🎮', name: 'Unmuted', desc: 'Speak up and stand out! An open-mic style event to share ideas, stories, and bold opinions.', maxTeam: 3, teamOnly: true },
+                    { id: 'ideart', icon: '📸', name: 'Ideart', desc: 'Where ideas meet art. Express your imagination through creative design and visual storytelling.', maxTeam: 3, teamOnly: true },
+                ],
+                special: [
+                    { id: 'chess', icon: '♟️', name: 'Chess', desc: 'Battle of minds! Outsmart your opponent in this classic strategy showdown. All skill levels welcome.', maxTeam: 1, teamOnly: false },
+                ]
+            };
+
+            /* ── Build card HTML ── */
+            function buildCards(list, type) {
+                const tagClass = type === 'nt' ? 'nt' : type === 'sp' ? 'sp' : '';
+                const cardClass = type === 'nt' ? 'nt-card' : type === 'sp' ? 'sp-card' : '';
+
+                return list.map(ev => {
+                    const teamOnly = ev.teamOnly === true;
+                    const teamLabel = ev.maxTeam === 1 ? 'Individual'
+                        : teamOnly ? `Team of ${ev.maxTeam}`
+                            : `Up to ${ev.maxTeam} Members`;
+
+                    let sizePills = '';
+                    if (ev.maxTeam > 1) {
+                        const startN = teamOnly ? ev.maxTeam : 2;
+                        for (let n = startN; n <= ev.maxTeam; n++) {
+                            const autoActive = teamOnly ? 'active' : '';
+                            sizePills += `<div class="size-pill ${autoActive}" data-size="${n}">${n}</div>`;
+                        }
+                    }
+
+                    let participationHTML;
+                    if (teamOnly) {
+                        participationHTML = `
+                            <span class="participation-label">Participation: Team Only</span>
+                            <div class="participation-toggle">
+                                <button class="part-btn active" data-mode="team" style="cursor:default;">👥 Team of ${ev.maxTeam}</button>
+                            </div>
+                            <div class="team-size-row show" id="sizeRow-${ev.id}" style="display:none">
+                                <div class="size-pills">${sizePills}</div>
+                            </div>`;
+                    } else {
+                        const teamBtn = ev.maxTeam > 1
+                            ? `<button class="part-btn" data-mode="team">👥 Team</button>`
+                            : '';
+                        participationHTML = `
+                            <span class="participation-label">How will you participate?</span>
+                            <div class="participation-toggle">
+                                <button class="part-btn active" data-mode="individual">👤 Individual</button>
+                                ${teamBtn}
+                            </div>
+                            ${ev.maxTeam > 1 ? `
+                            <div class="team-size-row" id="sizeRow-${ev.id}">
+                                <span class="team-size-label">Team size:</span>
+                                <div class="size-pills">${sizePills}</div>
+                            </div>` : ''}`;
+                    }
+
+                    return `
+                        <div class="event-select-card ${cardClass}"
+                             data-id="${ev.id}"
+                             data-name="${ev.name}"
+                             data-maxteam="${ev.maxTeam}"
+                             data-teamonly="${teamOnly}">
+
+                            <div class="card-check">✓</div>
+                            <span class="event-icon-lg">${ev.icon}</span>
+                            <h4>${ev.name}</h4>
+                            <p class="card-desc">${ev.desc}</p>
+                            <span class="event-tag ${tagClass}">${teamLabel}</span>
+
+                            <div class="participation-panel">
+                                ${participationHTML}
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+
+            /* ── Render page ── */
+            container.innerHTML = `
+                <div class="events-page-header">
+                    <h1>🎯 Choose Your Event</h1>
+                    <p>Select an event and participation mode, then fill in your details.</p>
+                </div>
+
+                <div class="category-title">💻 Technical Events</div>
+                <div class="events-select-grid">${buildCards(EVENTS.technical, 'tech')}</div>
+
+                <div class="category-title">🎭 Non-Technical Events</div>
+                <div class="events-select-grid">${buildCards(EVENTS.nonTechnical, 'nt')}</div>
+
+                <div class="category-title">🌟 Special Event</div>
+                <div class="events-select-grid">${buildCards(EVENTS.special, 'sp')}</div>
+            `;
+
+            /* ── Multi-select state ── */
+            const selected = new Map();
+
+            /* ── Conflict pairs ── */
+            const CONFLICT_PAIRS = [
+                [['project-expo'], ['ideart']],
+                [['project-expo'], ['clever-hunt']],
+                [['idea-forge'], ['ideart']],
+                [['idea-forge'], ['clever-hunt']],
+                [['clever-hunt'], ['ideart']],
+                [['currentclash'], ['unmuted']],
+                [['bug-arena'], ['mindfusion']],
+                [['tazky-among-uz'], ['upside-down']],
+            ];
+
+            function updateConflicts() {
+                const selIds = new Set(selected.keys());
+                const blocked = new Set();
+                CONFLICT_PAIRS.forEach(([a, b]) => {
+                    const hitA = a.some(id => selIds.has(id));
+                    const hitB = b.some(id => selIds.has(id));
+                    if (hitA) b.forEach(id => blocked.add(id));
+                    if (hitB) a.forEach(id => blocked.add(id));
+                });
+                document.querySelectorAll('.event-select-card').forEach(card => {
+                    const lock = blocked.has(card.dataset.id) && !selIds.has(card.dataset.id);
+                    card.classList.toggle('conflict-disabled', lock);
+                });
+            }
+
+            const proceedBar = document.getElementById('proceedBar');
+            const proceedEventEl = document.getElementById('proceedEventName');
+            const proceedModeEl = document.getElementById('proceedMode');
+
+            /* ── Refresh proceed bar ── */
+            function refreshBar() {
+                const count = selected.size;
+                if (count === 0) { proceedBar.classList.remove('visible'); return; }
+                proceedBar.classList.add('visible');
+                proceedEventEl.textContent = count === 1
+                    ? [...selected.values()][0].name
+                    : `${count} Events Selected`;
+                proceedModeEl.textContent = [...selected.values()]
+                    .map(s => s.mode === 'team' ? `${s.name}: 👥 ${s.teamSize}` : `${s.name}: 👤 Ind.`)
+                    .join('  ·  ');
+            }
+
+            /* ── Card click ── */
+            document.querySelectorAll('.event-select-card').forEach(card => {
+                card.addEventListener('click', function (e) {
+                    if (e.target.closest('.participation-panel')) return;
+                    const id = this.dataset.id;
+                    const name = this.dataset.name;
+                    const isTeamOnly = this.dataset.teamonly === 'true';
+                    const maxTeam = parseInt(this.dataset.maxteam);
+
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        selected.delete(id);
+                        this.querySelectorAll('.part-btn').forEach(b => b.classList.remove('active'));
+                        const ib = this.querySelector('.part-btn[data-mode="individual"]');
+                        const tb = this.querySelector('.part-btn[data-mode="team"]');
+                        if (ib) ib.classList.add('active');
+                        else if (tb) tb.classList.add('active');
+                        this.querySelectorAll('.team-size-row').forEach(r => r.classList.remove('show'));
+                        this.querySelectorAll('.size-pill').forEach(p => p.classList.remove('active'));
+                        if (isTeamOnly) {
+                            const lp = this.querySelector('.size-pill:last-child');
+                            if (lp) lp.classList.add('active');
+                        }
+                    } else {
+                        this.classList.add('selected');
+                        selected.set(id, {
+                            name,
+                            mode: isTeamOnly ? 'team' : 'individual',
+                            teamSize: isTeamOnly ? maxTeam : null
+                        });
+                    }
+                    refreshBar();
+                    updateConflicts();
+                });
+            });
+
+            /* ── Participation toggle ── */
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('.part-btn');
+                if (!btn) return;
+                e.stopPropagation();
+                const card = btn.closest('.event-select-card');
+                if (!card.classList.contains('selected')) return;
+
+                const id = card.dataset.id;
+                const mode = btn.dataset.mode;
+                card.querySelectorAll('.part-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                if (selected.has(id)) {
+                    selected.get(id).mode = mode;
+                    if (mode === 'individual') selected.get(id).teamSize = null;
+                }
+
+                const sizeRow = card.querySelector('.team-size-row');
+                if (sizeRow) {
+                    if (mode === 'team') { sizeRow.classList.add('show'); }
+                    else {
+                        sizeRow.classList.remove('show');
+                        card.querySelectorAll('.size-pill').forEach(p => p.classList.remove('active'));
+                    }
+                }
+                refreshBar();
+            });
+
+            /* ── Size pill clicks ── */
+            document.addEventListener('click', function (e) {
+                const pill = e.target.closest('.size-pill');
+                if (!pill) return;
+                e.stopPropagation();
+                const card = pill.closest('.event-select-card');
+                const id = card.dataset.id;
+                card.querySelectorAll('.size-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                if (selected.has(id)) selected.get(id).teamSize = parseInt(pill.dataset.size);
+                refreshBar();
+            });
+
+            /* ── Proceed → register ── */
+            document.getElementById('proceedBtn').addEventListener('click', function () {
+                if (selected.size === 0) return;
+
+                for (const [id, s] of selected) {
+                    if (s.mode === 'team' && (!s.teamSize || s.teamSize < 2)) {
+                        const c = document.querySelector(`.event-select-card[data-id="${id}"]`);
+                        const sr = c ? c.querySelector('.team-size-row') : null;
+                        if (sr) {
+                            sr.style.outline = '1.5px solid rgba(198,12,48,.6)';
+                            sr.style.borderRadius = '8px';
+                            sr.style.padding = '6px';
+                            setTimeout(() => { sr.style.outline = ''; sr.style.padding = ''; }, 1800);
+                        }
+                        alert(`Please select a team size of at least 2 for "${s.name}". A team must have more than 1 member.`);
+                        return;
+                    }
+                }
+
+                const eventsArr = [...selected.values()].map(s => ({
+                    event: s.name,
+                    participationMode: s.mode === 'team' ? `Team of ${s.teamSize}` : 'Individual',
+                    teamSize: s.teamSize || 1
+                }));
+
+                sessionStorage.setItem('selectedEvents', JSON.stringify(eventsArr));
+                sessionStorage.setItem('selectedEvent', eventsArr.map(e => e.event).join(', '));
+                sessionStorage.setItem('participationMode', eventsArr.length === 1 ? eventsArr[0].participationMode : 'Multiple Events');
+                sessionStorage.setItem('teamSize', String(eventsArr[0].teamSize));
+
+                window.location.href = 'register.html';
+            });
+
+        })();
+    </script>
+</body>
+
+</html>
