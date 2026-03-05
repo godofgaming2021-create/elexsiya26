@@ -25,3 +25,6 @@ firebase.initializeApp(firebaseConfig);
 
 // Initialize Firestore and expose it globally as `db`
 const db = firebase.firestore();
+
+// Initialize Storage and expose it globally as `storage`
+const storage = firebase.storage();

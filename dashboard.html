@@ -11,6 +11,7 @@
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             background: var(--bg-warm);
@@ -228,7 +229,206 @@
             margin-bottom: 8px;
         }
 
-        /* Responsive */
+        /* Screenshots Section */
+        .screenshots-section {
+            margin-top: 32px;
+            display: none;
+        }
+
+        .screenshots-section.visible {
+            display: block;
+        }
+
+        .screenshots-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .screenshots-header h2 {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .screenshot-card {
+            background: var(--white);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: var(--transition);
+        }
+
+        .screenshot-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+            transform: translateY(-2px);
+        }
+
+        .screenshot-img-wrap {
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+            background: #f4f4f4;
+            cursor: pointer;
+        }
+
+        .screenshot-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .screenshot-img-wrap:hover img {
+            transform: scale(1.05);
+        }
+
+        .screenshot-img-wrap .view-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: white;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .screenshot-img-wrap:hover .view-overlay {
+            opacity: 1;
+        }
+
+        .screenshot-meta {
+            padding: 14px 16px;
+        }
+
+        .screenshot-reg-id {
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            color: var(--emirates-red);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .screenshot-name {
+            font-size: 0.88rem;
+            color: var(--text-dark);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .screenshot-date {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .screenshot-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-verify {
+            flex: 1;
+            padding: 9px 0;
+            background: rgba(22, 163, 74, 0.1);
+            border: 1px solid rgba(22, 163, 74, 0.3);
+            color: #16a34a;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 0.82rem;
+            transition: var(--transition);
+        }
+
+        .btn-verify:hover {
+            background: rgba(22, 163, 74, 0.2);
+        }
+
+        .btn-verify.verified {
+            background: #16a34a;
+            color: white;
+            border-color: #16a34a;
+            cursor: default;
+        }
+
+        .btn-view-full {
+            padding: 9px 14px;
+            background: rgba(200, 169, 81, 0.1);
+            border: 1px solid rgba(200, 169, 81, 0.3);
+            color: var(--gold-dark);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 0.82rem;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-view-full:hover {
+            background: rgba(200, 169, 81, 0.2);
+        }
+
+        /* Lightbox */
+        .lightbox-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .lightbox-overlay.active {
+            display: flex;
+        }
+
+        .lightbox-img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox-caption {
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
         @media (max-width: 768px) {
             .dashboard {
                 padding: 80px 0 40px;
@@ -252,6 +452,187 @@
             .stats-row {
                 grid-template-columns: 1fr;
             }
+        }
+
+        /* Storage Modal */
+        .storage-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .storage-modal-overlay.active {
+            display: flex;
+        }
+
+        .storage-modal {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .storage-modal h2 {
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .storage-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            border-bottom: 1px dashed var(--border-light);
+            padding-bottom: 8px;
+        }
+
+        .storage-item:last-child {
+            border-bottom: none;
+            font-weight: 700;
+            color: var(--emirates-red);
+            font-size: 1.05rem;
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 2px solid var(--border-light);
+        }
+
+        .storage-progress-bg {
+            background: var(--border-light);
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        .storage-progress-fill {
+            background: var(--emirates-red);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease-out;
+        }
+
+        .storage-limit-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .storage-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-dark);
+        }
+
+        .action-btn.edit:hover {
+            color: #0369a1;
+            background: #e0f2fe;
+        }
+
+        .action-btn.delete:hover {
+            color: #ef4444;
+            background: #fee2e2;
+        }
+
+        .action-btn.toggle:hover {
+            color: #16a34a;
+            background: #dcfce3;
+        }
+
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+
+        .row-checkbox,
+        .selectAll-cb {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--emirates-red);
+        }
+
+        .checkin-toggle {
+            appearance: none;
+            width: 44px;
+            height: 24px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            transition: 0.3s ease;
+        }
+
+        .checkin-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .checkin-toggle:checked {
+            background: #16a34a;
+        }
+
+        .checkin-toggle:checked::after {
+            transform: translateX(20px);
+        }
+
+        .checkin-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 4px;
+            display: block;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .checkin-toggle:checked+.checkin-label {
+            color: #16a34a;
+            content: 'PRESENT';
         }
     </style>
 </head>
@@ -297,15 +678,110 @@
                 </div>
             </div>
 
+            <!-- Logistics Summaries & Analytics Grid -->
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 32px;">
+                <!-- Logistics Breakdown -->
+                <div class="premium-card shadow-card"
+                    style="padding: 24px; background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                    <h3
+                        style="font-family: var(--font-heading); font-size: 1.1rem; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                        <span>📦</span> Logistics Breakdown
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <!-- Food Group -->
+                        <div
+                            style="background: rgba(134, 239, 172, 0.1); border: 1px solid rgba(134, 239, 172, 0.3); padding: 16px; border-radius: var(--radius-sm);">
+                            <div
+                                style="font-size: .8rem; font-weight: 700; color: #16a34a; text-transform: uppercase; margin-bottom: 4px;">
+                                🥬 Veg</div>
+                            <div id="statVegCount"
+                                style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; color: var(--text-dark);">
+                                0</div>
+                        </div>
+                        <div
+                            style="background: rgba(252, 165, 165, 0.1); border: 1px solid rgba(252, 165, 165, 0.3); padding: 16px; border-radius: var(--radius-sm);">
+                            <div
+                                style="font-size: .8rem; font-weight: 700; color: #ef4444; text-transform: uppercase; margin-bottom: 4px;">
+                                🍗 Non-Veg</div>
+                            <div id="statNonVegCount"
+                                style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; color: var(--text-dark);">
+                                0</div>
+                        </div>
+
+                        <!-- Hostel Group -->
+                        <div
+                            style="grid-column: 1 / -1; background: rgba(200, 169, 81, 0.1); border: 1px solid rgba(200, 169, 81, 0.3); padding: 16px; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div
+                                    style="font-size: .8rem; font-weight: 700; color: var(--gold-dark); text-transform: uppercase; margin-bottom: 4px;">
+                                    🏨 Hostellers Needed</div>
+                                <div id="statHostelCount"
+                                    style="font-size: 1.6rem; font-family: var(--font-heading); font-weight: 800; color: var(--text-dark);">
+                                    0</div>
+                            </div>
+                            <div style="font-size: 2rem; opacity: 0.5;">🛏️</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Popularity Chart -->
+                <div class="premium-card shadow-card"
+                    style="padding: 24px; background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                    <h3
+                        style="font-family: var(--font-heading); font-size: 1.1rem; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>📈</span> Event Popularity
+                    </h3>
+                    <div style="position: relative; height: 180px; width: 100%;">
+                        <canvas id="eventChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Registration Timeline Chart -->
+                <div class="premium-card shadow-card"
+                    style="grid-column: 1 / -1; padding: 24px; background: var(--white); border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+                    <h3
+                        style="font-family: var(--font-heading); font-size: 1.1rem; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span>📅</span> Registration Timeline
+                    </h3>
+                    <div style="position: relative; height: 220px; width: 100%;">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <!-- Toolbar -->
             <div class="toolbar">
                 <input type="text" placeholder="🔍 Search by name, email, college, or reg ID..." id="searchInput" />
+                <select id="filterEvent">
+                    <option value="all">All Events</option>
+                    <!-- Populated dynamically -->
+                </select>
                 <select id="filterStatus">
                     <option value="all">All Status</option>
                     <option value="Paid">Paid</option>
                     <option value="Pending">Pending</option>
+                    <option value="Verification Required">Verification Required</option>
                 </select>
-                <button class="btn-csv" id="csvBtn">📥 Download CSV</button>
+
+                <div
+                    style="display: flex; gap: 8px; align-items: center; border-left: 1px solid var(--border-light); padding-left: 12px; margin-left: 4px;">
+                    <button class="btn-csv" id="bulkCsvBtn"
+                        style="background:#f0fdf4;border-color:#bbf7d0;color:#16a34a;">📥 Selected CSV</button>
+                    <button class="btn-csv" id="bulkDeleteBtn"
+                        style="background:rgba(239, 68, 68, .05);border-color:rgba(239, 68, 68, .2);color:#ef4444;">🗑️
+                        Delete Selected</button>
+                </div>
+
+                <div style="width: 100%; height: 1px; background: var(--border-light); margin: 8px 0;"></div>
+
+                <button class="btn-csv" id="csvBtn">📥 Download All CSV</button>
+                <button class="btn-csv" id="screenshotsBtn"
+                    style="background:rgba(198,12,48,.08);border-color:rgba(198,12,48,.25);color:var(--emirates-red);">📸
+                    Payment Screenshots</button>
+                <button class="btn-csv" id="storageBtn"
+                    style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1;">💾 Storage</button>
             </div>
 
             <!-- Table -->
@@ -315,11 +791,113 @@
                 </div>
             </div>
 
+            <!-- Payment Screenshots Section -->
+            <div class="screenshots-section" id="screenshotsSection">
+                <div class="screenshots-header">
+                    <h2>📸 Payment Screenshots</h2>
+                    <span id="screenshotCount" style="color:var(--text-muted);font-size:0.9rem;"></span>
+                </div>
+                <div class="screenshots-grid" id="screenshotsGrid">
+                    <div style="text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1;">⏳ Loading
+                        screenshots...</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox-overlay" id="lightbox">
+        <button class="lightbox-close" id="lightboxClose">✕</button>
+        <img src="" alt="Payment Screenshot" class="lightbox-img" id="lightboxImg" />
+        <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+
+    <!-- Storage Modal -->
+    <div class="storage-modal-overlay" id="storageModal">
+        <div class="storage-modal">
+            <button class="storage-close" id="storageClose">✕</button>
+            <h2>💾 Database Storage</h2>
+            <div id="storageContent">
+                <div style="text-align:center;padding:20px;color:var(--text-muted);">⏳ Calculating storage...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="storage-modal-overlay" id="editModal">
+        <div class="storage-modal" style="max-width: 500px;">
+            <button class="storage-close" id="editClose">✕</button>
+            <h2>✏️ Edit Registration</h2>
+            <form id="editForm" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                <input type="hidden" id="editRegId" />
+
+                <div>
+                    <label style="font-size: .85rem; font-weight: 600; color: var(--text-dark);">Name</label>
+                    <input type="text" id="editName" class="toolbar-input"
+                        style="width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);"
+                        required />
+                </div>
+
+                <div>
+                    <label style="font-size: .85rem; font-weight: 600; color: var(--text-dark);">Email</label>
+                    <input type="email" id="editEmail" class="toolbar-input"
+                        style="width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);"
+                        required />
+                </div>
+
+                <div>
+                    <label style="font-size: .85rem; font-weight: 600; color: var(--text-dark);">Phone</label>
+                    <input type="tel" id="editPhone" class="toolbar-input"
+                        style="width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);"
+                        required />
+                </div>
+
+                <div>
+                    <label style="font-size: .85rem; font-weight: 600; color: var(--text-dark);">College</label>
+                    <input type="text" id="editCollege" class="toolbar-input"
+                        style="width: 100%; padding: 10px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);"
+                        required />
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 10px;">
+                    <button type="button" class="btn-csv" id="cancelEditBtn"
+                        style="flex: 1; text-align: center;">Cancel</button>
+                    <button type="submit" class="btn-csv" id="saveEditBtn"
+                        style="flex: 1; text-align: center; background: rgba(198, 12, 48, .08); color: var(--emirates-red); border-color: rgba(198, 12, 48, .25);">💾
+                        Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tamper Alert Modal -->
+    <div class="storage-modal-overlay" id="tamperModal">
+        <div class="storage-modal">
+            <button class="storage-close" id="tamperClose">✕</button>
+            <h2 style="color: #ef4444;">⚠️ Tamper Details</h2>
+            <div id="tamperContent"
+                style="margin-top: 20px; font-size: .95rem; color: var(--text-body); line-height: 1.6;">
+                <p>This registration has been flagged as <strong>TAMPERED</strong>.</p>
+                <p style="margin-top: 12px;">The original secure checksum generated when the user submitted the form
+                    does not match the current data in the database.</p>
+                <div
+                    style="margin-top: 16px; padding: 12px; background: rgba(239, 68, 68, .05); border: 1px solid rgba(239, 68, 68, .2); border-radius: var(--radius-sm); font-size: .85rem;">
+                    <strong>Possible reasons:</strong>
+                    <ul style="margin-top: 8px; padding-left: 20px;">
+                        <li>The user intercepted the network request and changed the payment amount or registration
+                            details.</li>
+                        <li>An administrator modified this record directly in Firestore without updating the checksum.
+                        </li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="shared.js"></script>
     <script>
@@ -335,12 +913,27 @@
         });
 
         let allRegistrations = [];
+        let eventChartInst = null, timelineChartInst = null;
+
+        function getAllPersons(r) {
+            const persons = [{ name: r.name, food: r.food, hostel: r.hostel }];
+            if (r.members && r.members.length > 0) r.members.forEach(m => persons.push(m));
+            if (r.teamMembersByEvent) {
+                Object.values(r.teamMembersByEvent).forEach(evData => {
+                    const mems = Array.isArray(evData) ? evData : (evData.members || []);
+                    mems.forEach(m => persons.push(m));
+                });
+            }
+            return persons;
+        }
 
         async function loadData() {
             const wrap = document.getElementById('tableWrap');
             wrap.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-muted);">&#9203; Loading registrations from database...</div>';
             allRegistrations = await getRegistrations();
             updateStats();
+            populateEventFilter();
+            buildCharts();
             renderTable(allRegistrations);
         }
 
@@ -349,11 +942,87 @@
             const paid = allRegistrations.filter(r => r.paymentStatus === 'Paid').length;
             const pending = total - paid;
             const revenue = allRegistrations.filter(r => r.paymentStatus === 'Paid').reduce((sum, r) => sum + r.amount, 0);
-
             document.getElementById('totalRegs').textContent = total;
             document.getElementById('totalPaid').textContent = paid;
             document.getElementById('totalPending').textContent = pending;
-            document.getElementById('totalRevenue').textContent = '₹' + revenue.toLocaleString('en-IN');
+            document.getElementById('totalRevenue').textContent = '&#8377;' + revenue.toLocaleString('en-IN');
+
+            let veg = 0, nonVeg = 0, hostel = 0;
+            allRegistrations.forEach(r => {
+                getAllPersons(r).forEach(p => {
+                    if (p.food === 'Veg') veg++;
+                    else if (p.food === 'Non-Veg') nonVeg++;
+                    if (p.hostel === 'Yes') hostel++;
+                });
+            });
+            document.getElementById('statVegCount').textContent = veg;
+            document.getElementById('statNonVegCount').textContent = nonVeg;
+            document.getElementById('statHostelCount').textContent = hostel;
+        }
+
+        function populateEventFilter() {
+            const events = new Set();
+            allRegistrations.forEach(r => {
+                if (r.events && r.events.length > 0) r.events.forEach(e => events.add(e.event || e));
+                else if (r.event) events.add(r.event);
+            });
+            const sel = document.getElementById('filterEvent');
+            while (sel.options.length > 1) sel.remove(1);
+            [...events].sort().forEach(ev => {
+                const opt = document.createElement('option');
+                opt.value = ev; opt.textContent = ev;
+                sel.appendChild(opt);
+            });
+        }
+
+        function buildCharts() {
+            const eventCounts = {};
+            allRegistrations.forEach(r => {
+                const evs = (r.events && r.events.length > 0) ? r.events.map(e => e.event || e) : [r.event || 'Unknown'];
+                evs.forEach(ev => { eventCounts[ev] = (eventCounts[ev] || 0) + 1; });
+            });
+            const evLabels = Object.keys(eventCounts).sort((a, b) => eventCounts[b] - eventCounts[a]);
+            const evData = evLabels.map(k => eventCounts[k]);
+            const palette = ['#C60C30', '#C8A951', '#3b82f6', '#16a34a', '#f59e0b', '#6366f1', '#ec4899', '#14b8a6', '#f97316', '#84cc16', '#0ea5e9'];
+            if (eventChartInst) eventChartInst.destroy();
+            const evCtx = document.getElementById('eventChart').getContext('2d');
+            eventChartInst = new Chart(evCtx, {
+                type: 'bar',
+                data: { labels: evLabels, datasets: [{ data: evData, backgroundColor: palette.slice(0, evLabels.length), borderRadius: 6, borderSkipped: false }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y} registrant${ctx.parsed.y !== 1 ? 's' : ''}` } } },
+                    scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,.05)' } } }
+                }
+            });
+
+            const dateCounts = {};
+            allRegistrations.forEach(r => {
+                if (!r.registeredAt) return;
+                const d = new Date(r.registeredAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+                dateCounts[d] = (dateCounts[d] || 0) + 1;
+            });
+            const tlLabels = Object.keys(dateCounts);
+            const tlData = tlLabels.map(k => dateCounts[k]);
+            if (timelineChartInst) timelineChartInst.destroy();
+            const tlCtx = document.getElementById('timelineChart').getContext('2d');
+            timelineChartInst = new Chart(tlCtx, {
+                type: 'line',
+                data: { labels: tlLabels, datasets: [{ label: 'Registrations', data: tlData, borderColor: '#C60C30', backgroundColor: 'rgba(198,12,48,.08)', borderWidth: 2.5, pointBackgroundColor: '#C60C30', pointRadius: 4, fill: true, tension: 0.4 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { grid: { display: false }, ticks: { font: { size: 11 } } }, y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(0,0,0,.05)' } } }
+                }
+            });
+        }
+
+        function fmtDate(iso) { if (!iso) return '-'; const d = new Date(iso); return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); }
+        function fmtTime(iso) { if (!iso) return '-'; const d = new Date(iso); return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }); }
+        function hostelBadge(v) { return v === 'Yes' ? `<span style="color:#34d399;font-weight:700;">&#10004; Yes</span>` : `<span style="color:var(--text-muted);">No</span>`; }
+        function foodBadge(f) {
+            if (!f) return '-';
+            return f === 'Veg' ? `<span style="color:#86efac;font-weight:600;">&#129382; Veg</span>` : `<span style="color:#fca5a5;font-weight:600;">&#127829; Non-Veg</span>`;
         }
 
         function renderTable(data) {
@@ -362,22 +1031,13 @@
                 wrap.innerHTML = `<div class="no-data"><h3>No registrations found</h3><p>Registrations will appear here once users sign up.</p></div>`;
                 return;
             }
-            function fmtDate(iso) { if (!iso) return '-'; const d = new Date(iso); return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); }
-            function fmtTime(iso) { if (!iso) return '-'; const d = new Date(iso); return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }); }
-            function hostelBadge(v) { return v === 'Yes' ? `<span style="color:#34d399;font-weight:700;">&#10004; Yes</span>` : `<span style="color:var(--text-muted);">No</span>`; }
-            function foodBadge(f) {
-                if (!f) return '-';
-                return f === 'Veg'
-                    ? `<span style="color:#86efac;font-weight:600;">&#129382; Veg</span>`
-                    : `<span style="color:#fca5a5;font-weight:600;">&#127829; Non-Veg</span>`;
-            }
 
-            let html = `<table class="data-table">
-          <thead><tr>
-            <th>#</th><th>Reg ID</th><th>Type</th><th>Name</th><th>Email</th><th>Phone</th>
-            <th>College</th><th>Event(s)</th><th>Food</th><th>Hostel</th>
-            <th>Date</th><th>Time</th><th>Amount</th><th>Status</th>
-          </tr></thead><tbody>`;
+            let html = `<table class="data-table"><thead><tr>
+                <th class="checkbox-cell"><input type="checkbox" class="selectAll-cb" id="selectAll" /></th>
+                <th>#</th><th>Reg ID</th><th>Type</th><th>Name</th><th>Email</th><th>Phone</th>
+                <th>College</th><th>Event(s)</th><th>Food</th><th>Hostel</th>
+                <th>Date</th><th>Time</th><th>Amount</th><th>Status</th><th>Check-in</th><th>Actions</th>
+            </tr></thead><tbody>`;
 
             data.forEach((r, i) => {
                 const badgeClass = r.paymentStatus === 'Paid' ? 'badge-paid' : 'badge-pending';
@@ -386,220 +1046,355 @@
                 const typeBadge = hasTeam
                     ? `<span style="display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;background:rgba(200,169,81,.1);color:var(--gold-dark);border:1px solid rgba(200,169,81,.3);">&#128101; Team&#183;${totalPersons}</span>`
                     : `<span style="display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:700;background:rgba(198,12,48,.08);color:var(--emirates-red);border:1px solid rgba(198,12,48,.2);">&#128100; Individual</span>`;
-                const eventDisplay = (r.events && r.events.length > 1)
-                    ? r.events.map(e => e.event || e).join(' + ')
-                    : (r.event || '-');
-
-                // 🔒 #3: Tamper detection
+                const eventDisplay = (r.events && r.events.length > 1) ? r.events.map(e => e.event || e).join(' + ') : (r.event || '-');
                 const tampered = isRegistrationTampered(r);
                 const tamperedBadge = tampered
-                    ? `<span style="display:inline-block;margin-left:6px;padding:2px 8px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:6px;font-size:.68rem;font-weight:700;color:#ef4444;">&#9888; TAMPERED</span>`
+                    ? `<span onclick="openTamperModal('${r.regId}','${r.name.replace(/'/g, "\\'")}') " style="display:inline-block;margin-left:6px;padding:2px 8px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);border-radius:6px;font-size:.68rem;font-weight:700;color:#ef4444;cursor:pointer;">&#9888; TAMPERED</span>`
                     : '';
+                const isCheckedIn = r.checkedIn === true;
 
-                // Main row
                 html += `<tr>
-              <td>${i + 1}</td>
-              <td style="color:var(--emirates-red);font-weight:600;font-family:var(--font-heading);font-size:.9rem;white-space:nowrap;">${r.regId}${tamperedBadge}</td>
-              <td>${typeBadge}</td>
-              <td style="color:var(--text-primary);font-weight:600;">${hasTeam ? '&#127942; ' : ''}${r.name}</td>
-              <td style="font-size:.88rem;">${r.email}</td>
-              <td>${r.phone}</td>
-              <td style="font-size:.88rem;">${r.college}</td>
-              <td style="color:var(--emirates-red);font-weight:500;font-size:.85rem;">${eventDisplay}</td>
-              <td>${foodBadge(r.food)}</td>
-              <td>${hostelBadge(r.hostel)}</td>
-              <td style="white-space:nowrap;font-size:.85rem;">${fmtDate(r.registeredAt)}</td>
-              <td style="white-space:nowrap;font-size:.85rem;">${fmtTime(r.registeredAt)}</td>
-              <td style="font-weight:700;color:var(--emirates-red);">&#8377;${r.amount}</td>
-              <td><span class="badge ${badgeClass}">${r.paymentStatus}</span></td>
-            </tr>`;
+                    <td class="checkbox-cell"><input type="checkbox" class="row-checkbox" data-regid="${r.regId}" /></td>
+                    <td>${i + 1}</td>
+                    <td style="color:var(--emirates-red);font-weight:600;font-family:var(--font-heading);font-size:.9rem;white-space:nowrap;">${r.regId}${tamperedBadge}</td>
+                    <td>${typeBadge}</td>
+                    <td style="font-weight:600;">${hasTeam ? '&#127942; ' : ''}${r.name}</td>
+                    <td style="font-size:.88rem;">${r.email}</td>
+                    <td>${r.phone}</td>
+                    <td style="font-size:.88rem;">${r.college}</td>
+                    <td style="color:var(--emirates-red);font-weight:500;font-size:.85rem;">${eventDisplay}</td>
+                    <td>${foodBadge(r.food)}</td>
+                    <td>${hostelBadge(r.hostel)}</td>
+                    <td style="white-space:nowrap;font-size:.85rem;">${fmtDate(r.registeredAt)}</td>
+                    <td style="white-space:nowrap;font-size:.85rem;">${fmtTime(r.registeredAt)}</td>
+                    <td style="font-weight:700;color:var(--emirates-red);">&#8377;${r.amount}</td>
+                    <td><span class="badge ${badgeClass}">${r.paymentStatus}</span></td>
+                    <td style="text-align:center;">
+                        <input type="checkbox" class="checkin-toggle" ${isCheckedIn ? 'checked' : ''} onchange="toggleCheckIn('${r.regId}', this)" />
+                        <span class="checkin-label" style="color:${isCheckedIn ? '#16a34a' : 'var(--text-muted)'};">${isCheckedIn ? 'PRESENT' : 'ABSENT'}</span>
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <button class="action-btn edit" title="Edit" onclick="openEditModal('${r.regId}')">&#9998;</button>
+                        <button class="action-btn toggle" title="Toggle Payment" onclick="togglePayment('${r.regId}','${r.paymentStatus}',this)">&#128179;</button>
+                        <button class="action-btn delete" title="Delete" onclick="deleteSingleReg('${r.regId}')">&#128465;</button>
+                    </td>
+                </tr>`;
 
-                // Team detail sub-row
+                // Sub-row for details
+                const colspan = 17;
                 if (hasTeam) {
-                    // Build member cards — grouped per event if available, else flat list
-                    let memberCardsHTML = '';
-                    if (r.teamMembersByEvent && Object.keys(r.teamMembersByEvent).length > 0) {
-                        // New format: members stored per-event with team name
-                        Object.entries(r.teamMembersByEvent).forEach(([evName, evData]) => {
-                            // Support both old {members:[]} and new {teamName:'', members:[]} shapes
-                            const members = Array.isArray(evData) ? evData : (evData.members || []);
-                            const teamName = (!Array.isArray(evData) && evData.teamName) ? evData.teamName : null;
-                            memberCardsHTML += `<div style="margin-bottom:18px;">
-                                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
-                                    <span style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--emirates-red);">&#127919; ${evName}</span>
-                                    ${teamName ? `<span style="background:rgba(198,12,48,.08);border:1px solid rgba(198,12,48,.22);border-radius:50px;padding:3px 12px;font-size:.78rem;font-weight:700;color:var(--emirates-red);">&#128101; ${teamName}</span>` : ''}
-                                </div>
-                                <!-- Member 1 = registrant -->
-                                <div class="team-member-item" style="background:rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18);border-radius:12px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px;margin-bottom:8px;">
-                                    <div style="grid-column:1/-1;font-weight:700;color:var(--emirates-red);font-size:.9rem;margin-bottom:4px;">&#128100; Member 1: ${r.name}</div>
-                                    <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#9993; Email</span><br/>${r.email}</div>
-                                    <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#128222; Phone</span><br/>${r.phone}</div>
-                                    <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127860; Food</span><br/>${foodBadge(r.food)}</div>
-                                    <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127976; Hostel</span><br/>${hostelBadge(r.hostel)}</div>
-                                </div>
-                                ${members.map((m, mi) => `
-                                <div class="team-member-item" style="background:rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2);border-radius:12px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px;margin-bottom:8px;">
-                                    <div style="grid-column:1/-1;font-weight:700;color:var(--gold-dark);font-size:.9rem;margin-bottom:4px;">&#128100; Member ${mi + 2}: ${m.name || '-'}</div>
-                                    <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#9993; Email</span><br/>${m.email || '-'}</div>
-                                    <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#128222; Phone</span><br/>${m.phone || '-'}</div>
-                                    <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127860; Food</span><br/>${foodBadge(m.food)}</div>
-                                    <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127976; Hostel</span><br/>${hostelBadge(m.hostel)}</div>
-                                </div>`).join('')}
-                            </div>`;
-                        });
-                        // Append individual events for mixed registrations
-                        if (r.events) {
-                            r.events.filter(e => e.participationMode === 'Individual').forEach(ev => {
-                                memberCardsHTML += `<div style="margin-bottom:18px;">
-                                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;">
-                                        <span style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#facc15;">&#128100; ${ev.event || ev}</span>
-                                        <span style="background:rgba(250,204,21,.1);border:1px solid rgba(250,204,21,.25);border-radius:50px;padding:3px 12px;font-size:.78rem;font-weight:700;color:#facc15;">Individual</span>
-                                    </div>
-                                    <div class="team-member-item" style="background:rgba(250,204,21,.05);border:1px solid rgba(250,204,21,.2);border-radius:12px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px;margin-bottom:8px;">
-                                        <div style="grid-column:1/-1;font-weight:700;color:#facc15;font-size:.9rem;margin-bottom:4px;">&#128100; ${r.name}</div>
-                                        <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#9993; Email</span><br/>${r.email}</div>
-                                        <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#128222; Phone</span><br/>${r.phone}</div>
-                                        <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127860; Food</span><br/>${foodBadge(r.food)}</div>
-                                        <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127976; Hostel</span><br/>${hostelBadge(r.hostel)}</div>
-                                    </div>
+                    let memberHTML = '';
+                    const allEvData = r.teamMembersByEvent ? Object.entries(r.teamMembersByEvent) : [];
+                    if (allEvData.length > 0) {
+                        allEvData.forEach(([evName, evData]) => {
+                            const mems = Array.isArray(evData) ? evData : (evData.members || []);
+                            const teamName = !Array.isArray(evData) && evData.teamName ? evData.teamName : null;
+                            memberHTML += `<div style="margin-bottom:16px;"><div style="font-size:.8rem;font-weight:700;color:var(--emirates-red);text-transform:uppercase;margin-bottom:8px;">&#127919; ${evName}${teamName ? ` &middot; Team: ${teamName}` : ''}</div>`;
+                            const allMems = [{ name: r.name, email: r.email, phone: r.phone, food: r.food, hostel: r.hostel, _isLeader: true }, ...mems];
+                            allMems.forEach((m, mi) => {
+                                memberHTML += `<div style="background:${mi === 0 ? 'rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18)' : 'rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2)'};border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;margin-bottom:6px;">
+                                    <div style="grid-column:1/-1;font-weight:700;color:${mi === 0 ? 'var(--emirates-red)' : 'var(--gold-dark)'};font-size:.88rem;">&#128100; Member ${mi + 1}: ${m.name || '-'}</div>
+                                    <div style="font-size:.82rem;"><span style="color:var(--text-muted);">Email</span><br/>${m.email || '-'}</div>
+                                    <div style="font-size:.82rem;"><span style="color:var(--text-muted);">Phone</span><br/>${m.phone || '-'}</div>
+                                    <div style="font-size:.82rem;">${foodBadge(m.food)}</div>
+                                    <div style="font-size:.82rem;">${hostelBadge(m.hostel)}</div>
                                 </div>`;
                             });
-                        }
+                            memberHTML += '</div>';
+                        });
                     } else {
-                        // Legacy flat members list
-                        memberCardsHTML = `<div style="margin-bottom:8px;">
-                            <div class="team-member-item" style="background:rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18);border-radius:12px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px;margin-bottom:8px;">
-                                <div style="grid-column:1/-1;font-weight:700;color:var(--emirates-red);font-size:.9rem;margin-bottom:4px;">&#128100; Member 1: ${r.name}</div>
-                                <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#9993; Email</span><br/>${r.email}</div>
-                                <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#128222; Phone</span><br/>${r.phone}</div>
-                                <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127860; Food</span><br/>${foodBadge(r.food)}</div>
-                                <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127976; Hostel</span><br/>${hostelBadge(r.hostel)}</div>
-                            </div>
-                            ${(r.members || []).map((m, mi) => `
-                            <div class="team-member-item" style="background:rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2);border-radius:12px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px;margin-bottom:8px;">
-                                <div style="grid-column:1/-1;font-weight:700;color:var(--gold-dark);font-size:.9rem;margin-bottom:4px;">&#128100; Member ${mi + 2}: ${m.name || '-'}</div>
-                                <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#9993; Email</span><br/>${m.email || '-'}</div>
-                                <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#128222; Phone</span><br/>${m.phone || '-'}</div>
-                                <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127860; Food</span><br/>${foodBadge(m.food)}</div>
-                                <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127976; Hostel</span><br/>${hostelBadge(m.hostel)}</div>
-                            </div>`).join('')}
-                        </div>`;
+                        const flatMems = [{ name: r.name, email: r.email, phone: r.phone, food: r.food, hostel: r.hostel }, ...(r.members || [])];
+                        flatMems.forEach((m, mi) => {
+                            memberHTML += `<div style="background:${mi === 0 ? 'rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18)' : 'rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2)'};border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;margin-bottom:6px;">
+                                <div style="grid-column:1/-1;font-weight:700;color:${mi === 0 ? 'var(--emirates-red)' : 'var(--gold-dark)'};font-size:.88rem;">&#128100; Member ${mi + 1}: ${m.name || '-'}</div>
+                                <div style="font-size:.82rem;"><span style="color:var(--text-muted);">Email</span><br/>${m.email || '-'}</div>
+                                <div style="font-size:.82rem;"><span style="color:var(--text-muted);">Phone</span><br/>${m.phone || '-'}</div>
+                                <div style="font-size:.82rem;">${foodBadge(m.food)}</div>
+                                <div style="font-size:.82rem;">${hostelBadge(m.hostel)}</div>
+                            </div>`;
+                        });
                     }
-
-                    html += `<tr class="team-members-row"><td colspan="14">
-                <div class="team-members-wrap" style="padding:16px 20px;">
-                  <div class="team-members-label" style="margin-bottom:14px;font-size:.88rem;">
-                      &#127942; <strong>Team Event:</strong> <span style="color:var(--emirates-red);">${eventDisplay}</span>
-                      &nbsp;&middot;&nbsp; &#128100; <strong>Member 1:</strong> ${r.name}
-                      &nbsp;&middot;&nbsp; &#128222; ${r.phone}
-                      &nbsp;&middot;&nbsp; &#127860; ${foodBadge(r.food)}
-                      &nbsp;&middot;&nbsp; &#127976; Hostel: ${hostelBadge(r.hostel)}
-                      &nbsp;&middot;&nbsp; &#128197; ${fmtDate(r.registeredAt)} ${fmtTime(r.registeredAt)}
-                  </div>
-                  <div style="display:flex;flex-direction:column;gap:10px;">
-                    ${memberCardsHTML}
-                  </div>
-                </div></td></tr>`;
-                }
-
-                // Individual detail sub-row — same card style as team events
-                if (!hasTeam) {
-                    html += `<tr class="team-members-row"><td colspan="14">
-                <div class="team-members-wrap" style="padding:14px 20px;">
-                  <div class="team-members-label" style="margin-bottom:12px;font-size:.88rem;">
-                      &#127919; <strong>Event:</strong> <span style="color:var(--emirates-red);">${eventDisplay}</span>
-                      &nbsp;&middot;&nbsp; &#128197; ${fmtDate(r.registeredAt)} ${fmtTime(r.registeredAt)}
-                  </div>
-                  <div class="team-member-item" style="background:rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18);border-radius:12px;padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px 18px;">
-                      <div style="grid-column:1/-1;font-weight:700;color:var(--emirates-red);font-size:.95rem;margin-bottom:4px;">&#128100; ${r.name}</div>
-                      <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#9993; Email</span><br/>${r.email}</div>
-                      <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#128222; Phone</span><br/>${r.phone}</div>
-                      <div style="font-size:.83rem;color:var(--text-secondary);"><span style="color:var(--text-muted);">&#127979; College</span><br/>${r.college}</div>
-                      <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127860; Food</span><br/>${foodBadge(r.food)}</div>
-                      <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#127976; Hostel</span><br/>${hostelBadge(r.hostel)}</div>
-                      <div style="font-size:.83rem;"><span style="color:var(--text-muted);">&#8377; Amount</span><br/><strong style="color:var(--emirates-red);">&#8377;${r.amount}</strong>${r.extraChessFee ? `<br/><span style="font-size:0.8em;color:var(--gold-dark);">(includes &#8377;${r.extraChessFee} Chess)</span>` : ''}</div>
-                      <div style="font-size:.83rem;"><span class="badge ${r.paymentStatus === 'Paid' ? 'badge-paid' : 'badge-pending'}">${r.paymentStatus}</span></div>
-                  </div>
-                </div></td></tr>`;
+                    html += `<tr class="team-members-row"><td colspan="${colspan}"><div class="team-members-wrap">${memberHTML}</div></td></tr>`;
+                } else {
+                    html += `<tr class="team-members-row"><td colspan="${colspan}"><div class="team-members-wrap">
+                        <div style="font-size:.85rem;margin-bottom:8px;"><strong style="color:var(--emirates-red);">Event:</strong> ${eventDisplay} &middot; ${fmtDate(r.registeredAt)} ${fmtTime(r.registeredAt)}</div>
+                        <div style="background:rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18);border-radius:10px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px;">
+                            <div style="grid-column:1/-1;font-weight:700;color:var(--emirates-red);">&#128100; ${r.name}</div>
+                            <div style="font-size:.83rem;"><span style="color:var(--text-muted);">Email</span><br/>${r.email}</div>
+                            <div style="font-size:.83rem;"><span style="color:var(--text-muted);">Phone</span><br/>${r.phone}</div>
+                            <div style="font-size:.83rem;"><span style="color:var(--text-muted);">College</span><br/>${r.college}</div>
+                            <div style="font-size:.83rem;">${foodBadge(r.food)}</div>
+                            <div style="font-size:.83rem;">${hostelBadge(r.hostel)}</div>
+                            <div style="font-size:.83rem;"><span class="badge ${badgeClass}">${r.paymentStatus}</span></div>
+                        </div>
+                    </div></td></tr>`;
                 }
             });
-            html += `</tbody></table>`;
+
+            html += '</tbody></table>';
             wrap.innerHTML = html;
+
+            document.getElementById('selectAll').addEventListener('change', function () {
+                document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
+            });
+        }
+
+        function getSelectedRegIds() {
+            return [...document.querySelectorAll('.row-checkbox:checked')].map(cb => cb.dataset.regid);
         }
 
         function filterData() {
             const query = document.getElementById('searchInput').value.toLowerCase().trim();
             const status = document.getElementById('filterStatus').value;
-
+            const event = document.getElementById('filterEvent').value;
             let filtered = allRegistrations;
-
-            if (status !== 'all') {
-                filtered = filtered.filter(r => r.paymentStatus === status);
+            if (status !== 'all') filtered = filtered.filter(r => r.paymentStatus === status);
+            if (event !== 'all') {
+                filtered = filtered.filter(r => {
+                    if (r.events && r.events.length > 0) return r.events.some(e => (e.event || e) === event);
+                    return r.event === event;
+                });
             }
-
             if (query) {
                 filtered = filtered.filter(r =>
-                    r.name.toLowerCase().includes(query) ||
-                    r.email.toLowerCase().includes(query) ||
-                    r.college.toLowerCase().includes(query) ||
-                    r.regId.toLowerCase().includes(query) ||
-                    r.phone.includes(query)
+                    (r.name || '').toLowerCase().includes(query) ||
+                    (r.email || '').toLowerCase().includes(query) ||
+                    (r.college || '').toLowerCase().includes(query) ||
+                    (r.regId || '').toLowerCase().includes(query) ||
+                    (r.phone || '').includes(query)
                 );
             }
-
             renderTable(filtered);
         }
 
-        // Search & filter
         document.getElementById('searchInput').addEventListener('input', filterData);
         document.getElementById('filterStatus').addEventListener('change', filterData);
+        document.getElementById('filterEvent').addEventListener('change', filterData);
 
-        document.getElementById('csvBtn').addEventListener('click', function () {
-            if (allRegistrations.length === 0) { alert('No data to export'); return; }
-
-            const headers = [
-                'Reg ID', 'Type', 'Name', 'Email', 'Phone', 'College', 'Event(s)', 'Participation Mode',
-                'Leader Food', 'Hostel', 'Date', 'Time', 'Amount', 'Chess Fee', 'Payment Status',
-                'Member 1 Name', 'Member 1 Email', 'Member 1 Phone', 'Member 1 Food',
-                'Member 2 Name', 'Member 2 Email', 'Member 2 Phone', 'Member 2 Food',
-                'Member 3 Name', 'Member 3 Email', 'Member 3 Phone', 'Member 3 Food'
-            ];
-
-            const rows = allRegistrations.map(r => {
-                const m1 = (r.members && r.members[0]) || {};
-                const m2 = (r.members && r.members[1]) || {};
-                const m3 = (r.members && r.members[2]) || {};
+        // ── CSV helpers ──
+        function buildCSVBlob(regs) {
+            const headers = ['Reg ID', 'Type', 'Name', 'Email', 'Phone', 'College', 'Event(s)', 'Food', 'Hostel', 'Date', 'Time', 'Amount', 'Fee', 'Status', 'Checked In', 'M1 Name', 'M1 Email', 'M1 Phone', 'M1 Food', 'M2 Name', 'M2 Email', 'M2 Phone', 'M2 Food', 'M3 Name', 'M3 Email', 'M3 Phone', 'M3 Food'];
+            const rows = regs.map(r => {
+                const m1 = (r.members && r.members[0]) || {}; const m2 = (r.members && r.members[1]) || {}; const m3 = (r.members && r.members[2]) || {};
                 const dt = r.registeredAt ? new Date(r.registeredAt) : null;
                 const hasTeam = r.members && r.members.length > 0;
-                const eventStr = (r.events && r.events.length > 1)
-                    ? r.events.map(e => e.event || e).join(' + ')
-                    : (r.event || '');
-                return [
-                    r.regId,
-                    hasTeam ? `Team of ${r.teamSize || r.members.length + 1}` : 'Individual',
-                    r.name, r.email, r.phone, r.college,
-                    eventStr, r.participationMode || 'Individual',
-                    r.food || '', r.hostel || '',
-                    dt ? dt.toLocaleDateString('en-IN') : '',
-                    dt ? dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
-                    r.amount, r.extraChessFee || 0, r.paymentStatus,
-                    m1.name || '', m1.email || '', m1.phone || '', m1.food || '',
-                    m2.name || '', m2.email || '', m2.phone || '', m2.food || '',
-                    m3.name || '', m3.email || '', m3.phone || '', m3.food || ''
-                ];
+                const evStr = (r.events && r.events.length > 1) ? r.events.map(e => e.event || e).join(' + ') : (r.event || '');
+                return [r.regId, hasTeam ? `Team of ${r.teamSize || r.members.length + 1}` : 'Individual', r.name, r.email, r.phone, r.college, evStr, r.food || '', r.hostel || '', dt ? dt.toLocaleDateString('en-IN') : '', dt ? dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '', r.amount, r.extraChessFee || 0, r.paymentStatus, r.checkedIn ? 'Yes' : 'No', m1.name || '', m1.email || '', m1.phone || '', m1.food || '', m2.name || '', m2.email || '', m2.phone || '', m2.food || '', m3.name || '', m3.email || '', m3.phone || '', m3.food || ''];
             });
-
             let csv = headers.join(',') + '\n';
-            rows.forEach(row => { csv += row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',') + '\n'; });
+            rows.forEach(row => { csv += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',') + '\n'; });
+            return new Blob([csv], { type: 'text/csv' });
+        }
 
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Elexsiya_Registrations_${new Date().toISOString().slice(0, 10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+        function downloadBlob(blob, filename) {
+            const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('csvBtn').addEventListener('click', function () {
+            if (!allRegistrations.length) { alert('No data to export'); return; }
+            downloadBlob(buildCSVBlob(allRegistrations), `Elexsiya_All_${new Date().toISOString().slice(0, 10)}.csv`);
         });
+
+        document.getElementById('bulkCsvBtn').addEventListener('click', function () {
+            const ids = getSelectedRegIds();
+            if (!ids.length) { alert('Please select at least one row.'); return; }
+            downloadBlob(buildCSVBlob(allRegistrations.filter(r => ids.includes(r.regId))), `Elexsiya_Selected_${new Date().toISOString().slice(0, 10)}.csv`);
+        });
+
+        document.getElementById('bulkDeleteBtn').addEventListener('click', async function () {
+            const ids = getSelectedRegIds();
+            if (!ids.length) { alert('Please select rows first.'); return; }
+            if (!confirm(`Delete ${ids.length} registration(s)? Cannot be undone.`)) return;
+            this.disabled = true; this.textContent = '&#9203; Deleting...';
+            try {
+                await Promise.all(ids.map(id => deleteRegistration(id)));
+                allRegistrations = allRegistrations.filter(r => !ids.includes(r.regId));
+                updateStats(); buildCharts(); populateEventFilter(); filterData();
+            } catch (err) { alert('Error: ' + err.message); }
+            finally { this.disabled = false; this.textContent = '&#128465; Delete Selected'; }
+        });
+
+        async function togglePayment(regId, currentStatus, btn) {
+            const newStatus = currentStatus === 'Paid' ? 'Pending' : 'Paid';
+            if (!confirm(`Change ${regId} to "${newStatus}"?`)) return;
+            btn.disabled = true;
+            try {
+                await updatePaymentStatus(regId, newStatus);
+                const reg = allRegistrations.find(r => r.regId === regId);
+                if (reg) reg.paymentStatus = newStatus;
+                updateStats(); filterData();
+            } catch (err) { alert('Failed: ' + err.message); }
+            finally { btn.disabled = false; }
+        }
+
+        async function toggleCheckIn(regId, toggle) {
+            const newStatus = toggle.checked;
+            const label = toggle.nextElementSibling;
+            toggle.disabled = true;
+            try {
+                await updateCheckInStatus(regId, newStatus);
+                const reg = allRegistrations.find(r => r.regId === regId);
+                if (reg) reg.checkedIn = newStatus;
+                label.textContent = newStatus ? 'PRESENT' : 'ABSENT';
+                label.style.color = newStatus ? '#16a34a' : 'var(--text-muted)';
+            } catch (err) { alert('Failed: ' + err.message); toggle.checked = !newStatus; }
+            finally { toggle.disabled = false; }
+        }
+
+        async function deleteSingleReg(regId) {
+            if (!confirm(`Delete registration ${regId}? Cannot be undone.`)) return;
+            try {
+                await deleteRegistration(regId);
+                allRegistrations = allRegistrations.filter(r => r.regId !== regId);
+                updateStats(); buildCharts(); populateEventFilter(); filterData();
+            } catch (err) { alert('Failed: ' + err.message); }
+        }
+
+        // ── Edit Modal ──
+        const editModalEl = document.getElementById('editModal');
+        document.getElementById('editClose').addEventListener('click', () => editModalEl.classList.remove('active'));
+        document.getElementById('cancelEditBtn').addEventListener('click', () => editModalEl.classList.remove('active'));
+        editModalEl.addEventListener('click', e => { if (e.target === editModalEl) editModalEl.classList.remove('active'); });
+
+        function openEditModal(regId) {
+            const reg = allRegistrations.find(r => r.regId === regId);
+            if (!reg) return;
+            document.getElementById('editRegId').value = reg.regId;
+            document.getElementById('editName').value = reg.name || '';
+            document.getElementById('editEmail').value = reg.email || '';
+            document.getElementById('editPhone').value = reg.phone || '';
+            document.getElementById('editCollege').value = reg.college || '';
+            editModalEl.classList.add('active');
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const regId = document.getElementById('editRegId').value;
+            const saveBtn = document.getElementById('saveEditBtn');
+            saveBtn.disabled = true; saveBtn.textContent = '&#9203; Saving...';
+            const updates = {
+                name: document.getElementById('editName').value.trim(),
+                email: document.getElementById('editEmail').value.trim(),
+                phone: document.getElementById('editPhone').value.trim(),
+                college: document.getElementById('editCollege').value.trim()
+            };
+            try {
+                await updateRegistrationData(regId, updates);
+                const reg = allRegistrations.find(r => r.regId === regId);
+                if (reg) Object.assign(reg, updates);
+                editModalEl.classList.remove('active');
+                filterData();
+                alert('Updated successfully!');
+            } catch (err) { alert('Error: ' + err.message); }
+            finally { saveBtn.disabled = false; saveBtn.textContent = '&#128190; Save'; }
+        });
+
+        // ── Tamper Modal ──
+        const tamperModalEl = document.getElementById('tamperModal');
+        document.getElementById('tamperClose').addEventListener('click', () => tamperModalEl.classList.remove('active'));
+        tamperModalEl.addEventListener('click', e => { if (e.target === tamperModalEl) tamperModalEl.classList.remove('active'); });
+
+        function openTamperModal(regId, name) {
+            document.getElementById('tamperContent').innerHTML = `
+                <p>Registration <strong style="color:var(--emirates-red);">${regId}</strong> (${name}) is flagged as <strong>TAMPERED</strong>.</p>
+                <p style="margin-top:10px;">The secure checksum generated at submission does not match the current database record.</p>
+                <div style="margin-top:14px;padding:12px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius-sm);font-size:.85rem;">
+                    <strong>Possible reasons:</strong>
+                    <ul style="margin-top:8px;padding-left:20px;">
+                        <li>User intercepted and altered the request (e.g., changed payment amount).</li>
+                        <li>Admin edited the record in Firestore without recalculating the checksum.</li>
+                        <li>A code change altered the checksum calculation method.</li>
+                    </ul>
+                </div>`;
+            tamperModalEl.classList.add('active');
+        }
+
+        // ── Screenshots Section ──
+        let screenshotsVisible = false;
+        const screenshotsSection = document.getElementById('screenshotsSection');
+        const screenshotsGrid = document.getElementById('screenshotsGrid');
+        const screenshotCount = document.getElementById('screenshotCount');
+
+        document.getElementById('screenshotsBtn').addEventListener('click', function () {
+            screenshotsVisible = !screenshotsVisible;
+            screenshotsSection.classList.toggle('visible', screenshotsVisible);
+            this.textContent = screenshotsVisible ? '&#10005; Hide Screenshots' : '&#128248; Payment Screenshots';
+            if (screenshotsVisible) renderScreenshots();
+        });
+
+        async function renderScreenshots() {
+            screenshotsGrid.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1;">&#9203; Loading...</div>`;
+            try {
+                const snap = await db.collection('screenshots').get();
+                const docs = snap.docs.map(d => d.data());
+                screenshotCount.textContent = `${docs.length} screenshot${docs.length !== 1 ? 's' : ''} uploaded`;
+                if (docs.length === 0) { screenshotsGrid.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1;">No screenshots uploaded yet.</div>`; return; }
+                screenshotsGrid.innerHTML = docs.map(s => {
+                    const reg = allRegistrations.find(r => r.regId === s.regId) || {};
+                    const dt = s.uploadedAt ? new Date(s.uploadedAt) : null;
+                    const dateStr = dt ? dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
+                    const isPaid = reg.paymentStatus === 'Paid';
+                    return `<div class="screenshot-card">
+                        <div class="screenshot-img-wrap" onclick="openLightbox('${s.imageData}','${s.regId}')">
+                            <img src="${s.imageData}" alt="Screenshot ${s.regId}" loading="lazy" />
+                            <div class="view-overlay">&#128269; View Full Size</div>
+                        </div>
+                        <div class="screenshot-meta">
+                            <div class="screenshot-reg-id">${s.regId}</div>
+                            <div class="screenshot-name">${reg.name || '—'} &middot; ${reg.college || '—'}</div>
+                            <div class="screenshot-date">${dateStr}</div>
+                            <div class="screenshot-actions">
+                                ${!isPaid ? `<button class="btn-verify" onclick="markPaid('${s.regId}',this)">&#10003; Mark Paid</button>` : `<button class="btn-verify verified" disabled>&#10003; Paid</button>`}
+                                <button class="btn-view-full" onclick="downloadScreenshot('${s.regId}','${s.imageData}')">&#8595; Save</button>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+            } catch (err) { screenshotsGrid.innerHTML = `<div style="text-align:center;padding:40px;color:var(--emirates-red);grid-column:1/-1;">&#10060; ${err.message}</div>`; }
+        }
+
+        function downloadScreenshot(regId, dataUrl) { const a = document.createElement('a'); a.href = dataUrl; a.download = `payment_${regId}.jpg`; a.click(); }
+
+        async function markPaid(regId, btn) {
+            if (!confirm(`Mark ${regId} as Paid?`)) return;
+            btn.disabled = true; btn.textContent = '&#9203; Updating...';
+            try {
+                await updatePaymentStatus(regId, 'Paid');
+                const reg = allRegistrations.find(r => r.regId === regId);
+                if (reg) reg.paymentStatus = 'Paid';
+                btn.classList.add('verified'); btn.textContent = '&#10003; Verified & Paid';
+                updateStats();
+            } catch (err) { alert('Failed: ' + err.message); btn.disabled = false; btn.textContent = '&#10003; Mark Paid'; }
+        }
+
+        // ── Storage Modal ──
+        const storageModalEl = document.getElementById('storageModal');
+        document.getElementById('storageClose').addEventListener('click', () => storageModalEl.classList.remove('active'));
+        storageModalEl.addEventListener('click', e => { if (e.target === storageModalEl) storageModalEl.classList.remove('active'); });
+
+        document.getElementById('storageBtn').addEventListener('click', async () => {
+            storageModalEl.classList.add('active');
+            const content = document.getElementById('storageContent');
+            content.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">&#9203; Calculating...</div>';
+            try {
+                let regsSize = 0; allRegistrations.forEach(r => { regsSize += new Blob([JSON.stringify(r)]).size; });
+                let screensSize = 0; const snap = await db.collection('screenshots').get(); snap.forEach(doc => { screensSize += new Blob([JSON.stringify(doc.data())]).size; });
+                const total = regsSize + screensSize;
+                const pct = Math.min((total / (1024 * 1024 * 1024)) * 100, 100).toFixed(2);
+                const fmt = b => { if (!b) return '0 B'; const k = 1024, s = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(b) / Math.log(k)); return parseFloat((b / Math.pow(k, i)).toFixed(2)) + ' ' + s[i]; };
+                content.innerHTML = `<div class="storage-item"><span>Registrations</span><span>${fmt(regsSize)}</span></div><div class="storage-item"><span>Screenshots</span><span>${fmt(screensSize)}</span></div><div class="storage-item"><span>Total</span><span>${fmt(total)}</span></div><div class="storage-progress-bg"><div class="storage-progress-fill" style="width:${pct}%"></div></div><div class="storage-limit-text">Using ${pct}% of 1 GB Free Tier</div>`;
+            } catch (err) { content.innerHTML = `<div style="text-align:center;padding:20px;color:var(--emirates-red);">&#10060; ${err.message}</div>`; }
+        });
+
+        // ── Lightbox ──
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        const lightboxCaption = document.getElementById('lightboxCaption');
+        document.getElementById('lightboxClose').addEventListener('click', () => lightbox.classList.remove('active'));
+        lightbox.addEventListener('click', e => { if (e.target === lightbox) lightbox.classList.remove('active'); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') lightbox.classList.remove('active'); });
+
+        function openLightbox(url, caption) { lightboxImg.src = url; lightboxCaption.textContent = caption; lightbox.classList.add('active'); }
 
         // Initial load
         loadData();

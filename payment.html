@@ -200,6 +200,82 @@
       color: var(--emirates-red);
     }
 
+    .error-msg {
+      color: var(--emirates-red);
+      font-size: .8rem;
+      margin-top: 5px;
+      display: none;
+    }
+
+    .has-error .error-msg {
+      display: block;
+    }
+
+    /* ── Upload Section ── */
+    .upload-section {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1.5px dashed var(--border-light);
+      text-align: center;
+    }
+
+    .upload-label {
+      display: block;
+      margin-bottom: 12px;
+      font-weight: 600;
+      color: var(--text-dark);
+      font-size: 0.95rem;
+    }
+
+    /* Hidden real file input — triggered by label */
+    #screenshotInput {
+      display: none;
+    }
+
+    .file-pick-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px;
+      background: #f8f9fa;
+      border: 1.5px dashed var(--border-light);
+      border-radius: var(--radius);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 20px;
+      user-select: none;
+    }
+
+    .file-pick-label:hover {
+      border-color: var(--emirates-red);
+      background: rgba(198, 12, 48, 0.02);
+      color: var(--emirates-red);
+    }
+
+    .file-pick-label.has-file {
+      border-color: #16a34a;
+      border-style: solid;
+      background: rgba(22, 163, 74, 0.04);
+      color: #16a34a;
+    }
+
+    .preview-thumb {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      border: 1px solid var(--border-light);
+      display: none;
+    }
+
+    .preview-thumb.visible {
+      display: block;
+      margin: 0 auto 16px;
+    }
+
     @media (max-width: 560px) {
       .payment-card {
         padding: 32px 20px;
@@ -233,6 +309,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script src="shared.js"></script>
   <script>
@@ -345,17 +422,27 @@
           </div>
 
           <div class="upi-note">Pay &#8377;${reg.amount} · Use Reg ID <strong style="color:var(--text-dark);">${reg.regId}</strong> as remark</div>
-          <div class="upi-warn">&#9888;&#65039; Bring payment screenshot to the event desk for confirmation</div>
+        </div>
+
+        <div class="upload-section">
+          <label class="upload-label">&#128248; Upload Payment Screenshot</label>
+          <img id="previewThumb" class="preview-thumb" alt="Preview" />
+          <input type="file" id="screenshotInput" accept="image/*" />
+          <label for="screenshotInput" class="file-pick-label" id="filePickLabel">
+            &#128196; Select Payment Image
+          </label>
+          <div class="error-msg" id="uploadError" style="margin-bottom:15px;">Please select a screenshot to confirm payment</div>
+          
+          <button class="btn btn-red" id="confirmPaymentBtn" style="width:100%; padding:16px;">
+            &#10003; Upload &amp; Confirm Registration
+          </button>
         </div>
 
         <p class="payment-note">
-          &#128274; Pay via UPI and bring your payment screenshot to the event desk.<br/>
-          After paying, click the button below to view your confirmation.
+          &#128274; Payment verification is required to confirm your slot.<br/>
+          After uploading, your registration will be verified by the organizers.<br/>
+          For on-spot queries, visit the <strong>Registration Desk</strong> at the venue entrance.
         </p>
-
-        <button class="btn btn-outline-dark btn-simulate" id="checkStatusBtn" style="width:100%;padding:14px;font-size:.95rem;margin-top:12px;">
-          &#10003; I've Paid &mdash; View Confirmation
-        </button>
       `;
 
       const PHONEPE_URL = ''; // ← PASTE YOUR REAL PAYMENT LINK HERE
@@ -368,22 +455,66 @@
         phonepeBtn.href = '#';
         phonepeBtn.addEventListener('click', function (ev) {
           ev.preventDefault();
-          alert('💳 Online payment gateway will be set up soon.\n\nFor now, please pay via UPI using the ID shown below and show your receipt at the event desk.');
+          alert('💳 Online payment gateway will be set up soon.\n\nFor now, please pay via UPI using the ID shown below and upload the screenshot. You can also visit the Registration Desk at the venue for support.');
         });
       }
 
-      sessionStorage.setItem('allowSuccessView', regId);
+      // File input handling
+      const fileInput = document.getElementById('screenshotInput');
+      const filePickLabel = document.getElementById('filePickLabel');
+      const previewThumb = document.getElementById('previewThumb');
+      const uploadError = document.getElementById('uploadError');
 
-      document.getElementById('checkStatusBtn').addEventListener('click', function () {
-        window.location.href = 'success.html';
-      });
+      if (fileInput) {
+        fileInput.addEventListener('change', function (e) {
+          if (this.files && this.files[0]) {
+            filePickLabel.classList.add('has-file');
+            filePickLabel.innerHTML = `&#10003; ${this.files[0].name}`;
+            uploadError.style.display = 'none';
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+              previewThumb.src = ev.target.result;
+              previewThumb.classList.add('visible');
+            };
+            reader.readAsDataURL(this.files[0]);
+          } else {
+            filePickLabel.classList.remove('has-file');
+            filePickLabel.innerHTML = `&#128196; Select Payment Image`;
+            previewThumb.classList.remove('visible');
+          }
+        });
+      }
+
+      const confirmBtn = document.getElementById('confirmPaymentBtn');
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', async function () {
+          const file = fileInput.files[0];
+          if (!file) {
+            uploadError.style.display = 'block';
+            return;
+          }
+
+          this.disabled = true;
+          this.innerHTML = '⏳ Uploading Proof...';
+
+          try {
+            await uploadPaymentScreenshot(reg.regId, file);
+            sessionStorage.setItem('allowSuccessView', reg.regId);
+            window.location.href = 'success.html';
+          } catch (err) {
+            console.error("Upload failed:", err);
+            alert("❌ Upload failed. Please check your connection and try again.");
+            this.disabled = false;
+            this.innerHTML = '&#10003; Upload & Confirm Registration';
+          }
+        });
+      }
 
       // Robust UPI redirection
       const upiLink = document.getElementById('upiLink');
       if (upiLink) {
         upiLink.addEventListener('click', function (e) {
-          // On mobile, this will trigger the upi:// protocol
-          // We let the default behavior happen, but ensure it's triggered
           console.log("UPI Link clicked:", this.href);
         });
       }

@@ -9,6 +9,20 @@ const ADMIN_USER_HASH = 'b3ce598dcbeff9dc0445e0bfb8093727036768d9caf03f8ca188fe8
 const ADMIN_PASS_HASH = 'eda52fd9a8fc52c6cb9a734862360ccd058833dfa750d0e8e7c29ef037ecee70'; // SHA-256 of admin password
 const REG_FEE = 499;
 
+const EVENT_WHATSAPP_LINKS = {
+  'Project Expo': 'https://chat.whatsapp.com/BCWwTp0oD8S3OVqYPQqt2y?mode=gi_t',
+  'Idea Forge': 'https://chat.whatsapp.com/EoyntlXHnHAG4zWyE0DVmS?mode=gi_t',
+  'Tazky Among Uz': 'https://chat.whatsapp.com/EPl5tbVDKP4JmwTGS48qJJ?mode=gi_t',
+  'CurrentClash': 'https://chat.whatsapp.com/KJvzocc0IUEGH21iEwN81B',
+  'Clever Hunt': 'https://chat.whatsapp.com/HXCsoCN2fGDH5dyUIuPF8O?mode=gi_t',
+  'Bug Arena': 'https://chat.whatsapp.com/FpAxTCEGOWG8fhN8Bjp8pL?mode=gi_t',
+  'Upside Down': 'https://chat.whatsapp.com/DuyhohRaQos2PEuqcjy3os?mode=gi_t',
+  'Mindfusion': 'https://chat.whatsapp.com/EmozTWe9uYyLCflqyMDy89?mode=gi_t',
+  'Unmuted': 'https://chat.whatsapp.com/LnHZ3zXkdU6JqOM62hKX40?mode=gi_t',
+  'Ideart': 'https://chat.whatsapp.com/DKaYcJoifg850UZokpvdUm?mode=gi_t',
+  'Chess': 'https://chat.whatsapp.com/KFkFZ4pxZpqGUnHAjAZLB7?mode=gi_t'
+};
+
 /* ---------- Async SHA-256 helper ---------- */
 async function sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -76,6 +90,96 @@ async function updatePaymentStatus(regId, status) {
     await db.collection('registrations').doc(regId).update({ paymentStatus: status });
   } catch (err) {
     console.error('[DB] updatePaymentStatus error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Delete a registration document from Firestore.
+ * @param {string} regId 
+ */
+async function deleteRegistration(regId) {
+  try {
+    await db.collection('registrations').doc(regId).delete();
+  } catch (err) {
+    console.error('[DB] deleteRegistration error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Update a registration document with new data.
+ * @param {string} regId 
+ * @param {Object} newData 
+ */
+async function updateRegistrationData(regId, newData) {
+  try {
+    await db.collection('registrations').doc(regId).update(newData);
+  } catch (err) {
+    console.error('[DB] updateRegistrationData error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Update the check-in status of a registration.
+ * @param {string} regId 
+ * @param {boolean} status 
+ */
+async function updateCheckInStatus(regId, status) {
+  try {
+    await db.collection('registrations').doc(regId).update({ checkedIn: status });
+  } catch (err) {
+    console.error('[DB] updateCheckInStatus error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Upload a payment screenshot to Firebase Storage.
+ * @param {string} regId
+ * @param {File} file
+ * @returns {Promise<string>} Download URL of the uploaded image.
+ */
+async function uploadPaymentScreenshot(regId, file) {
+  try {
+    // ── Step 1: Compress image via Canvas (max 900px, 70% JPEG quality) ──
+    const base64 = await new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => { img.src = e.target.result; };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+
+      img.onload = () => {
+        const MAX_W = 900;
+        let w = img.width, h = img.height;
+        if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.70));
+      };
+      img.onerror = reject;
+    });
+
+    // ── Step 2: Save compressed image to Firestore screenshots collection ──
+    await db.collection('screenshots').doc(regId).set({
+      regId,
+      imageData: base64,
+      uploadedAt: new Date().toISOString(),
+      fileName: file.name
+    });
+
+    // ── Step 3: Update registration status ──
+    await db.collection('registrations').doc(regId).update({
+      paymentStatus: 'Verification Required',
+      hasScreenshot: true
+    });
+
+    return base64; // Return base64 so callers can use it if needed
+  } catch (err) {
+    console.error('[UPLOAD] uploadPaymentScreenshot error:', err);
     throw err;
   }
 }
