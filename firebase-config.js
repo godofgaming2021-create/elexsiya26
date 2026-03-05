@@ -21,33 +21,25 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+const app = firebase.initializeApp(firebaseConfig);
 
-// Initialize Firestore and expose it globally as `db`
-const db = firebase.firestore();
-
-// Initialize Storage and expose it globally as `storage`
-const storage = firebase.storage();
+// Expose services globally
+window.db = app.firestore();
+window.storage = app.storage();
 
 // Initialize Auth and expose it globally
-window.initFirebaseAuth = function () {
-  try {
-    if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') {
-      if (!window.auth) {
-        window.auth = firebase.auth();
-        window.googleProvider = new firebase.auth.GoogleAuthProvider();
-        console.log("Firebase Auth initialized successfully.");
-      }
-      return true;
-    } else {
-      console.error("Firebase Auth SDK not detected. Check script tags in your HTML.");
-      return false;
-    }
-  } catch (e) {
-    console.error("Error initializing Firebase Auth:", e);
-    return false;
+try {
+  if (typeof firebase.auth === 'function') {
+    window.auth = app.auth();
+    window.googleProvider = new firebase.auth.GoogleAuthProvider();
+    window.firebaseReady = true;
+    console.log("Firebase services initialized successfully.");
+  } else {
+    window.firebaseReady = false;
+    console.error("Firebase Auth SDK not detected. Check script tags.");
   }
-};
+} catch (e) {
+  window.firebaseReady = false;
+  console.error("Error initializing Firebase Auth:", e);
+}
 
-// Auto-run on load
-window.initFirebaseAuth();

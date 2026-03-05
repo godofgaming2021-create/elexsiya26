@@ -500,11 +500,15 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="firebase-config.js"></script>
-    <script src="shared.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"
+        onerror="alert('Failed to load Firebase App SDK. Check your internet or if gstatic.com is blocked.')"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"
+        onerror="alert('Failed to load Firebase Firestore SDK.')"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"
+        onerror="alert('Failed to load Firebase Auth SDK.')"></script>
+    <script src="firebase-config.js"
+        onerror="alert('Failed to load firebase-config.js. Ensure the file exists in the same folder.')"></script>
+    <script src="shared.js" onerror="alert('Failed to load shared.js.')"></script>
     <script>
 
         async function pasteToField(inputId, btnEl) {
@@ -521,19 +525,19 @@
 
         async function handleGoogleVerify(mPrefix) {
             try {
-                // Try last-second re-init if not loaded
-                if (!window.auth && typeof window.initFirebaseAuth === 'function') {
-                    window.initFirebaseAuth();
-                }
-
                 if (window.location.protocol === 'file:') {
                     alert("⚠️ FIREBASE AUTH ALERT: You are opening this file directly from your folder (file:// protocol). Google Authentication only works if you run the site on a local server (like Live Server in VS Code) or host it online. Please run it via http://localhost or similar.");
                     return;
                 }
 
-                if (!window.auth || !window.googleProvider) {
-                    console.error("Auth object:", window.auth, "Provider:", window.googleProvider);
-                    throw new Error("Firebase Auth is not fully loaded. Please refresh the page or check your internet connection.");
+                if (!window.firebaseReady || !window.auth) {
+                    console.error("Firebase Status: Ready?", window.firebaseReady, "Auth?", !!window.auth);
+                    let info = "Firebase Authentication is not fully loaded.\n\nPossible reasons:\n";
+                    info += "1. No internet connection.\n";
+                    info += "2. An Ad-Blocker or Firewall is blocking Google/Firebase services.\n";
+                    info += "3. Slow connection. Please wait a few seconds and try again.\n\n";
+                    info += "Check your browser's 'Console' for more technical details.";
+                    throw new Error(info);
                 }
                 const result = await window.auth.signInWithPopup(window.googleProvider);
                 const user = result.user;
