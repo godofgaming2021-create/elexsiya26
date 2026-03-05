@@ -523,6 +523,14 @@
             }
         }
 
+        // Helper to resume an existing unpaid registration
+        function resumeUnpaidPayment(regId) {
+            if (!regId) return;
+            sessionStorage.setItem('currentRegId', regId);
+            window.location.href = 'payment.html';
+        }
+
+
         async function handleGoogleVerify(mPrefix) {
             try {
                 if (window.location.protocol === 'file:') {
@@ -591,10 +599,15 @@
             } catch (error) {
                 console.error("Google Auth failed:", error);
                 let msg = "Verification failed. ";
-                if (error.code === 'auth/popup-closed-by-user') msg += "The sign-in popup was closed before completion.";
-                else if (error.code === 'auth/operation-not-allowed') msg += "Google Sign-In is not enabled in your Firebase Console.";
-                else if (error.code === 'auth/unauthorized-domain') msg += "This domain is not authorized in Firebase Console Settings.";
-                else msg += error.message;
+                if (error.code === 'auth/popup-closed-by-user') {
+                    msg += "The sign-in popup was closed before completion.";
+                } else if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/configuration-not-found') {
+                    msg += "Google Sign-In is not enabled in your Firebase Console.\n\nPlease:\n1. Go to Firebase Console > Authentication > Sign-in method.\n2. Click 'Add new provider' and choose 'Google'.\n3. Click 'Enable' and 'Save'.";
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    msg += "This domain (" + window.location.hostname + ") is not authorized in Firebase Console.\n\nPlease add it under Authentication > Settings > Authorized domains.";
+                } else {
+                    msg += error.message;
+                }
 
                 alert(msg + "\n\nError Code: " + error.code);
             }
@@ -855,7 +868,7 @@
 
                 // 2. Database check (across all registrations for THIS event)
                 const existing = await getRegistrations();
-                const alreadyRegistered = existing.some(r => {
+                const conflictReg = existing.find(r => {
                     // Check main registration contact
                     if (r.event.toLowerCase().includes(eventName.toLowerCase())) {
                         if (type === 'email' && r.email.toLowerCase() === val) return true;
@@ -872,11 +885,22 @@
                     return false;
                 });
 
-                if (alreadyRegistered) {
+                if (conflictReg) {
                     group.classList.add('has-error');
-                    if (errEl) errEl.textContent = `⚠️ This ${type === 'email' ? 'email' : 'phone'} is already registered for ${eventName}`;
+                    const isPaid = conflictReg.paymentStatus === 'Paid' || conflictReg.paymentStatus === 'Verification Required';
+
+                    if (!isPaid) {
+                        errEl.innerHTML = `⚠️ This ${type} is already registered but unpaid. <br/>
+                            <button type="button" onclick="resumeUnpaidPayment('${conflictReg.regId}')" 
+                                style="background:var(--emirates-red); border:none; color:white; padding:4px 10px; border-radius:4px; margin-top:5px; cursor:pointer; font-size:12px;">
+                                💳 Resume Payment for ${conflictReg.regId}
+                            </button>`;
+                    } else {
+                        errEl.textContent = `⚠️ This ${type === 'email' ? 'email' : 'phone'} is already registered and confirmed for ${eventName}`;
+                    }
                     return false;
                 }
+
 
                 group.classList.remove('has-error');
                 if (errEl) errEl.textContent = `Please enter valid ${type}`;
