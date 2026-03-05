@@ -428,6 +428,49 @@
             font-weight: 700;
             letter-spacing: 0.05em;
         }
+
+        /* ── Verify with Google ── */
+        .btn-verify {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px;
+            background: #fff;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius);
+            color: var(--text-dark);
+            font-weight: 600;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+        }
+
+        .btn-verify:hover {
+            background: #f8f8f8;
+            border-color: #4285F4;
+        }
+
+        .btn-verify img {
+            width: 20px;
+            height: 20px;
+        }
+
+        .verified-badge {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            color: #16a34a;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .has-error .verified-badge {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -459,6 +502,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="shared.js"></script>
     <script>
@@ -472,6 +516,57 @@
                 if (btnEl) { btnEl.textContent = '&#10003; Pasted'; btnEl.classList.add('pasted'); setTimeout(() => { btnEl.textContent = '&#128203; Paste'; btnEl.classList.remove('pasted'); }, 2000); }
             } catch (err) {
                 if (btnEl) { btnEl.textContent = '&#128683; Denied'; btnEl.classList.add('denied'); setTimeout(() => { btnEl.textContent = '&#128203; Paste'; btnEl.classList.remove('denied'); }, 2200); }
+            }
+        }
+
+        async function handleGoogleVerify(mPrefix) {
+            try {
+                // Try last-second re-init if not loaded
+                if (!window.auth && typeof window.initFirebaseAuth === 'function') {
+                    window.initFirebaseAuth();
+                }
+
+                if (window.location.protocol === 'file:') {
+                    alert("⚠️ FIREBASE AUTH ALERT: You are opening this file directly from your folder (file:// protocol). Google Authentication only works if you run the site on a local server (like Live Server in VS Code) or host it online. Please run it via http://localhost or similar.");
+                    return;
+                }
+
+                if (!window.auth || !window.googleProvider) {
+                    console.error("Auth object:", window.auth, "Provider:", window.googleProvider);
+                    throw new Error("Firebase Auth is not fully loaded. Please refresh the page or check your internet connection.");
+                }
+                const result = await window.auth.signInWithPopup(window.googleProvider);
+                const user = result.user;
+
+                if (user && user.email) {
+                    const nameInput = document.getElementById(`${mPrefix}_name`);
+                    const emailInput = document.getElementById(`${mPrefix}_email`);
+                    const badge = document.getElementById(`${mPrefix}_verifiedBadge`);
+                    const verifyBtn = document.getElementById(`${mPrefix}_verifyBtn`);
+
+                    if (nameInput) nameInput.value = user.displayName || "";
+                    if (emailInput) {
+                        emailInput.value = user.email;
+                        emailInput.readOnly = true;
+                        emailInput.style.backgroundColor = "#f0f0f0";
+                        emailInput.style.cursor = "not-allowed";
+                    }
+
+                    if (badge) badge.style.display = "flex";
+                    if (verifyBtn) verifyBtn.style.display = "none";
+
+                    window.isVerified = true;
+                    updateFeeDisplay();
+                }
+            } catch (error) {
+                console.error("Google Auth failed:", error);
+                let msg = "Verification failed. ";
+                if (error.code === 'auth/popup-closed-by-user') msg += "The sign-in popup was closed before completion.";
+                else if (error.code === 'auth/operation-not-allowed') msg += "Google Sign-In is not enabled in your Firebase Console.";
+                else if (error.code === 'auth/unauthorized-domain') msg += "This domain is not authorized in Firebase Console Settings.";
+                else msg += error.message;
+
+                alert(msg + "\n\nError Code: " + error.code);
             }
         }
 
@@ -516,16 +611,20 @@
                 const totalSlots = eventsArr.reduce((sum, e) => sum + e.teamSize, 0);
                 const uniquePersons = filledCount > 0 ? filledCount : totalSlots;
 
-                const isChessSelected = eventsArr.some(e => e.event.toLowerCase() === 'chess');
+                const chessEvent = eventsArr.find(e => e.event.toLowerCase() === 'chess');
+                const isChessSelected = !!chessEvent;
+                const chessParticipantsCount = chessEvent ? (chessEvent.teamSize || 1) : 0;
+
                 const baseFee = PRICE_PER_PERSON * uniquePersons;
-                const extraChessFee = isChessSelected ? 30 : 0;
+                const extraChessFee = isChessSelected ? (30 * chessParticipantsCount) : 0;
 
                 return {
                     unique: uniquePersons,
                     baseFee,
                     extraChessFee,
                     totalFee: baseFee + extraChessFee,
-                    isChessSelected
+                    isChessSelected,
+                    chessParticipantsCount
                 };
             }
 
@@ -535,7 +634,7 @@
                 if (noteEl) {
                     let html = `&#8377;${PRICE_PER_PERSON} &times; <strong>${info.unique} unique person${info.unique !== 1 ? 's' : ''}</strong> = <strong>&#8377;${info.baseFee.toLocaleString('en-IN')}</strong>`;
                     if (info.isChessSelected) {
-                        html += ` <br><span style="color:var(--gold-dark);">+ &#8377;30 Chess Entry Fee</span>`;
+                        html += ` <br><span style="color:var(--gold-dark);">+ &#8377;30 &times; ${info.chessParticipantsCount} Chess Entry Fee</span>`;
                         html += ` <br><strong style="font-size:1.1em;color:var(--emirates-red);">Total: &#8377;${info.totalFee.toLocaleString('en-IN')}</strong>`;
                     }
                     html += `<span style="font-size:.78rem;color:var(--text-muted);display:block;margin-top:4px;">Emails across events are counted as one person</span>`;
@@ -571,12 +670,30 @@
             }
 
             /* ── Member fields HTML ── */
-            function eventMemberFormHTML(sectionPrefix, memberIdx, isFirstMember = false) {
+            function eventMemberFormHTML(sectionPrefix, memberIdx, isFirstMember = false, isChess = false) {
                 const prefix = `${sectionPrefix}_m${memberIdx}`;
-                const titleText = isFirstMember ? (memberIdx === 1 ? 'Participant / Leader Details' : `Member ${memberIdx}`) : `Member ${memberIdx}`;
+
+                let titleText;
+                if (isChess) {
+                    titleText = `Participant ${memberIdx}`;
+                } else {
+                    titleText = isFirstMember ? (memberIdx === 1 ? 'Participant / Leader Details' : `Member ${memberIdx}`) : `Member ${memberIdx}`;
+                }
+
+                const isPrimary = sectionPrefix === 'evSection_0' && memberIdx === 1;
+                const verifyBtn = isPrimary ? `
+                    <button type="button" class="btn-verify" id="${prefix}_verifyBtn" onclick="handleGoogleVerify('${prefix}')">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                        Verify with Google Account *
+                    </button>
+                    <div class="verified-badge" id="${prefix}_verifiedBadge">
+                        <span style="font-size:1.2rem;">&#9989;</span> Email Verified via Google
+                    </div>
+                ` : '';
 
                 return `<div class="member-section">
                     <div class="member-title">${titleText}</div>
+                    ${verifyBtn}
                     <div class="member-grid">
                         <div class="form-group" id="${prefix}_nameGroup"><label for="${prefix}_name">Full Name *</label><input type="text" id="${prefix}_name" placeholder="Full name"/><div class="error-msg" id="${prefix}_nameError">Please enter name</div></div>
                         <div class="form-group" id="${prefix}_emailGroup"><label for="${prefix}_email">Email *</label><div class="input-paste-wrap"><input type="email" id="${prefix}_email" class="email-input" placeholder="email@example.com"/><button type="button" class="btn-paste" onclick="pasteToField('${prefix}_email',this)">&#128203; Paste</button></div><div class="error-msg" id="${prefix}_emailError">Please enter valid email</div></div>
@@ -608,16 +725,18 @@
 
                 eventsArr.forEach((ev, idx) => {
                     const sectionPrefix = `evSection_${idx}`;
+                    const isChess = ev.event.toLowerCase() === 'chess' || ev.isChess;
                     const isTeam = ev.teamSize > 1;
-                    const typeLabel = isTeam ? `Team of ${ev.teamSize}` : 'Individual';
+                    const typeLabel = isChess ? '' : (isTeam ? `Team of ${ev.teamSize}` : 'Individual');
                     const titleColor = isTeam ? 'var(--emirates-red)' : 'var(--gold-dark)';
 
                     let memberForms = '';
                     for (let i = 1; i <= ev.teamSize; i++) {
-                        memberForms += eventMemberFormHTML(sectionPrefix, i, i === 1);
+                        memberForms += eventMemberFormHTML(sectionPrefix, i, i === 1, isChess);
                     }
 
-                    const teamNameField = isTeam ? `
+                    const isTeamEventNotChess = isTeam && ev.event.toLowerCase() !== 'chess';
+                    const teamNameField = isTeamEventNotChess ? `
                         <div class="form-group" id="teamNameGroup_${sectionPrefix}" style="margin-bottom:20px;">
                             <label for="teamName_${sectionPrefix}" style="color:var(--emirates-red); font-weight:700;">&#128101; Team Name for ${ev.event} *</label>
                             <input type="text" id="teamName_${sectionPrefix}" placeholder="e.g. Dream Team" style="font-weight:600;"/>
@@ -792,7 +911,8 @@
                     const sectionPrefix = `evSection_${idx}`;
                     const sectionData = { event: ev.event, teamSize: ev.teamSize, members: [] };
 
-                    if (ev.teamSize > 1) {
+                    const isTeamEventNotChess = ev.teamSize > 1 && ev.event.toLowerCase() !== 'chess';
+                    if (isTeamEventNotChess) {
                         const tnEl = document.getElementById(`teamName_${sectionPrefix}`);
                         const tnVal = tnEl ? tnEl.value.trim() : '';
                         if (!validateField(`teamName_${sectionPrefix}`, `teamNameGroup_${sectionPrefix}`, tnVal)) valid = false;
@@ -823,6 +943,17 @@
                     allSectionData.push(sectionData);
                 }
 
+                if (!window.isVerified) {
+                    const vBtn = document.querySelector('.btn-verify');
+                    if (vBtn) {
+                        vBtn.style.outline = '2px solid var(--emirates-red)';
+                        vBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => vBtn.style.outline = '', 2000);
+                    }
+                    alert("⚠️ Please verify your Gmail account using the 'Verify with Google' button before proceeding.");
+                    return;
+                }
+
                 if (!valid) return;
 
                 const submitBtn = document.getElementById('submitBtn');
@@ -846,6 +977,7 @@
                         phone: firstMember.phone,
                         college: college,
                         startingLocation: startingLocation,
+                        verifiedViaGoogle: true,
                         event: eventsArr.map(e => e.event).join(', '),
                         events: eventsArr.map(e => ({
                             event: e.event,

@@ -517,31 +517,27 @@
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Yes, on-the-spot registration is available for most events on the day of the symposium. However, we
-              highly recommend registering online in advance to secure your slot, as seats for popular events fill up
-              quickly.</p>
+            <p>Yes, on-spot registration is available.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-question">
-            <span>Do we get participation certificates?</span>
+            <span>Will lunch be provided?</span>
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Yes! Every registered participant who attends an event will receive an official Elexsiya 26 participation
-              certificate, signed by the department heads.</p>
+            <p>Yes, lunch will be provided.</p>
           </div>
         </div>
 
         <div class="faq-item">
           <button class="faq-question">
-            <span>Is lunch provided?</span>
+            <span>Will I get a participation certificate?</span>
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Yes, complimentary lunch and refreshments will be provided to all registered participants on the day of
-              the symposium.</p>
+            <p>Yes, a participation certificate will be provided.</p>
           </div>
         </div>
 
@@ -551,8 +547,7 @@
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Absolutely! You can register for as many events as you like, provided their timings do not clash. Please
-              check the timings at the registration desk on the event day.</p>
+            <p>Yes, a participant can be in multiple events.</p>
           </div>
         </div>
 
@@ -562,13 +557,46 @@
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Yes, accommodation is available for outstation participants for an additional fee. You can select the
-              accommodation requirement when filling out the online registration form.</p>
+            <p>Yes, accommodation will be provided if asked.</p>
           </div>
         </div>
       </div>
     </div>
   </section>
+
+  <script>
+    /* ── FAQ Accordion Logic ──────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+      const faqQuestions = document.querySelectorAll('.faq-question');
+
+      faqQuestions.forEach(question => {
+        question.addEventListener('click', () => {
+          const item = question.parentElement;
+          const answer = item.querySelector('.faq-answer');
+          const isOpen = item.classList.contains('active');
+
+          // Close all other open FAQs
+          document.querySelectorAll('.faq-item').forEach(otherItem => {
+            otherItem.classList.remove('active');
+            const otherAnswer = otherItem.querySelector('.faq-answer');
+            if (otherAnswer) otherAnswer.style.maxHeight = null;
+            const otherIcon = otherItem.querySelector('.faq-icon');
+            if (otherIcon) otherIcon.textContent = '+';
+            if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+          });
+
+          // Toggle current one
+          if (!isOpen) {
+            item.classList.add('active');
+            answer.style.maxHeight = answer.scrollHeight + 'px';
+            const icon = item.querySelector('.faq-icon');
+            if (icon) icon.textContent = '-';
+            if (icon) icon.style.transform = 'rotate(180deg)';
+          }
+        });
+      });
+    });
+  </script>
 
 
 
@@ -674,7 +702,7 @@
       inset: 0;
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(8px);
-      z-index: 100000;
+      z-index: 99995;
       display: flex;
       align-items: center;
       justify-content: center;

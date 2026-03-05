@@ -368,7 +368,7 @@ function initCursor() {
   }
   animateCursor();
 
-  const magnetTargets = 'a, button, .btn, .glass-card, .event-info-btn, .hanim-cd-unit';
+  const magnetTargets = 'a, button, .btn, .glass-card, .event-info-btn, .hanim-cd-unit, .contact-modal-close, .whatsapp-btn';
   document.addEventListener('mouseover', (e) => {
     if (e.target.closest(magnetTargets)) {
       dot.classList.add('active');

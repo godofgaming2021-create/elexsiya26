@@ -558,7 +558,7 @@
                     { id: 'ideart', icon: '📸', name: 'Ideart', desc: 'Where ideas meet art. Express your imagination through creative design and visual storytelling.', maxTeam: 3, teamOnly: true },
                 ],
                 special: [
-                    { id: 'chess', icon: '♟️', name: 'Chess', desc: 'Battle of minds! Outsmart your opponent in this classic strategy showdown. All skill levels welcome.', maxTeam: 1, teamOnly: false },
+                    { id: 'chess', icon: '♟️', name: 'Chess', desc: 'Battle of minds! Outsmart your opponent in this classic strategy showdown. All skill levels welcome.', maxTeam: 5, teamOnly: false, isChess: true },
                 ]
             };
 
@@ -569,12 +569,14 @@
 
                 return list.map(ev => {
                     const teamOnly = ev.teamOnly === true;
-                    const teamLabel = ev.maxTeam === 1 ? 'Individual'
-                        : teamOnly ? `Team of ${ev.maxTeam}`
-                            : `Up to ${ev.maxTeam} Members`;
+                    const isChess = ev.isChess === true;
+                    const teamLabel = isChess ? 'Individual / Multi-Entry'
+                        : ev.maxTeam === 1 ? 'Individual'
+                            : teamOnly ? `Team of ${ev.maxTeam}`
+                                : `Up to ${ev.maxTeam} Members`;
 
                     let sizePills = '';
-                    if (ev.maxTeam > 1) {
+                    if (ev.maxTeam > 1 && !isChess) {
                         const startN = teamOnly ? ev.maxTeam : 2;
                         for (let n = startN; n <= ev.maxTeam; n++) {
                             const autoActive = teamOnly ? 'active' : '';
@@ -583,7 +585,16 @@
                     }
 
                     let participationHTML;
-                    if (teamOnly) {
+                    if (isChess) {
+                        participationHTML = `
+                            <span class="participation-label">How many players to register?</span>
+                            <div class="chess-count-row" id="chessRow-${ev.id}" style="display:flex;align-items:center;gap:14px;margin-top:10px;">
+                                <button type="button" class="chess-count-btn" data-dir="-1" data-id="${ev.id}" style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border-light);background:var(--white);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font-body);">−</button>
+                                <span class="chess-count-display" id="chessCount-${ev.id}" style="font-size:1.5rem;font-weight:700;color:var(--emirates-red);min-width:28px;text-align:center;">1</span>
+                                <button type="button" class="chess-count-btn" data-dir="1" data-id="${ev.id}" style="width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border-light);background:var(--white);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font-body);">+</button>
+                                <span style="font-size:.82rem;color:var(--text-muted);">player(s) · ♟️ ₹30 each</span>
+                            </div>`;
+                    } else if (teamOnly) {
                         participationHTML = `
                             <span class="participation-label">Participation: Team Only</span>
                             <div class="participation-toggle">
@@ -614,7 +625,8 @@
                              data-id="${ev.id}"
                              data-name="${ev.name}"
                              data-maxteam="${ev.maxTeam}"
-                             data-teamonly="${teamOnly}">
+                             data-teamonly="${teamOnly}"
+                             data-ischess="${isChess}">
 
                             <div class="card-check">✓</div>
                             <span class="event-icon-lg">${ev.icon}</span>
@@ -689,7 +701,9 @@
                     ? [...selected.values()][0].name
                     : `${count} Events Selected`;
                 proceedModeEl.textContent = [...selected.values()]
-                    .map(s => s.mode === 'team' ? `${s.name}: 👥 ${s.teamSize}` : `${s.name}: 👤 Ind.`)
+                    .map(s => s.isChess
+                        ? `${s.name}: ♟️ ${s.teamSize || 1} player(s)`
+                        : s.mode === 'team' ? `${s.name}: 👥 ${s.teamSize}` : `${s.name}: 👤 Ind.`)
                     .join('  ·  ');
             }
 
@@ -700,6 +714,7 @@
                     const id = this.dataset.id;
                     const name = this.dataset.name;
                     const isTeamOnly = this.dataset.teamonly === 'true';
+                    const isChess = this.dataset.ischess === 'true';
                     const maxTeam = parseInt(this.dataset.maxteam);
 
                     if (this.classList.contains('selected')) {
@@ -716,17 +731,44 @@
                             const lp = this.querySelector('.size-pill:last-child');
                             if (lp) lp.classList.add('active');
                         }
+                        // Reset chess counter
+                        if (isChess) {
+                            const display = document.getElementById(`chessCount-${id}`);
+                            if (display) display.textContent = '1';
+                        }
                     } else {
                         this.classList.add('selected');
+                        const chessCount = isChess
+                            ? parseInt(document.getElementById(`chessCount-${id}`)?.textContent || '1')
+                            : null;
                         selected.set(id, {
                             name,
-                            mode: isTeamOnly ? 'team' : 'individual',
-                            teamSize: isTeamOnly ? maxTeam : null
+                            isChess,
+                            mode: isChess ? 'team' : (isTeamOnly ? 'team' : 'individual'),
+                            teamSize: isChess ? chessCount : (isTeamOnly ? maxTeam : null)
                         });
                     }
                     refreshBar();
                     updateConflicts();
                 });
+            });
+
+            /* ── Chess +/− stepper ── */
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('.chess-count-btn');
+                if (!btn) return;
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const dir = parseInt(btn.dataset.dir);
+                const display = document.getElementById(`chessCount-${id}`);
+                if (!display) return;
+                let current = parseInt(display.textContent) || 1;
+                current = Math.min(5, Math.max(1, current + dir));
+                display.textContent = current;
+                if (selected.has(id)) {
+                    selected.get(id).teamSize = current;
+                    refreshBar();
+                }
             });
 
             /* ── Participation toggle ── */
@@ -776,6 +818,8 @@
                 if (selected.size === 0) return;
 
                 for (const [id, s] of selected) {
+                    // Skip team-size check for chess (it registers individual players)
+                    if (s.isChess) continue;
                     if (s.mode === 'team' && (!s.teamSize || s.teamSize < 2)) {
                         const c = document.querySelector(`.event-select-card[data-id="${id}"]`);
                         const sr = c ? c.querySelector('.team-size-row') : null;
@@ -793,7 +837,8 @@
                 const eventsArr = [...selected.values()].map(s => ({
                     event: s.name,
                     participationMode: s.mode === 'team' ? `Team of ${s.teamSize}` : 'Individual',
-                    teamSize: s.teamSize || 1
+                    teamSize: s.teamSize || 1,
+                    isChess: s.isChess
                 }));
 
                 sessionStorage.setItem('selectedEvents', JSON.stringify(eventsArr));

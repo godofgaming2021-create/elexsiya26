@@ -28,3 +28,26 @@ const db = firebase.firestore();
 
 // Initialize Storage and expose it globally as `storage`
 const storage = firebase.storage();
+
+// Initialize Auth and expose it globally
+window.initFirebaseAuth = function () {
+  try {
+    if (typeof firebase !== 'undefined' && typeof firebase.auth === 'function') {
+      if (!window.auth) {
+        window.auth = firebase.auth();
+        window.googleProvider = new firebase.auth.GoogleAuthProvider();
+        console.log("Firebase Auth initialized successfully.");
+      }
+      return true;
+    } else {
+      console.error("Firebase Auth SDK not detected. Check script tags in your HTML.");
+      return false;
+    }
+  } catch (e) {
+    console.error("Error initializing Firebase Auth:", e);
+    return false;
+  }
+};
+
+// Auto-run on load
+window.initFirebaseAuth();
