@@ -20,26 +20,37 @@ const firebaseConfig = {
   appId: "1:1022603880984:web:b6b592175646b6f6e1b16d"
 };
 
-// Initialize Firebase
+// Initialize Firebase App
 const app = firebase.initializeApp(firebaseConfig);
-
-// Expose services globally
 window.db = app.firestore();
 window.storage = app.storage();
 
-// Initialize Auth and expose it globally
-try {
+// Poll for Auth SDK (it can take a moment to attach to the firebase object)
+let authRetryCount = 0;
+const maxRetries = 20; // 20 * 500ms = 10 seconds
+
+function checkAuthAndInit() {
   if (typeof firebase.auth === 'function') {
-    window.auth = app.auth();
-    window.googleProvider = new firebase.auth.GoogleAuthProvider();
-    window.firebaseReady = true;
-    console.log("Firebase services initialized successfully.");
+    try {
+      window.auth = app.auth();
+      window.googleProvider = new firebase.auth.GoogleAuthProvider();
+      window.firebaseReady = true;
+      console.log("✅ Firebase Auth & Services Initialized.");
+    } catch (e) {
+      console.error("❌ Error during Auth initialization:", e);
+      window.firebaseReady = false;
+    }
+  } else if (authRetryCount < maxRetries) {
+    authRetryCount++;
+    if (authRetryCount % 4 === 0) console.log(`⏳ Waiting for Firebase Auth SDK... (${authRetryCount / 2}s)`);
+    setTimeout(checkAuthAndInit, 500);
   } else {
+    console.error("❌ Firebase Auth SDK failed to load within 10 seconds.");
     window.firebaseReady = false;
-    console.error("Firebase Auth SDK not detected. Check script tags.");
   }
-} catch (e) {
-  window.firebaseReady = false;
-  console.error("Error initializing Firebase Auth:", e);
 }
+
+// Start polling
+checkAuthAndInit();
+
 

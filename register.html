@@ -536,9 +536,34 @@
                     info += "1. No internet connection.\n";
                     info += "2. An Ad-Blocker or Firewall is blocking Google/Firebase services.\n";
                     info += "3. Slow connection. Please wait a few seconds and try again.\n\n";
-                    info += "Check your browser's 'Console' for more technical details.";
+                    info += "Click 'OK' and then 'Check System Status' below for more details.";
+
+                    const diagBtnId = "diag_btn_" + Date.now();
+                    setTimeout(() => {
+                        const existing = document.getElementById('diag-area');
+                        if (existing) existing.remove();
+                        const div = document.createElement('div');
+                        div.id = 'diag-area';
+                        div.style = "text-align:center;margin-top:20px;";
+                        div.innerHTML = `<button id="${diagBtnId}" style="padding:10px 20px;background:#f0f0f0;border:1px solid #ccc;border-radius:8px;cursor:pointer;font-weight:bold;color:#555;">🔍 Check System Status</button>`;
+                        const vBtn = document.querySelector('.btn-verify');
+                        if (vBtn) vBtn.parentElement.appendChild(div);
+
+                        document.getElementById(diagBtnId).onclick = () => {
+                            let report = "--- SYSTEM DIAGNOSTICS ---\n";
+                            report += "Firebase App: " + (typeof firebase !== 'undefined' ? "Loaded ✅" : "NOT LOADED ❌") + "\n";
+                            report += "Firebase Auth: " + (typeof firebase !== 'undefined' && firebase.auth ? "Loaded ✅" : "NOT LOADED ❌") + "\n";
+                            report += "Auth Object: " + (window.auth ? "Initialized ✅" : "NOT INITIALIZED ❌") + "\n";
+                            report += "Protocol: " + window.location.protocol + "\n";
+                            report += "Domain: " + window.location.hostname + "\n";
+                            report += "User Agent: " + navigator.userAgent.slice(0, 50) + "...\n";
+                            alert(report);
+                        };
+                    }, 500);
+
                     throw new Error(info);
                 }
+
                 const result = await window.auth.signInWithPopup(window.googleProvider);
                 const user = result.user;
 
