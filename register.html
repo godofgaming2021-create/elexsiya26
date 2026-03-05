@@ -532,11 +532,12 @@
 
                 if (!window.firebaseReady || !window.auth) {
                     console.error("Firebase Status: Ready?", window.firebaseReady, "Auth?", !!window.auth);
-                    let info = "Firebase Authentication is not fully loaded.\n\nPossible reasons:\n";
-                    info += "1. No internet connection.\n";
-                    info += "2. An Ad-Blocker or Firewall is blocking Google/Firebase services.\n";
-                    info += "3. Slow connection. Please wait a few seconds and try again.\n\n";
-                    info += "Click 'OK' and then 'Check System Status' below for more details.";
+                    let info = "Firebase Authentication is not fully loaded yet.\n\n";
+                    info += "Please try the following:\n";
+                    info += "1. Wait 5 seconds and try again.\n";
+                    info += "2. Disable any Ad-Blockers (Brave Shields, uBlock, etc.).\n";
+                    info += "3. Try an Incognito window or a different browser.\n\n";
+                    info += "If you see this repeated, your network may be blocking Google services.";
 
                     const diagBtnId = "diag_btn_" + Date.now();
                     setTimeout(() => {
@@ -551,12 +552,12 @@
 
                         document.getElementById(diagBtnId).onclick = () => {
                             let report = "--- SYSTEM DIAGNOSTICS ---\n";
-                            report += "Firebase App: " + (typeof firebase !== 'undefined' ? "Loaded ✅" : "NOT LOADED ❌") + "\n";
-                            report += "Firebase Auth: " + (typeof firebase !== 'undefined' && firebase.auth ? "Loaded ✅" : "NOT LOADED ❌") + "\n";
-                            report += "Auth Object: " + (window.auth ? "Initialized ✅" : "NOT INITIALIZED ❌") + "\n";
-                            report += "Protocol: " + window.location.protocol + "\n";
+                            report += "App Instance: " + (firebase.apps.length ? "Initialized ✅" : "NOT READY ❌") + "\n";
+                            report += "Firebase Auth: " + (typeof firebase.auth === 'function' ? "Available ✅" : "MISSING (Check Internet) ❌") + "\n";
+                            report += "Auth Object: " + (window.auth ? "Created ✅" : "NOT INITIALIZED ❌") + "\n";
+                            if (window.authInitError) report += "Init Error: " + window.authInitError + "\n";
+                            report += "Ready Flag: " + (window.firebaseReady ? "True ✅" : "False ❌") + "\n";
                             report += "Domain: " + window.location.hostname + "\n";
-                            report += "User Agent: " + navigator.userAgent.slice(0, 50) + "...\n";
                             alert(report);
                         };
                     }, 500);

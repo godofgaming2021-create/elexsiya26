@@ -15,42 +15,52 @@ const firebaseConfig = {
   apiKey: "AIzaSyDiU3cklV89XEeAmcFWMg1PAGL_-SDN8bo",
   authDomain: "elexsiya-26-2b815.firebaseapp.com",
   projectId: "elexsiya-26-2b815",
-  storageBucket: "elexsiya-26-2b815.firebasestorage.ap",
+  storageBucket: "elexsiya-26-2b815.firebasestorage.app", // Fixed truncated bucket path
   messagingSenderId: "1022603880984",
   appId: "1:1022603880984:web:b6b592175646b6f6e1b16d"
 };
 
-// Initialize Firebase App
-const app = firebase.initializeApp(firebaseConfig);
-window.db = app.firestore();
-window.storage = app.storage();
-
-// Poll for Auth SDK (it can take a moment to attach to the firebase object)
-let authRetryCount = 0;
-const maxRetries = 20; // 20 * 500ms = 10 seconds
-
-function checkAuthAndInit() {
-  if (typeof firebase.auth === 'function') {
-    try {
-      window.auth = app.auth();
-      window.googleProvider = new firebase.auth.GoogleAuthProvider();
-      window.firebaseReady = true;
-      console.log("✅ Firebase Auth & Services Initialized.");
-    } catch (e) {
-      console.error("❌ Error during Auth initialization:", e);
-      window.firebaseReady = false;
-    }
-  } else if (authRetryCount < maxRetries) {
-    authRetryCount++;
-    if (authRetryCount % 4 === 0) console.log(`⏳ Waiting for Firebase Auth SDK... (${authRetryCount / 2}s)`);
-    setTimeout(checkAuthAndInit, 500);
-  } else {
-    console.error("❌ Firebase Auth SDK failed to load within 10 seconds.");
-    window.firebaseReady = false;
+// Prevent duplicate initialization
+if (!firebase.apps.length) {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    console.log('✅ Firebase App Initialized.');
+  } catch (e) {
+    console.error('❌ Firebase App Init Error:', e);
   }
 }
 
-// Start polling
-checkAuthAndInit();
+// Initialize Firestore
+try {
+  const db = firebase.firestore();
+  window.db = db;
+} catch (e) { console.error('❌ Firestore Init Error:', e); }
 
+// Initialize Storage
+try {
+  const storage = firebase.storage();
+  window.storage = storage;
+} catch (e) { console.error('❌ Storage Init Error:', e); }
 
+// Initialize Auth with a small retry loop
+window.authInitError = null;
+function tryInitAuth(attempts = 0) {
+  if (typeof firebase.auth === 'function') {
+    try {
+      window.auth = firebase.auth();
+      window.googleProvider = new firebase.auth.GoogleAuthProvider();
+      window.firebaseReady = true;
+      console.log('✅ Firebase Auth ready.');
+    } catch (e) {
+      console.error('❌ Firebase Auth initialization failed inside function:', e);
+      window.authInitError = e.message;
+      window.firebaseReady = false;
+    }
+  } else if (attempts < 50) {
+    setTimeout(() => tryInitAuth(attempts + 1), 100);
+  } else {
+    console.warn('⚠️ firebase.auth is not a function after 5s.');
+    window.firebaseReady = false;
+  }
+}
+tryInitAuth();
