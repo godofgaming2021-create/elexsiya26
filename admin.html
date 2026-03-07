@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com;">
     <title>Admin Login – Elexsiya 26</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -151,6 +153,9 @@
     <script src="firebase-config.js"></script>
     <script src="shared.js"></script>
     <script>
+        // Anti-Clickjacking
+        if (window.top !== window.self) { window.top.location = window.self.location; }
+
         if (sessionStorage.getItem('adminLoggedIn') === 'true') {
             window.location.href = 'dashboard.html';
         }
@@ -163,16 +168,49 @@
             const errorEl = document.getElementById('loginError');
             const btn = document.querySelector('.btn-login');
 
+            const now = Date.now();
+            const lastAttempt = parseInt(localStorage.getItem('lastAdminLoginAttempt') || '0');
+            const attemptCount = parseInt(localStorage.getItem('adminLoginAttempts') || '0');
+
+            if (attemptCount >= 5 && now - lastAttempt < 60000) {
+                errorEl.textContent = 'Too many failed attempts. Please try again in 1 minute.';
+                errorEl.style.display = 'block';
+                return;
+            }
+
             btn.disabled = true;
             btn.textContent = '⏳ Verifying...';
 
-            const ok = await verifyAdmin(username, password);
-            if (ok) {
+            const result = await verifyAdmin(username, password);
+            if (result.success) {
                 sessionStorage.setItem('adminLoggedIn', 'true');
+                sessionStorage.setItem('adminToken', result.token); // Secure token
+                if (result.isSuper) {
+                    sessionStorage.setItem('isSuperUser', 'true');
+                    sessionStorage.removeItem('isTreasurer');
+                    sessionStorage.removeItem('isOnSpot');
+                } else if (result.isTreasurer) {
+                    sessionStorage.setItem('isTreasurer', 'true');
+                    sessionStorage.removeItem('isSuperUser');
+                    sessionStorage.removeItem('isOnSpot');
+                } else if (result.isOnSpot) {
+                    sessionStorage.setItem('isOnSpot', 'true');
+                    sessionStorage.removeItem('isSuperUser');
+                    sessionStorage.removeItem('isTreasurer');
+                } else {
+                    sessionStorage.removeItem('isSuperUser');
+                    sessionStorage.removeItem('isTreasurer');
+                    sessionStorage.removeItem('isOnSpot');
+                }
+                localStorage.removeItem('adminLoginAttempts');
                 window.location.href = 'dashboard.html';
             } else {
+                localStorage.setItem('lastAdminLoginAttempt', now.toString());
+                localStorage.setItem('adminLoginAttempts', (attemptCount + 1).toString());
+
                 btn.disabled = false;
                 btn.textContent = '🔓 Login';
+                errorEl.textContent = 'Invalid email or password';
                 errorEl.style.display = 'block';
                 errorEl.style.animation = 'fadeIn .3s ease-out';
             }

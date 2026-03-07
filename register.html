@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com;">
     <title>Register – Elexsiya 26</title>
     <meta name="description" content="Register for Elexsiya 26 – National Level Technical Symposium." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -506,6 +508,8 @@
         onerror="alert('Failed to load Firebase Firestore SDK.')"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"
         onerror="alert('Failed to load Firebase Auth SDK.')"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"
+        onerror="alert('Failed to load Firebase Storage SDK.')"></script>
     <script src="firebase-config.js"
         onerror="alert('Failed to load firebase-config.js. Ensure the file exists in the same folder.')"></script>
     <script src="shared.js" onerror="alert('Failed to load shared.js.')"></script>
@@ -723,24 +727,15 @@
                     titleText = isFirstMember ? (memberIdx === 1 ? 'Participant / Leader Details' : `Member ${memberIdx}`) : `Member ${memberIdx}`;
                 }
 
-                const isPrimary = sectionPrefix === 'evSection_0' && memberIdx === 1;
-                const verifyBtn = isPrimary ? `
-                    <button type="button" class="btn-verify" id="${prefix}_verifyBtn" onclick="handleGoogleVerify('${prefix}')">
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-                        Verify with Google Account *
-                    </button>
-                    <div class="verified-badge" id="${prefix}_verifiedBadge">
-                        <span style="font-size:1.2rem;">&#9989;</span> Email Verified via Google
-                    </div>
-                ` : '';
+                const verifyBtn = '';
 
                 return `<div class="member-section">
                     <div class="member-title">${titleText}</div>
                     ${verifyBtn}
                     <div class="member-grid">
-                        <div class="form-group" id="${prefix}_nameGroup"><label for="${prefix}_name">Full Name *</label><input type="text" id="${prefix}_name" placeholder="Full name"/><div class="error-msg" id="${prefix}_nameError">Please enter name</div></div>
-                        <div class="form-group" id="${prefix}_emailGroup"><label for="${prefix}_email">Email *</label><div class="input-paste-wrap"><input type="email" id="${prefix}_email" class="email-input" placeholder="email@example.com"/><button type="button" class="btn-paste" onclick="pasteToField('${prefix}_email',this)">&#128203; Paste</button></div><div class="error-msg" id="${prefix}_emailError">Please enter valid email</div></div>
-                        <div class="form-group" id="${prefix}_phoneGroup"><label for="${prefix}_phone">Phone *</label><div class="input-paste-wrap"><input type="tel" id="${prefix}_phone" class="phone-input" placeholder="10-digit mobile" maxlength="10"/><button type="button" class="btn-paste" onclick="pasteToField('${prefix}_phone',this)">&#128203; Paste</button></div><div class="error-msg" id="${prefix}_phoneError">Please enter valid phone</div></div>
+                        <div class="form-group" id="${prefix}_nameGroup"><label for="${prefix}_name">Full Name *</label><input type="text" id="${prefix}_name" placeholder="Full name" maxlength="100"/><div class="error-msg" id="${prefix}_nameError">Please enter name</div></div>
+                        <div class="form-group" id="${prefix}_emailGroup"><label for="${prefix}_email">Email *</label><div class="input-paste-wrap"><input type="email" id="${prefix}_email" class="email-input" placeholder="email@example.com" maxlength="150"/><button type="button" class="btn-paste" onclick="pasteToField('${prefix}_email',this)">&#128203; Paste</button></div><div class="error-msg" id="${prefix}_emailError">Please enter valid email</div></div>
+                        <div class="form-group" id="${prefix}_phoneGroup"><label for="${prefix}_phone">Phone *</label><div class="input-paste-wrap"><input type="tel" id="${prefix}_phone" class="phone-input" placeholder="10-digit mobile" maxlength="15"/><button type="button" class="btn-paste" onclick="pasteToField('${prefix}_phone',this)">&#128203; Paste</button></div><div class="error-msg" id="${prefix}_phoneError">Please enter valid phone</div></div>
                         <div class="form-group" id="foodGroup_${prefix}"><label>Food Preference *</label>${foodHTML(prefix)}</div>
                     </div>
                     ${hostelHTML(prefix)}
@@ -756,12 +751,12 @@
                 <div class="shared-shared-fields" style="margin-bottom: 30px; border-bottom: 2px solid var(--border-light); padding-bottom: 20px;">
                     <div class="form-group" id="collegeGroup" style="margin-bottom: 15px;">
                         <label for="college">College Name * <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(Shared for all)</span></label>
-                        <input type="text" id="college" placeholder="Enter your college name"/>
+                        <input type="text" id="college" placeholder="Enter your college name" maxlength="150"/>
                         <div class="error-msg" id="collegeError">Please enter your college name</div>
                     </div>
                     <div class="form-group" id="locationGroup">
                         <label for="startingLocation">Starting Location (City/Area) * <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(Used for directions)</span></label>
-                        <input type="text" id="startingLocation" placeholder="e.g. Arapalayam, Madurai"/>
+                        <input type="text" id="startingLocation" placeholder="e.g. Arapalayam, Madurai" maxlength="100"/>
                         <div class="error-msg" id="locationError">Please enter your starting location</div>
                     </div>
                 </div>`;
@@ -782,7 +777,7 @@
                     const teamNameField = isTeamEventNotChess ? `
                         <div class="form-group" id="teamNameGroup_${sectionPrefix}" style="margin-bottom:20px;">
                             <label for="teamName_${sectionPrefix}" style="color:var(--emirates-red); font-weight:700;">&#128101; Team Name for ${ev.event} *</label>
-                            <input type="text" id="teamName_${sectionPrefix}" placeholder="e.g. Dream Team" style="font-weight:600;"/>
+                            <input type="text" id="teamName_${sectionPrefix}" placeholder="e.g. Dream Team" style="font-weight:600;" maxlength="100"/>
                             <div class="error-msg" id="teamNameError_${sectionPrefix}">Please enter a team name</div>
                         </div>` : '';
 
@@ -950,6 +945,15 @@
             /* ── Submit ── */
             async function submitForm(e) {
                 e.preventDefault();
+
+                // Rate Limiting (Vulnerability 7 Fix)
+                const lastAttempt = localStorage.getItem('lastRegAttempt');
+                if (lastAttempt && Date.now() - parseInt(lastAttempt) < 60000) {
+                    alert('Please wait at least 60 seconds between registration attempts to prevent spam.');
+                    return;
+                }
+                localStorage.setItem('lastRegAttempt', Date.now().toString());
+
                 let valid = true;
 
                 const college = document.getElementById('college').value.trim();
@@ -997,16 +1001,7 @@
                     allSectionData.push(sectionData);
                 }
 
-                if (!window.isVerified) {
-                    const vBtn = document.querySelector('.btn-verify');
-                    if (vBtn) {
-                        vBtn.style.outline = '2px solid var(--emirates-red)';
-                        vBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        setTimeout(() => vBtn.style.outline = '', 2000);
-                    }
-                    alert("⚠️ Please verify your Gmail account using the 'Verify with Google' button before proceeding.");
-                    return;
-                }
+
 
                 if (!valid) return;
 
@@ -1031,7 +1026,7 @@
                         phone: firstMember.phone,
                         college: college,
                         startingLocation: startingLocation,
-                        verifiedViaGoogle: true,
+                        verifiedViaGoogle: window.isVerified || false,
                         event: eventsArr.map(e => e.event).join(', '),
                         events: eventsArr.map(e => ({
                             event: e.event,

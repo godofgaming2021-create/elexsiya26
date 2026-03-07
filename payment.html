@@ -468,8 +468,30 @@
       if (fileInput) {
         fileInput.addEventListener('change', function (e) {
           if (this.files && this.files[0]) {
+            const file = this.files[0];
+
+            // Client-side Validation (Vulnerability 5 Fix)
+            if (!file.type.startsWith('image/')) {
+              uploadError.textContent = 'Please select a valid image file (PNG, JPG, etc).';
+              uploadError.style.display = 'block';
+              this.value = ''; // Reset input
+              filePickLabel.classList.remove('has-file');
+              filePickLabel.innerHTML = `&#128196; Select Payment Image`;
+              previewThumb.classList.remove('visible');
+              return;
+            }
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+              uploadError.textContent = 'File is too large. Maximum size is 5MB.';
+              uploadError.style.display = 'block';
+              this.value = ''; // Reset input
+              filePickLabel.classList.remove('has-file');
+              filePickLabel.innerHTML = `&#128196; Select Payment Image`;
+              previewThumb.classList.remove('visible');
+              return;
+            }
+
             filePickLabel.classList.add('has-file');
-            filePickLabel.innerHTML = `&#10003; ${this.files[0].name}`;
+            filePickLabel.innerHTML = `&#10003; ${file.name}`;
             uploadError.style.display = 'none';
             // Show preview
             const reader = new FileReader();
@@ -477,7 +499,7 @@
               previewThumb.src = ev.target.result;
               previewThumb.classList.add('visible');
             };
-            reader.readAsDataURL(this.files[0]);
+            reader.readAsDataURL(file);
           } else {
             filePickLabel.classList.remove('has-file');
             filePickLabel.innerHTML = `&#128196; Select Payment Image`;
@@ -491,6 +513,14 @@
         confirmBtn.addEventListener('click', async function () {
           const file = fileInput.files[0];
           if (!file) {
+            uploadError.textContent = 'Please select a screenshot to confirm payment';
+            uploadError.style.display = 'block';
+            return;
+          }
+
+          if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
+            // Should be caught by change event, but double checking
+            uploadError.textContent = 'Invalid file. Must be an image under 5MB.';
             uploadError.style.display = 'block';
             return;
           }

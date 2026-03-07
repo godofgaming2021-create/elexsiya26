@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow read/write for standard collections during the event
+    // In production, these should be locked to Cloud Functions or Auth.
+    match /registrations/{document=**} {
+      allow read, write: if true;
+    }
+    match /screenshots/{document=**} {
+      allow read, write: if true;
+    }
+    match /sponsorships/{document=**} {
+      allow read, write: if true;
+    }
+    match /expenditures/{document=**} {
+      allow read, write: if true;
+    }
+    match /settings/{document=**} {
+      allow read, write: if true;
+    }
+    match /site_logs/{document=**} {
+      allow read, write: if true;
+    }
+    match /feedback/{document=**} {
+      allow read, write: if true;
+    }
+
+    // 🛡️ SECURITY: Admin Audit Log is append-only
+    // Nobody can delete or modify past audit logs from the client.
+    match /admin_audit/{document=**} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false; 
+    }
+  }
+}

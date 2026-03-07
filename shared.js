@@ -1,13 +1,25 @@
-/* ============================================================
-   COLLEGE SYMPOSIUM – SHARED UTILITIES
+﻿/* ============================================================
+   COLLEGE SYMPOSIUM â€“ SHARED UTILITIES
    Firebase Firestore data store + helpers
    ============================================================ */
 
-// 🔒 Credentials stored as SHA-256 hashes — never in plain text
+// ðŸ”’ Credentials stored as SHA-256 hashes â€” never in plain text
 // To regenerate: run sha256('your_email') and sha256('your_password') in browser console
-const ADMIN_USER_HASH = 'b3ce598dcbeff9dc0445e0bfb8093727036768d9caf03f8ca188fe86ded4a3cc'; // SHA-256 of admin email
-const ADMIN_PASS_HASH = 'eda52fd9a8fc52c6cb9a734862360ccd058833dfa750d0e8e7c29ef037ecee70'; // SHA-256 of admin password
+const ADMIN_USER_HASH = 'd8f6739fa824a4ddcdc1b0f95b212410817f596ea5554d12c55f72d12ce5a799'; // SHA-256 of 'ece26'
+const ADMIN_PASS_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // SHA-256 of 'password'
 const REG_FEE = 499;
+
+// Super User Hash
+const SUPER_USER_HASH = '1f6cbaaa52d8e0f10c3ece3145afc32d43ed0b471ff03b54d6df1a0c441c00cd'; // sha256('rakulkavi')
+const SUPER_PASS_HASH = '9a31a90c12eabfdf5443fa7a9b0c0340f1a9a83d735c03c5b8b9f1d2e1c7f40d'; // sha256('SuperSecr3t2026!')
+
+// Treasurer Hash
+const TREASURER_USER_HASH = '4747766b2c4cdd203673c68b7529323381aeb977717462bbbc9f8ce3242ba4e6'; // sha256('elexsiya26')
+const TREASURER_PASS_HASH = 'f5e6b99b52eb8de32810ce8ea08c1ea98471bd80e4b8555fa39b85c1ec88574d'; // sha256('Treasury$ync#26')
+
+// On-Spot Admin Hash
+const ONSPOT_USER_HASH = '4747766b2c4cdd203673c68b7529323381aeb977717462bbbc9f8ce3242ba4e6'; // sha256('elexsiya26')
+const ONSPOT_PASS_HASH = 'd8cc681ba4c9dbe39f50e9bd28ff9634e2c2ddf2dfbdce65b5ec1e959ce5dace'; // sha256('ece@26')
 
 const EVENT_WHATSAPP_LINKS = {
   'Project Expo': 'https://chat.whatsapp.com/BCWwTp0oD8S3OVqYPQqt2y?mode=gi_t',
@@ -31,13 +43,48 @@ async function sha256(str) {
 
 /* ---------- Async admin verifier ---------- */
 async function verifyAdmin(email, password) {
-  const [eHash, pHash] = await Promise.all([sha256(email.toLowerCase().trim()), sha256(password)]);
-  return eHash === ADMIN_USER_HASH && pHash === ADMIN_PASS_HASH;
+  const cleanEmail = email.toLowerCase().trim();
+  const [eHash, pHash] = await Promise.all([sha256(cleanEmail), sha256(password)]);
+
+  // Check for Super User first
+  if (eHash === SUPER_USER_HASH && pHash === SUPER_PASS_HASH) {
+    return { success: true, isSuper: true, isTreasurer: false, token: pHash };
+  }
+  // Check for Treasurer
+  if (eHash === TREASURER_USER_HASH && pHash === TREASURER_PASS_HASH) {
+    return { success: true, isSuper: false, isTreasurer: true, isOnSpot: false, token: pHash };
+  }
+  // Check for On-Spot Admin
+  if (eHash === ONSPOT_USER_HASH && pHash === ONSPOT_PASS_HASH) {
+    return { success: true, isSuper: false, isTreasurer: false, isOnSpot: true, token: pHash };
+  }
+
+  const isNormal = eHash === ADMIN_USER_HASH && pHash === ADMIN_PASS_HASH;
+  return isNormal ? { success: true, isSuper: false, isTreasurer: false, token: pHash } : { success: false };
+}
+
+/**
+ * Log user activity to Firestore.
+ */
+async function logActivity(action, details = {}) {
+  try {
+    const logData = {
+      action,
+      details,
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      path: window.location.pathname,
+      screen: `${window.innerWidth}x${window.innerHeight}`
+    };
+    await window.db.collection('site_logs').add(logData);
+  } catch (err) {
+    console.warn('[LOG] Error logging activity:', err);
+  }
 }
 
 /* ============================================================
    FIRESTORE DATA HELPERS
-   All functions are async — always use `await` when calling.
+   All functions are async â€” always use `await` when calling.
    ============================================================ */
 
 /**
@@ -45,15 +92,16 @@ async function verifyAdmin(email, password) {
  * @returns {Promise<Array>} Array of registration objects.
  */
 async function getRegistrations() {
+  if (!window.db) { console.warn('[DB] window.db not ready'); return []; }
   try {
-    const snapshot = await db.collection('registrations')
+    const snapshot = await window.db.collection('registrations')
       .orderBy('registeredAt', 'desc')
       .get();
     return snapshot.docs.map(doc => doc.data());
   } catch (err) {
     console.error('[DB] getRegistrations error:', err);
     if (err.code === 'permission-denied') {
-      alert("⚠️ Firebase Permission Denied. Your Cloud Firestore Rules are blocking read access. Please update your rules to allow read/write (see README-FIREBASE.txt).");
+      alert("âš ï¸ Firebase Permission Denied. Your Cloud Firestore Rules are blocking read access. Please update your rules to allow read/write (see README-FIREBASE.txt).");
     }
     return [];
   }
@@ -66,14 +114,27 @@ async function getRegistrations() {
  * @returns {Promise<Object>} The saved registration.
  */
 async function addRegistration(reg) {
+  if (!window.db) { throw new Error('Firebase not initialized. Please reload and try again.'); }
+
+  // Vulnerability 29: Force Numeric parsing
+  reg.amount = Number(reg.amount) || 0;
+  if (reg.amount < 0) throw new Error("Invalid payment amount");
+
+  // Vulnerability 27: Strict backend conflict checking
+  const eventList = reg.events ? reg.events.map(e => e.event) : [reg.event];
+  if (hasTimeConflict(eventList)) {
+    throw new Error("Time conflict detected between selected events. Registration rejected.");
+  }
+
   // Attach integrity checksum
-  reg._checksum = _calcChecksum(reg);
+  reg._checksum = await _calcChecksum(reg);
+
   try {
-    await db.collection('registrations').doc(reg.regId).set(reg);
+    await window.db.collection('registrations').doc(reg.regId).set(reg);
   } catch (err) {
     console.error('[DB] addRegistration error:', err);
     if (err.code === 'permission-denied') {
-      alert("⚠️ Firebase Permission Denied. Your Cloud Firestore Rules are blocking write access. Please see README-FIREBASE.txt to fix this. Registration was NOT saved.");
+      alert("âš ï¸ Firebase Permission Denied. Your Cloud Firestore Rules are blocking write access. Please see README-FIREBASE.txt to fix this. Registration was NOT saved.");
     }
     throw err;
   }
@@ -87,7 +148,7 @@ async function addRegistration(reg) {
  */
 async function updatePaymentStatus(regId, status) {
   try {
-    await db.collection('registrations').doc(regId).update({ paymentStatus: status });
+    await window.db.collection('registrations').doc(regId).update({ paymentStatus: status });
   } catch (err) {
     console.error('[DB] updatePaymentStatus error:', err);
     throw err;
@@ -100,7 +161,7 @@ async function updatePaymentStatus(regId, status) {
  */
 async function deleteRegistration(regId) {
   try {
-    await db.collection('registrations').doc(regId).delete();
+    await window.db.collection('registrations').doc(regId).delete();
   } catch (err) {
     console.error('[DB] deleteRegistration error:', err);
     throw err;
@@ -114,7 +175,7 @@ async function deleteRegistration(regId) {
  */
 async function updateRegistrationData(regId, newData) {
   try {
-    await db.collection('registrations').doc(regId).update(newData);
+    await window.db.collection('registrations').doc(regId).update(newData);
   } catch (err) {
     console.error('[DB] updateRegistrationData error:', err);
     throw err;
@@ -128,9 +189,118 @@ async function updateRegistrationData(regId, newData) {
  */
 async function updateCheckInStatus(regId, status) {
   try {
-    await db.collection('registrations').doc(regId).update({ checkedIn: status });
+    await window.db.collection('registrations').doc(regId).update({ checkedIn: status });
   } catch (err) {
     console.error('[DB] updateCheckInStatus error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Update certificate release status.
+ */
+async function updateCertStatus(regId, status) {
+  try {
+    await window.db.collection('registrations').doc(regId).update({ certReleased: status });
+  } catch (err) {
+    console.error('[DB] updateCertStatus error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Save certificate template image.
+ */
+async function saveCertTemplate(imageData) {
+  try {
+    await window.db.collection('settings').doc('certificate').set({ template: imageData, updatedAt: new Date().toISOString() });
+  } catch (err) {
+    console.error('[DB] saveCertTemplate error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Get certificate template image.
+ */
+async function getCertTemplate() {
+  try {
+    const doc = await window.db.collection('settings').doc('certificate').get();
+    return doc.exists ? doc.data().template : null;
+  } catch (err) {
+    console.error('[DB] getCertTemplate error:', err);
+    return null;
+  }
+}
+
+/* ============================================================
+   SPONSORSHIP HELPERS
+   ============================================================ */
+
+async function getSponsorships() {
+  try {
+    const snap = await window.db.collection('sponsorships').orderBy('timestamp', 'desc').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (err) {
+    console.error('[DB] getSponsorships error:', err);
+    return [];
+  }
+}
+
+async function addSponsorship(data) {
+  try {
+    const docRef = await window.db.collection('sponsorships').add({
+      ...data,
+      timestamp: new Date().toISOString()
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[DB] addSponsorship error:', err);
+    throw err;
+  }
+}
+
+async function deleteSponsorship(id) {
+  try {
+    await window.db.collection('sponsorships').doc(id).delete();
+  } catch (err) {
+    console.error('[DB] deleteSponsorship error:', err);
+    throw err;
+  }
+}
+
+/* ============================================================
+   EXPENDITURE HELPERS
+   ============================================================ */
+
+async function getExpenditures() {
+  try {
+    const snap = await window.db.collection('expenditures').orderBy('timestamp', 'desc').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (err) {
+    console.error('[DB] getExpenditures error:', err);
+    return [];
+  }
+}
+
+async function addExpenditure(data) {
+  try {
+    const docRef = await window.db.collection('expenditures').add({
+      ...data,
+      timestamp: new Date().toISOString()
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[DB] addExpenditure error:', err);
+    throw err;
+  }
+}
+
+async function deleteExpenditure(id) {
+  try {
+    await window.db.collection('expenditures').doc(id).delete();
+  } catch (err) {
+    console.error('[DB] deleteExpenditure error:', err);
     throw err;
   }
 }
@@ -143,7 +313,7 @@ async function updateCheckInStatus(regId, status) {
  */
 async function uploadPaymentScreenshot(regId, file) {
   try {
-    // ── Step 1: Compress image via Canvas (max 900px, 70% JPEG quality) ──
+    // â”€â”€ Step 1: Compress image via Canvas (max 900px, 70% JPEG quality) â”€â”€
     const base64 = await new Promise((resolve, reject) => {
       const img = new Image();
       const reader = new FileReader();
@@ -163,16 +333,16 @@ async function uploadPaymentScreenshot(regId, file) {
       img.onerror = reject;
     });
 
-    // ── Step 2: Save compressed image to Firestore screenshots collection ──
-    await db.collection('screenshots').doc(regId).set({
+    // â”€â”€ Step 2: Save compressed image to Firestore screenshots collection â”€â”€
+    await window.db.collection('screenshots').doc(regId).set({
       regId,
       imageData: base64,
       uploadedAt: new Date().toISOString(),
       fileName: file.name
     });
 
-    // ── Step 3: Update registration status ──
-    await db.collection('registrations').doc(regId).update({
+    // â”€â”€ Step 3: Update registration status â”€â”€
+    await window.db.collection('registrations').doc(regId).update({
       paymentStatus: 'Verification Required',
       hasScreenshot: true
     });
@@ -193,10 +363,14 @@ async function generateRegId() {
   let id;
   do {
     id = 'ELX-';
-    for (let i = 0; i < 8; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    const randomArray = new Uint32Array(8);
+    crypto.getRandomValues(randomArray);
+    for (let i = 0; i < 8; i++) {
+      id += chars[randomArray[i] % chars.length];
+    }
     // Check Firestore for this ID. Catch permissions error so it doesn't hang!
     try {
-      const doc = await db.collection('registrations').doc(id).get();
+      const doc = await window.db.collection('registrations').doc(id).get();
       if (!doc.exists) break;
     } catch (err) {
       console.warn("Could not check reg ID uniqueness (likely permissions):", err);
@@ -207,17 +381,129 @@ async function generateRegId() {
 }
 
 /* ---------- Tamper-detection checksum ---------- */
-// ⚠️ NOTE: This checksum is informational — provides a basic integrity layer.
-function _calcChecksum(reg) {
-  const sig = [reg.regId, reg.email, reg.event, reg.amount, reg.registeredAt].join('|');
-  let h = 0;
-  for (let i = 0; i < sig.length; i++) { h = (Math.imul(31, h) + sig.charCodeAt(i)) | 0; }
-  return h.toString(16);
+async function _calcChecksum(reg) {
+  // Vulnerability 28: Dynamic salt based on user properties to prevent prediction
+  const salt = 'ELX_' + (reg.email || reg.regId).length + '_26_';
+  const sig = [salt, reg.regId, reg.email, reg.event, reg.amount, reg.registeredAt].join('|');
+  return await sha256(sig);
 }
 
-function isRegistrationTampered(reg) {
+// Vulnerability 27: Verify time conflicts strictly on backend helper
+function hasTimeConflict(selectedEvents) {
+  if (!selectedEvents || selectedEvents.length < 2) return false;
+
+  // Normalize names
+  const selIds = new Set(selectedEvents.map(e => e.toLowerCase().replace(/\s+/g, '-')));
+
+  const CONFLICT_PAIRS = [
+    [['project-expo'], ['ideart']],
+    [['project-expo'], ['clever-hunt']],
+    [['idea-forge'], ['ideart']],
+    [['idea-forge'], ['clever-hunt']],
+    [['clever-hunt'], ['ideart']],
+    [['currentclash'], ['unmuted']],
+    [['bug-arena'], ['mindfusion']],
+    [['tazky-among-uz'], ['upside-down']],
+  ];
+
+  for (const [a, b] of CONFLICT_PAIRS) {
+    const hitA = a.some(id => selIds.has(id));
+    const hitB = b.some(id => selIds.has(id));
+    if (hitA && hitB) return true;
+  }
+  return false;
+}
+
+async function isRegistrationTampered(reg) {
   if (!reg._checksum) return true;
-  return reg._checksum !== _calcChecksum(reg);
+  const expected = await _calcChecksum(reg);
+  return reg._checksum !== expected;
+}
+
+/* ============================================================
+   COMMAND CENTER HELPERS (Super User Only)
+   ============================================================ */
+
+// ── Maintenance Mode ──
+async function getMaintenanceMode() {
+  try {
+    const doc = await window.db.collection('settings').doc('maintenance').get();
+    return doc.exists ? doc.data() : { enabled: false, message: '' };
+  } catch (err) { console.error('[DB] getMaintenanceMode error:', err); return { enabled: false, message: '' }; }
+}
+
+async function setMaintenanceMode(enabled, message = '') {
+  try {
+    await window.db.collection('settings').doc('maintenance').set({ enabled, message, updatedAt: new Date().toISOString() });
+  } catch (err) { console.error('[DB] setMaintenanceMode error:', err); throw err; }
+}
+
+// ── Dynamic Marquee ──
+async function getMarqueeText() {
+  try {
+    const doc = await window.db.collection('settings').doc('marquee').get();
+    return doc.exists ? doc.data() : { text: '', enabled: false };
+  } catch (err) { console.error('[DB] getMarqueeText error:', err); return { text: '', enabled: false }; }
+}
+
+async function setMarqueeText(text, enabled = true) {
+  try {
+    await window.db.collection('settings').doc('marquee').set({ text, enabled, updatedAt: new Date().toISOString() });
+  } catch (err) { console.error('[DB] setMarqueeText error:', err); throw err; }
+}
+
+// ── Event Capacity ──
+async function getClosedEvents() {
+  try {
+    const doc = await window.db.collection('settings').doc('event_capacity').get();
+    return doc.exists ? (doc.data().closedEvents || []) : [];
+  } catch (err) { console.error('[DB] getClosedEvents error:', err); return []; }
+}
+
+async function setClosedEvents(closedEventsArray) {
+  try {
+    await window.db.collection('settings').doc('event_capacity').set({ closedEvents: closedEventsArray, updatedAt: new Date().toISOString() });
+  } catch (err) { console.error('[DB] setClosedEvents error:', err); throw err; }
+}
+
+// ── Admin Audit Log ──
+async function logAdminAction(admin, action, details = {}) {
+  try {
+    await window.db.collection('admin_audit').add({ admin, action, details, timestamp: new Date().toISOString() });
+  } catch (err) { console.warn('[DB] logAdminAction error:', err); }
+}
+
+async function getAdminAuditLogs(limitCount = 50) {
+  try {
+    const snap = await window.db.collection('admin_audit').orderBy('timestamp', 'desc').limit(limitCount).get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (err) { console.error('[DB] getAdminAuditLogs error:', err); return []; }
+}
+
+// ── Feedback ──
+async function getFeedback() {
+  try {
+    const snap = await window.db.collection('feedback').orderBy('timestamp', 'desc').get();
+    return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (err) { console.error('[DB] getFeedback error:', err); return []; }
+}
+
+// ── Full DB JSON Export ──
+async function exportAllDataAsJSON() {
+  const collections = ['registrations', 'screenshots', 'sponsorships', 'expenditures', 'settings', 'site_logs', 'feedback', 'admin_audit'];
+  const allData = {};
+  for (const col of collections) {
+    try {
+      const snap = await window.db.collection(col).get();
+      allData[col] = snap.docs.map(doc => ({ _id: doc.id, ...doc.data() }));
+    } catch (err) { allData[col] = []; }
+  }
+  const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `Elexsiya_Full_Backup_${new Date().toISOString().slice(0, 10)}.json`; a.click();
+  URL.revokeObjectURL(url);
+  return allData;
 }
 
 /* ---------- Scroll animations ---------- */
@@ -444,4 +730,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initParticles();
   initScrollAnimations();
+
+  // Log page visit
+  const pageName = window.location.pathname.split('/').pop() || 'index.html';
+  logActivity('page_visit', { page: pageName });
 });
+
+

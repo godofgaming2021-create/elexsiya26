@@ -7,6 +7,8 @@
   <title>Elexsiya 26 – National Level Technical Symposium</title>
   <meta name="description"
     content="Elexsiya 26 – National Level Technical Symposium at Anna University Regional Campus Madurai. Innovate. Inspire. Ignite." />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com;">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -45,6 +47,7 @@
         <li><a href="#events">Events</a></li>
         <li><a href="#prizes">Prizes</a></li>
         <li><a href="#contact">Contact</a></li>
+        <li><a href="login.html" style="color: var(--primary); font-weight: 700;">Login</a></li>
         <li><a href="admin.html">Admin</a></li>
         <li><a href="events.html" class="nav-cta">Register Now</a></li>
       </ul>
@@ -100,9 +103,8 @@
         <div class="hero-actions">
           <a href="events.html" class="btn btn-red btn-lg" id="registerBtn">🎯 Register Now</a>
           <a href="#events" class="btn btn-outline-white btn-lg">Explore Events</a>
-          <a href="#" class="btn btn-outline-white btn-lg"
-            style="border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.9);"
-            onclick="alert('Brochure PDF will be available soon!'); return false;">📄 Download Brochure</a>
+          <a href="brochure.pdf" class="btn btn-outline-white btn-lg"
+            style="border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.9);" download>📄 Download Brochure</a>
         </div>
       </div>
       <div class="scroll-indicator">
@@ -116,7 +118,7 @@
     <div class="marquee-track">
       <span>⚡ Elexsiya 26</span>
       <span class="marquee-dot">✦</span>
-      <span>🏆 Prizes TBD</span>
+      <span>🏆 Prizes 15k+</span>
       <span class="marquee-dot">✦</span>
       <span>🚀 March 27, 2026</span>
       <span class="marquee-dot">✦</span>
@@ -131,7 +133,7 @@
       <!-- duplicate for seamless loop -->
       <span>⚡ Elexsiya 26</span>
       <span class="marquee-dot">✦</span>
-      <span>🏆 Prizes TBD</span>
+      <span>🏆 Prizes 15k+</span>
       <span class="marquee-dot">✦</span>
       <span>🚀 March 27, 2026</span>
       <span class="marquee-dot">✦</span>
@@ -154,7 +156,7 @@
         <div class="strip-stat-label">Events</div>
       </div>
       <div class="strip-stat animate-on-scroll delay-1">
-        <div class="strip-stat-value">TBD</div>
+        <div class="strip-stat-value">15k+</div>
         <div class="strip-stat-label">Prize Pool</div>
       </div>
       <div class="strip-stat animate-on-scroll delay-2">
@@ -442,7 +444,8 @@
           <h3>Our Location</h3>
           <p>Kanyakumari National Highway, Keelakuilkudi, Madurai, Tamil Nadu 625019</p>
           <a href="https://www.google.com/maps/dir/?api=1&destination=Anna+University+Regional+Campus+Madurai"
-            target="_blank" class="btn btn-red btn-sm" style="margin-top: 15px; display: inline-block;">
+            target="_blank" rel="noopener noreferrer" class="btn btn-red btn-sm"
+            style="margin-top: 15px; display: inline-block;">
             Get Directions
           </a>
         </div>
@@ -614,7 +617,7 @@
         <div class="contact-tile animate-on-scroll delay-1">
           <div class="tile-emoji">📱</div>
           <h4>Phone</h4>
-          <p>+91 9342478364<br>+91 9080362418<br>+91 8428436372</p>
+          <p>+91 9790920311<br>+91 8122733877<br>+91 9597800532</p>
         </div>
         <div class="contact-tile animate-on-scroll delay-2">
           <div class="tile-emoji">📍</div>
@@ -626,8 +629,11 @@
           <div class="tile-emoji">🌐</div>
           <h4>Follow Us</h4>
           <p>
-            <a href="https://www.instagram.com/elexsiya_26/" target="_blank"
-              style="color:inherit; text-decoration:none;">Instagram</a> · LinkedIn · Twitter
+            <a href="https://www.instagram.com/elexsiya_26?igsh=MTBwMzhyencxcTl6Zw==" target="_blank"
+              rel="noopener noreferrer" style="color:inherit; text-decoration:none;">Instagram</a> · <a
+              href="https://www.linkedin.com/in/anna-university-regional-campus-madurai-elcosa-4aab113b4?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+              target="_blank" rel="noopener noreferrer" style="color:inherit; text-decoration:none;">LinkedIn</a> ·
+            Twitter
           </p>
         </div>
       </div>
@@ -654,15 +660,19 @@
           <h5>Participate</h5>
           <ul>
             <li><a href="events.html">Register</a></li>
+            <li><a href="login.html">Participant Login</a></li>
             <li><a href="admin.html">Admin Login</a></li>
           </ul>
         </div>
         <div class="footer-col">
           <h5>Connect</h5>
           <ul>
-            <li><a href="https://www.instagram.com/elexsiya_26/" target="_blank" class="btn btn-red btn-sm"
-                style="display:inline-block; margin-top:5px; padding: 8px 15px; font-size: 0.8rem;">Instagram</a></li>
-            <li><a href="#">LinkedIn</a></li>
+            <li><a href="https://www.instagram.com/elexsiya_26?igsh=MTBwMzhyencxcTl6Zw==" target="_blank"
+                rel="noopener noreferrer">Instagram</a>
+            </li>
+            <li><a
+                href="https://www.linkedin.com/in/anna-university-regional-campus-madurai-elcosa-4aab113b4?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
+                target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
             <li><a href="#">Twitter</a></li>
           </ul>
         </div>
@@ -1323,7 +1333,7 @@
 
     /* ── Floating WhatsApp Chat ───────────────────────────────────── */
     function openWhatsAppSupport() {
-      // Direct link to the support number elexsiyamediateam (+91 9342478364)
+      // Direct link to the support number (+91 9342478364)
       const url = `https://api.whatsapp.com/send?phone=919342478364&text=${encodeURIComponent("Hi Elexsiya Team! I have a question regarding the symposium.")}`;
       window.open(url, '_blank');
     }
@@ -1359,6 +1369,63 @@
         behavior: "smooth"
       });
     });
+  </script>
+
+  <!-- Firebase for Command Center integrations -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    // ── Maintenance Mode Overlay ──
+    (async function checkMaintenance() {
+      try {
+        const doc = await window.db.collection('settings').doc('maintenance').get();
+        if (doc.exists && doc.data().enabled) {
+          const msg = doc.data().message || 'We are performing scheduled updates. Please check back soon!';
+          const overlay = document.createElement('div');
+          overlay.id = 'maintenanceOverlay';
+          overlay.innerHTML = `
+            <div style="position:fixed;inset:0;z-index:999999;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#0a0a0a 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;text-align:center;padding:40px;">
+              <div style="font-size:4rem;margin-bottom:20px;">🔧</div>
+              <h1 style="font-family:'Cinzel',serif;font-size:2rem;margin-bottom:16px;color:#ffd700;">Under Maintenance</h1>
+              <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:500px;line-height:1.6;">${msg}</p>
+              <p style="font-size:0.85rem;color:rgba(255,255,255,0.4);margin-top:30px;">— Team Elexsiya</p>
+            </div>`;
+          document.body.innerHTML = '';
+          document.body.appendChild(overlay);
+        }
+      } catch (e) { console.warn('Maintenance check failed:', e); }
+    })();
+
+    // ── Dynamic Marquee ──
+    (async function loadDynamicMarquee() {
+      try {
+        const doc = await window.db.collection('settings').doc('marquee').get();
+        if (doc.exists && doc.data().enabled && doc.data().text) {
+          const track = document.querySelector('.marquee-track');
+          if (!track) return;
+          const announcement = `<span style="color:#ffd700;font-weight:800;">📢 ${doc.data().text}</span><span class="marquee-dot">✦</span>`;
+          // Insert at start of both duplicated halves
+          track.insertAdjacentHTML('afterbegin', announcement);
+        }
+      } catch (e) { console.warn('Marquee load failed:', e); }
+    })();
+
+    // ── Emergency Broadcast Banner ──
+    (async function loadBroadcast() {
+      try {
+        const doc = await window.db.collection('settings').doc('broadcast').get();
+        if (doc.exists && doc.data().enabled && doc.data().text) {
+          const banner = document.createElement('div');
+          banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;background:linear-gradient(90deg,#ef4444,#dc2626);color:white;text-align:center;padding:12px 20px;font-size:0.9rem;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;gap:8px;';
+          banner.innerHTML = `<span>🚨</span><span>${doc.data().text}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;margin-left:12px;">✕</button>`;
+          document.body.prepend(banner);
+          // Push navbar down
+          const nav = document.querySelector('.navbar');
+          if (nav) nav.style.top = banner.offsetHeight + 'px';
+        }
+      } catch (e) { console.warn('Broadcast load failed:', e); }
+    })();
   </script>
 </body>
 

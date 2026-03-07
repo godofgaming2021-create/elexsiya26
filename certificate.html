@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com;">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <title>My Participant Portal - Elexsiya 26</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800&family=Pinyon+Script&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --emirates-red: #C60C30;
+            --text-dark: #1a1a1a;
+            --gold: #C8A951;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            gap: 30px;
+        }
+
+        /* ── Entry Pass Card ── */
+        .entry-pass-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(198, 12, 48, 0.12);
+            border: 2px solid rgba(198, 12, 48, 0.15);
+            width: 100%;
+            max-width: 420px;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .pass-header {
+            background: linear-gradient(135deg, var(--emirates-red), #8B0020);
+            color: white;
+            padding: 20px;
+        }
+
+        .pass-header h2 {
+            margin: 0 0 4px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+        }
+
+        .pass-header p {
+            margin: 0;
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        .pass-body {
+            padding: 24px 24px 28px;
+        }
+
+        .pass-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .pass-event {
+            font-size: 0.85rem;
+            color: var(--emirates-red);
+            font-weight: 700;
+            margin-bottom: 18px;
+        }
+
+        .pass-id-badge {
+            display: inline-block;
+            background: rgba(198, 12, 48, 0.07);
+            border: 1.5px dashed rgba(198, 12, 48, 0.4);
+            color: var(--emirates-red);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            padding: 8px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .pass-qr-img {
+            width: 200px;
+            height: 200px;
+            border: 3px solid rgba(198, 12, 48, 0.15);
+            border-radius: 14px;
+            padding: 8px;
+            background: white;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .pass-qr-label {
+            margin-top: 12px;
+            font-size: 0.78rem;
+            color: #666;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .pass-footer {
+            border-top: 1px dashed rgba(198, 12, 48, 0.2);
+            padding: 12px 24px;
+            font-size: 0.76rem;
+            color: #888;
+        }
+
+        /* ── Controls ── */
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+        }
+
+        .btn-print {
+            background: var(--emirates-red);
+            color: white;
+        }
+
+        .btn-logout {
+            background: white;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ── Certificate section ── */
+        .cert-container {
+            background: white;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            aspect-ratio: 1.414/1;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .cert-bg {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .cert-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .cert-name {
+            font-family: 'Pinyon Script', cursive;
+            font-size: 4rem;
+            color: #1a1a1a;
+            margin-top: 20px;
+        }
+
+        .cert-details {
+            font-size: 1.2rem;
+            color: #444;
+            margin-top: 10px;
+            font-weight: 500;
+            text-align: center;
+            max-width: 80%;
+        }
+
+        /* ── Cert Not Ready Banner ── */
+        .cert-pending-banner {
+            background: white;
+            border-radius: 16px;
+            border: 1.5px solid rgba(200, 169, 81, 0.3);
+            padding: 24px 32px;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .cert-pending-banner .icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .cert-pending-banner h3 {
+            margin: 0 0 8px;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+
+        .cert-pending-banner p {
+            margin: 0;
+            color: #888;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .controls {
+                display: none;
+            }
+
+            .cert-pending-banner {
+                display: none;
+            }
+
+            .pass-footer .no-print {
+                display: none;
+            }
+
+            .cert-container {
+                box-shadow: none;
+                border: none;
+                max-width: none;
+                width: 100%;
+                height: 100vh;
+            }
+        }
+
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loadingOverlay">
+        <div style="text-align:center;">
+            <div style="font-size:2rem; margin-bottom:10px;">🎫</div>
+            <p>Loading your participant portal...</p>
+        </div>
+    </div>
+
+    <!-- Entry Pass Card -->
+    <div class="entry-pass-card" id="entryPassCard" style="display:none;">
+        <div class="pass-header">
+            <h2>ELEXSIYA 26</h2>
+            <p>Official Event Day Entry Pass</p>
+        </div>
+        <div class="pass-body">
+            <div class="pass-name" id="passName">—</div>
+            <div class="pass-event" id="passEvent">—</div>
+            <div class="pass-id-badge" id="passRegId">—</div>
+            <div>
+                <img id="passQrImg" class="pass-qr-img" src="" alt="Entry QR Code" />
+            </div>
+            <div class="pass-qr-label">📱 Show this QR at the registration desk for entry</div>
+        </div>
+        <div class="pass-footer">Scan QR to verify · Team Elexsiya · Do not share</div>
+    </div>
+
+    <!-- Cert Not Released -->
+    <div class="cert-pending-banner" id="certPendingBanner" style="display:none;">
+        <div class="icon">🏆</div>
+        <h3>Certificate Not Yet Available</h3>
+        <p>Your participation certificate will be released by the organizer after the event. Check back here to download
+            it.</p>
+    </div>
+
+    <!-- Certificate (when released) -->
+    <div class="cert-container" id="certFrame" style="display:none;">
+        <img id="templateImg" class="cert-bg" src="" alt="Certificate Template">
+        <div class="cert-overlay">
+            <div class="cert-name" id="userName">Participant Name</div>
+            <div class="cert-details" id="userEvent">For participating in Event Name</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-print" onclick="window.print()">🖨️ Download / Print Pass</button>
+        <a href="login.html" class="btn btn-logout" onclick="sessionStorage.clear()">✕ Logout</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="shared.js"></script>
+    <script>
+        async function initPortal() {
+            const user = JSON.parse(sessionStorage.getItem('partUser'));
+
+            // 30-minute session timeout fix
+            let sessionLoginTime = parseInt(sessionStorage.getItem('partLoginTime') || '0');
+            const now = Date.now();
+            if (!sessionLoginTime && user) {
+                sessionLoginTime = now;
+                sessionStorage.setItem('partLoginTime', now.toString());
+            }
+            if (!user || now - sessionLoginTime > 30 * 60 * 1000) {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Verify signature (Vuln 24 Fix)
+            const expectedSig = await _calcChecksum({
+                regId: user.regId,
+                email: user.email,
+                event: user.event,
+                amount: user.amount,
+                registeredAt: user.registeredAt
+            });
+            if (user.signature !== expectedSig) {
+                alert("Session tampering detected. Please log in again.");
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                // 1. Populate Entry Pass immediately from session data
+                document.getElementById('passName').textContent = user.name || '—';
+                document.getElementById('passEvent').textContent = user.event || 'Elexsiya 26';
+                document.getElementById('passRegId').textContent = user.regId || '—';
+                document.getElementById('passQrImg').src =
+                    `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(user.regId)}`;
+                document.getElementById('entryPassCard').style.display = 'block';
+
+                // 2. Check certificate status
+                const regDoc = await db.collection('registrations').doc(user.regId).get();
+
+                if (regDoc.exists && regDoc.data().certReleased) {
+                    // Cert is released — show it
+                    const template = await getCertTemplate();
+                    if (template) {
+                        document.getElementById('templateImg').src = template;
+                        document.getElementById('userName').textContent = user.name;
+                        document.getElementById('userEvent').textContent =
+                            `For successfully participating in ${user.event || 'Elexsiya 26'}`;
+                        document.getElementById('certFrame').style.display = 'block';
+                    }
+                } else {
+                    // Cert not ready — show friendly banner
+                    document.getElementById('certPendingBanner').style.display = 'block';
+                }
+
+                document.getElementById('loadingOverlay').style.display = 'none';
+            } catch (err) {
+                console.error(err);
+                // Even on error, still show the pass from session data
+                document.getElementById('certPendingBanner').style.display = 'block';
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        initPortal();
+    </script>
+</body>
+
+</html>

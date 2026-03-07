@@ -30,15 +30,17 @@ if (!firebase.apps.length) {
   }
 }
 
-// Initialize Firestore
+// Initialize Firestore and globally expose it
+var db;
 try {
-  const db = firebase.firestore();
+  db = firebase.firestore();
   window.db = db;
 } catch (e) { console.error('❌ Firestore Init Error:', e); }
 
-// Initialize Storage
+// Initialize Storage and globally expose it
+var storage;
 try {
-  const storage = firebase.storage();
+  storage = firebase.storage();
   window.storage = storage;
 } catch (e) { console.error('❌ Storage Init Error:', e); }
 
