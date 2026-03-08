@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Admin – Tournament</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-warm);
+            margin: 0;
+            padding: 28px 16px 60px;
+        }
+
+        /* ── Top bar ── */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto 24px;
+            background: white;
+            padding: 16px 26px;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .05);
+        }
+
+        .top-bar h1 {
+            color: var(--emirates-red);
+            font-family: var(--font-heading);
+            margin: 0;
+            font-size: 1.35rem;
+        }
+
+        .btn-logout {
+            background: rgba(198, 12, 48, .08);
+            border: 1px solid rgba(198, 12, 48, .22);
+            color: var(--emirates-red);
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* ── Two slot layout ── */
+        .slots-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 22px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 820px) {
+            .slots-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .slot-panel {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .05);
+            overflow: hidden;
+        }
+
+        .slot-header {
+            padding: 15px 22px 12px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .slot-title {
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 3px 10px;
+            border-radius: 50px;
+        }
+
+        .badge-a {
+            background: rgba(198, 12, 48, .08);
+            color: var(--emirates-red);
+            border: 1px solid rgba(198, 12, 48, .2);
+        }
+
+        .badge-b {
+            background: rgba(37, 99, 235, .08);
+            color: #2563eb;
+            border: 1px solid rgba(37, 99, 235, .2);
+        }
+
+        .badge-rnd {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .badge-done {
+            background: rgba(22, 163, 74, .08);
+            color: #15803d;
+            border: 1px solid rgba(22, 163, 74, .22);
+        }
+
+        .slot-body {
+            padding: 18px 20px 22px;
+        }
+
+        .slot-stats {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        /* Buttons */
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 9px 16px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+
+        .btn:hover {
+            opacity: .88;
+        }
+
+        .btn:disabled {
+            opacity: .38;
+            cursor: not-allowed;
+        }
+
+        .btn-red {
+            background: var(--emirates-red);
+            color: white;
+        }
+
+        .btn-blue {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-green {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-gray {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* ── ATTENDANCE ── */
+        .attendance-section {
+            margin-bottom: 14px;
+        }
+
+        .att-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .att-header span {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .att-header-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        .att-small-btn {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #475569;
+        }
+
+        .att-small-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .att-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .att-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .att-list::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+
+        .att-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            transition: all .18s;
+            user-select: none;
+        }
+
+        .att-row.present {
+            border-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .att-row.absent {
+            border-color: #e2e8f0;
+            background: #f8fafc;
+            opacity: .7;
+        }
+
+        .att-checkbox {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 2px solid #cbd5e1;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            transition: all .18s;
+        }
+
+        .att-row.present .att-checkbox {
+            background: #16a34a;
+            border-color: #16a34a;
+            color: white;
+        }
+
+        .att-player-name {
+            font-weight: 600;
+            font-size: 0.85rem;
+            flex: 1;
+        }
+
+        .att-player-id {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .att-status {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 50px;
+        }
+
+        .att-row.present .att-status {
+            background: rgba(22, 163, 74, .12);
+            color: #15803d;
+        }
+
+        .att-row.absent .att-status {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+
+        .att-summary {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0 14px;
+            font-size: 0.8rem;
+        }
+
+        .att-count {
+            font-weight: 700;
+        }
+
+        .pres-count {
+            color: #15803d;
+        }
+
+        .abs-count {
+            color: #dc2626;
+        }
+
+        /* ── Slot B manual add ── */
+        .manual-add {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .manual-add input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1.5px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: var(--font-body);
+            outline: none;
+        }
+
+        .manual-add input:focus {
+            border-color: #2563eb;
+        }
+
+        .btn-add {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            opacity: .88;
+        }
+
+        .chips-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+            min-height: 24px;
+        }
+
+        .chip {
+            background: rgba(37, 99, 235, .08);
+            border: 1px solid rgba(37, 99, 235, .2);
+            color: #1d4ed8;
+            border-radius: 50px;
+            padding: 3px 10px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .chip.absent-chip {
+            background: rgba(220, 38, 38, .06);
+            border-color: rgba(220, 38, 38, .18);
+            color: #b91c1c;
+        }
+
+        .chip-x {
+            cursor: pointer;
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .chip-x:hover {
+            color: #ef4444;
+        }
+
+        /* ── Progress ── */
+        .prog-wrap {
+            margin-bottom: 12px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .prog-track {
+            height: 5px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .prog-fill {
+            height: 100%;
+            background: #16a34a;
+            border-radius: 3px;
+            transition: width .3s;
+        }
+
+        /* ── Board list ── */
+        .boards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+
+        .loading-msg {
+            text-align: center;
+            padding: 28px 10px;
+            color: var(--text-muted);
+            font-size: 0.86rem;
+            display: none;
+        }
+
+        .board-card {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 13px 13px 11px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow .2s;
+        }
+
+        .board-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--emirates-red);
+        }
+
+        .board-card.slot-b::before {
+            background: #2563eb;
+        }
+
+        .board-card.done::before {
+            background: #16a34a;
+        }
+
+        .board-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--gold-dark);
+            margin-bottom: 8px;
+        }
+
+        .player-slot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: white;
+            border: 1.5px solid var(--border-light);
+            border-radius: 8px;
+            padding: 7px 10px;
+            margin: 4px 0;
+            transition: all .22s;
+            min-height: 42px;
+        }
+
+        .player-slot.winner {
+            border-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .player-slot.loser {
+            opacity: .28;
+            background: #f1f5f9;
+            filter: grayscale(1);
+        }
+
+        .pname {
+            font-weight: 700;
+            font-size: 0.83rem;
+        }
+
+        .pid {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+
+        .win-btn {
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            color: #64748b;
+            border-radius: 50px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all .18s;
+        }
+
+        .win-btn:hover {
+            border-color: #16a34a;
+            color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .win-btn.selected {
+            background: #16a34a;
+            color: white;
+            border-color: #16a34a;
+        }
+
+        .vs-tag {
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: var(--emirates-red);
+            margin: 2px 0;
+            letter-spacing: .05em;
+        }
+
+        .winner-banner {
+            display: none;
+            margin-top: 7px;
+            background: rgba(22, 163, 74, .08);
+            border: 1px solid rgba(22, 163, 74, .22);
+            border-radius: 6px;
+            padding: 4px 9px;
+            font-size: 0.73rem;
+            font-weight: 700;
+            color: #15803d;
+        }
+
+        .winner-banner.show {
+            display: block;
+        }
+
+        /* Volunteer */
+        .vol-btn {
+            width: 100%;
+            background: #fffbeb;
+            border: 1.5px dashed #f59e0b;
+            color: #b45309;
+            font-weight: 700;
+            font-size: 0.76rem;
+            padding: 7px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .vol-btn:hover {
+            background: #fef3c7;
+        }
+
+        .vol-wrap {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .vol-wrap input {
+            flex: 1;
+            padding: 6px 8px;
+            border: 2px solid #f59e0b;
+            border-radius: 7px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .vol-ok {
+            background: #16a34a;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            padding: 6px 11px;
+            font-weight: 700;
+            font-size: 0.76rem;
+            cursor: pointer;
+        }
+
+        /* Champion */
+        .champion-card {
+            text-align: center;
+            padding: 36px 16px;
+        }
+
+        .champion-card .trophy {
+            font-size: 2.6rem;
+            margin-bottom: 10px;
+        }
+
+        .champion-card h3 {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            color: var(--emirates-red);
+            margin-bottom: 6px;
+        }
+
+        .champion-card p {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .champion-card .sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        /* History */
+        .history-wrap {
+            margin-top: 16px;
+            border-top: 1px solid var(--border-light);
+            padding-top: 12px;
+        }
+
+        .history-wrap h4 {
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .h-round {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 11px;
+            margin-bottom: 7px;
+            font-size: 0.76rem;
+        }
+
+        .h-rtitle {
+            font-weight: 700;
+            color: var(--emirates-red);
+            margin-bottom: 4px;
+        }
+
+        .h-match {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 0;
+            border-bottom: 1px dashed #f1f5f9;
+        }
+
+        .h-match:last-child {
+            border: none;
+        }
+
+        .hw {
+            font-weight: 700;
+            color: #15803d;
+        }
+
+        .hl {
+            color: #94a3b8;
+            text-decoration: line-through;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px 16px;
+            font-size: 0.85rem;
+        }
+
+        /* ── Grand Final ── */
+        .grand-final-section {
+            display: none;
+            max-width: 1200px;
+            margin: 24px auto 0;
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .07);
+            overflow: hidden;
+        }
+
+        .grand-final-section.show {
+            display: block;
+        }
+
+        .gf-header {
+            background: linear-gradient(135deg, var(--emirates-red) 0%, #1d1d1d 100%);
+            padding: 22px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .gf-header h2 {
+            color: white;
+            font-family: var(--font-heading);
+            margin: 0;
+            font-size: 1.2rem;
+            letter-spacing: .04em;
+        }
+
+        .gf-header .gf-badge {
+            background: rgba(255, 255, 255, .15);
+            color: white;
+            border-radius: 50px;
+            padding: 4px 14px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+
+        .gf-body {
+            padding: 28px 28px 32px;
+        }
+
+        .gf-matchup {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+
+        .gf-player {
+            flex: 1;
+            padding: 22px 18px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: all .25s;
+        }
+
+        .gf-player.winner {
+            background: #f0fdf4;
+        }
+
+        .gf-player.loser {
+            opacity: .3;
+            filter: grayscale(1);
+            background: #f8fafc;
+        }
+
+        .gf-group-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            padding: 3px 10px;
+            border-radius: 50px;
+            margin-bottom: 4px;
+        }
+
+        .gf-pname {
+            font-weight: 800;
+            font-size: 1rem;
+            color: var(--text-dark);
+        }
+
+        .gf-pid {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+        }
+
+        .gf-win-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #64748b;
+            border-radius: 50px;
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all .18s;
+            white-space: nowrap;
+        }
+
+        .gf-win-btn:hover {
+            border-color: #16a34a;
+            color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .gf-win-btn.selected {
+            background: #16a34a;
+            color: white;
+            border-color: #16a34a;
+        }
+
+        .gf-vs {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 14px;
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: var(--emirates-red);
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .gf-result {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            animation: fadeIn .4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .gf-result.show {
+            display: block;
+        }
+
+        .gf-result .trophy {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+        }
+
+        /* ── Certificate Portal ── */
+        .cert-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: all .2s;
+        }
+
+        .cert-card:hover {
+            border-color: var(--emirates-red);
+        }
+
+        .cert-info {
+            flex: 1;
+        }
+
+        .cert-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #1e293b;
+        }
+
+        .cert-sub {
+            font-size: 0.72rem;
+            color: #64748b;
+        }
+
+        .cert-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cert-status {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .status-ready {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .status-none {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .btn-upload {
+            background: var(--emirates-red);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #cert-loading {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 0.82rem;
+        }
+
+        .gf-result h3 {
+            font-family: var(--font-heading);
+            color: var(--emirates-red);
+            font-size: 1.4rem;
+            margin-bottom: 6px;
+        }
+
+        .gf-result p {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .gf-waiting {
+            text-align: center;
+            padding: 28px;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        .gf-waiting .wait-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+
+        .wait-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .wait-item.ready {
+            border-color: #16a34a;
+            background: #f0fdf4;
+            color: #15803d;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-bar">
+        <h1>♟️ Chess Tournament Manager</h1>
+        <button class="btn-logout" onclick="logout()">🔓 Logout</button>
+    </div>
+
+    </div><!-- /slots-wrapper -->
+
+    <!-- ══════════════ GRAND FINAL ══════════════ -->
+    <div class="grand-final-section" id="grand-final">
+        <div class="gf-header">
+            <h2>⚔️ Grand Final</h2>
+            <span class="gf-badge">Group A Champion vs Group B Champion</span>
+        </div>
+        <div class="gf-body">
+            <!-- Waiting state -->
+            <div class="gf-waiting" id="gf-waiting">
+                <div>Waiting for both group champions…</div>
+                <div class="wait-badges">
+                    <div class="wait-item" id="gf-wait-a">🔴 Group A: <span id="gf-wait-a-text">In progress…</span>
+                    </div>
+                    <div class="wait-item" id="gf-wait-b">🔵 Group B: <span id="gf-wait-b-text">Not started</span></div>
+                </div>
+            </div>
+            <!-- Match -->
+            <div id="gf-match" style="display:none;">
+                <div class="gf-matchup">
+                    <div class="gf-player" id="gf-p1">
+                        <span class="gf-group-badge badge-a">Group A</span>
+                        <div class="gf-pname" id="gf-p1-name"></div>
+                        <div class="gf-pid" id="gf-p1-id"></div>
+                        <button class="gf-win-btn" id="gf-btn-1" onclick="selectGrandFinalWinner(1)">🏆 Won</button>
+                    </div>
+                    <div class="gf-vs">VS</div>
+                    <div class="gf-player" id="gf-p2">
+                        <span class="gf-group-badge badge-b">Group B</span>
+                        <div class="gf-pname" id="gf-p2-name"></div>
+                        <div class="gf-pid" id="gf-p2-id"></div>
+                        <button class="gf-win-btn" id="gf-btn-2" onclick="selectGrandFinalWinner(2)">🏆 Won</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Final result -->
+            <div class="gf-result" id="gf-result">
+                <div class="trophy">🏆</div>
+                <h3>🎉 Overall Chess Champion!</h3>
+                <p id="gf-champion-name"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="slots-wrapper">
+
+        <!-- ══════════════ SLOT A – Registered Players with Attendance ══════════════ -->
+        <div class="slot-panel">
+            <div class="slot-header">
+                <div class="slot-title">
+                    <span class="badge badge-a">Group A</span>
+                    Registered Players
+                </div>
+                <span class="badge badge-rnd" id="sa-round-badge" style="display:none;"></span>
+            </div>
+            <div class="slot-body">
+                <div class="slot-stats" id="sa-stats">⏳ Loading from database…</div>
+
+                <!-- Attendance phase -->
+                <div class="attendance-section" id="sa-att-section" style="display:none;">
+                    <div class="att-header">
+                        <span>Mark attendance:</span>
+                        <div class="att-header-btns">
+                            <button class="att-small-btn" onclick="markAll('a', true)">✅ All Present</button>
+                            <button class="att-small-btn" onclick="markAll('a', false)">❌ All Absent</button>
+                        </div>
+                    </div>
+                    <div class="att-list" id="sa-att-list"></div>
+                    <div class="att-summary" id="sa-att-summary"></div>
+                    <button class="btn btn-green" onclick="confirmAttendance()" id="sa-att-btn">✅ Confirm Attendance
+                        &amp; Assign</button>
+                </div>
+
+                <!-- Tournament phase -->
+                <div id="sa-tournament-phase" style="display:none;">
+                    <div class="btn-row">
+                        <button class="btn btn-green" id="sa-next-btn" style="display:none;" onclick="nextRound('a')"
+                            disabled>➡️ Next Round</button>
+                        <button class="btn btn-red" id="sa-reassign-btn" onclick="reassignSlot('a')">🔄
+                            Re-assign</button>
+                    </div>
+                    <div class="prog-wrap" id="sa-prog-wrap">
+                        <span id="sa-prog-text"></span>
+                        <div class="prog-track">
+                            <div class="prog-fill" id="sa-prog-fill" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <div class="loading-msg" id="sa-loading">⏳ Shuffling boards…</div>
+                    <div class="boards-list" id="sa-boards"></div>
+                    <div class="history-wrap" id="sa-history" style="display:none;">
+                        <h4>📜 Round History</h4>
+                        <div id="sa-history-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLOT B – Absent / Manual Players ══════════════ -->
+        <div class="slot-panel">
+            <div class="slot-header">
+                <div class="slot-title">
+                    <span class="badge badge-b">Group B</span>
+                    Absent / Extra Players
+                </div>
+                <span class="badge badge-rnd" id="sb-round-badge" style="display:none;"></span>
+            </div>
+            <div class="slot-body">
+                <div class="slot-stats" id="sb-stats">Absent players will appear here after attendance. You can also add
+                    manually.</div>
+
+                <div id="sb-entry-phase">
+                    <!-- Absent chips (auto-filled from attendance) -->
+                    <div id="sb-absent-label"
+                        style="font-size:0.76rem;font-weight:700;color:#dc2626;margin-bottom:6px;display:none;">
+                        ❌ Absent players (auto-added):
+                    </div>
+                    <div class="chips-wrap" id="sb-absent-chips"></div>
+
+                    <!-- Manual add -->
+                    <div style="font-size:0.76rem;font-weight:700;color:#2563eb;margin-bottom:6px;margin-top:4px;">
+                        ➕ Add extra players manually:
+                    </div>
+                    <div class="manual-add">
+                        <input type="text" id="sb-input" placeholder="Player name…" maxlength="60"
+                            onkeydown="if(event.key==='Enter') addManualPlayerB()" />
+                        <button class="btn-add" onclick="addManualPlayerB()">+ Add</button>
+                    </div>
+                    <div class="chips-wrap" id="sb-manual-chips"></div>
+
+                    <div class="btn-row" style="margin-top:6px;">
+                        <button class="btn btn-blue" onclick="assignSlot('b')">🎲 Assign Randomly</button>
+                    </div>
+                </div>
+
+                <!-- Tournament phase B -->
+                <div id="sb-tournament-phase" style="display:none;">
+                    <div class="btn-row">
+                        <button class="btn btn-green" id="sb-next-btn" style="display:none;" onclick="nextRound('b')"
+                            disabled>➡️ Next Round</button>
+                        <button class="btn btn-blue" id="sb-reassign-btn" onclick="reassignSlot('b')">🔄
+                            Re-assign</button>
+                    </div>
+                    <div class="prog-wrap" id="sb-prog-wrap">
+                        <span id="sb-prog-text"></span>
+                        <div class="prog-track">
+                            <div class="prog-fill" id="sb-prog-fill" style="width:0%"></div>
+                        </div>
+                    </div>
+                    <div class="loading-msg" id="sb-loading">⏳ Shuffling boards…</div>
+                    <div class="boards-list" id="sb-boards"></div>
+                    <div class="history-wrap" id="sb-history" style="display:none;">
+                        <h4>📜 Round History</h4>
+                        <div id="sb-history-list"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- ══════════════ CERTIFICATE PORTAL ══════════════ -->
+            <div class="slot-panel" style="border-top-color: var(--emirates-red);">
+                <div class="slot-header">
+                    <div class="slot-title">
+                        <span class="badge" style="background:#0f172a; color:white;">Portal</span>
+                        Individual Certificates
+                    </div>
+                </div>
+                <div class="slot-body">
+                    <div class="slot-stats">Assign custom certificates to specific players for them to download.</div>
+                    <div style="margin-top: 10px;">
+                        <div id="cert-loading">⏳ Loading players…</div>
+                        <div id="cert-player-list" style="max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /slots-wrapper -->
+
+        <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+        <script src="firebase-config.js"></script>
+        <script>
+            // ── Auth ──
+            if (sessionStorage.getItem('chessAdminLoggedIn') !== 'true') {
+                window.location.href = 'chess_admin_login.html';
+            }
+            function logout() {
+                sessionStorage.removeItem('chessAdminLoggedIn');
+                window.location.href = 'chess_admin_login.html';
+            }
+
+            // ── Global state per slot ──
+            const S = {
+                a: { allPlayers: [], attendance: {}, present: [], absent: [], round: 0, active: [], winners: {}, boards: [], history: [] },
+                b: { absentPre: [], manualExtra: [], allPlayers: [], round: 0, active: [], winners: {}, boards: [], history: [] }
+            };
+
+            // ── Utilities ──
+            const el = id => document.getElementById(id);
+            function shuffle(arr) {
+                const a = [...arr];
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
+            }
+
+            // ── DB wait ──
+            function waitForDb(cb, n = 30) {
+                if (window.db) cb();
+                else if (n > 0) setTimeout(() => waitForDb(cb, n - 1), 200);
+                else el('sa-stats').textContent = '❌ Database not available.';
+            }
+
+            // ══════════════════════════════════════════
+            // SLOT A — Fetch + Attendance
+            // ══════════════════════════════════════════
+            async function fetchChessPlayers() {
+                el('sa-stats').textContent = '⏳ Connecting to database…';
+                try {
+                    const snap = await window.db.collection('registrations').get();
+                    const seen = new Set();
+
+                    function add(name, regId, college) {
+                        const key = (name || '').toLowerCase().trim();
+                        if (key && !seen.has(key)) {
+                            seen.add(key);
+                            S.a.allPlayers.push({ name: name || 'Unknown', regId: regId || '—', college: college || '—' });
+                        }
+                    }
+
+                    snap.docs.forEach(d => {
+                        const r = d.data();
+                        let isChess = (r.event || '').toLowerCase().trim() === 'chess';
+                        if (!isChess && Array.isArray(r.events)) {
+                            isChess = r.events.some(e => {
+                                const n = typeof e === 'object' ? e.event || '' : e || '';
+                                return n.toLowerCase().trim() === 'chess';
+                            });
+                        }
+                        if (!isChess) return;
+                        add(r.name, r.regId, r.college);
+                        if (Array.isArray(r.members)) r.members.forEach(m => add(m.name, r.regId, m.college || r.college));
+                        if (r.teamMembersByEvent) {
+                            Object.entries(r.teamMembersByEvent).forEach(([ev, evData]) => {
+                                if (ev.toLowerCase().includes('chess')) {
+                                    const mems = Array.isArray(evData) ? evData : evData.members || [];
+                                    mems.forEach(m => add(m.name, r.regId, m.college || r.college));
+                                }
+                            });
+                        }
+                    });
+
+                    const c = S.a.allPlayers.length;
+                    if (c === 0) {
+                        el('sa-stats').textContent = '⚠️ No chess registrations found.';
+                        return;
+                    }
+                    el('sa-stats').innerHTML = `♟️ <strong>${c}</strong> player${c !== 1 ? 's' : ''} found — Mark attendance below`;
+                    renderAttendanceList();
+                    el('sa-att-section').style.display = 'block';
+                } catch (err) {
+                    el('sa-stats').textContent = '❌ ' + err.message;
+                }
+            }
+
+            // Render the attendance checklist
+            function renderAttendanceList() {
+                // Default everyone to present
+                S.a.allPlayers.forEach(p => {
+                    if (!(p.name in S.a.attendance)) S.a.attendance[p.name] = true;
+                });
+
+                el('sa-att-list').innerHTML = S.a.allPlayers.map(p => {
+                    const isPresent = S.a.attendance[p.name];
+                    return `
+            <div class="att-row ${isPresent ? 'present' : 'absent'}"
+                 id="att-row-${sanitizeId(p.name)}"
+                 onclick="toggleAtt('${esc(p.name)}')">
+                <div class="att-checkbox">${isPresent ? '✓' : ''}</div>
+                <div style="flex:1;">
+                    <div class="att-player-name">${p.name}</div>
+                    <div class="att-player-id">${p.regId}</div>
+                </div>
+                <span class="att-status">${isPresent ? 'Present' : 'Absent'}</span>
+            </div>`;
+                }).join('');
+                updateAttSummary();
+            }
+
+            function sanitizeId(name) { return name.replace(/[^a-zA-Z0-9]/g, '_'); }
+            function esc(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+            function toggleAtt(name) {
+                S.a.attendance[name] = !S.a.attendance[name];
+                const isPresent = S.a.attendance[name];
+                const rowId = 'att-row-' + sanitizeId(name);
+                const row = el(rowId);
+                if (row) {
+                    row.className = 'att-row ' + (isPresent ? 'present' : 'absent');
+                    row.querySelector('.att-checkbox').textContent = isPresent ? '✓' : '';
+                    row.querySelector('.att-status').textContent = isPresent ? 'Present' : 'Absent';
+                }
+                updateAttSummary();
+            }
+
+            function markAll(slot, present) {
+                S.a.allPlayers.forEach(p => { S.a.attendance[p.name] = present; });
+                renderAttendanceList();
+            }
+
+            function updateAttSummary() {
+                const total = S.a.allPlayers.length;
+                const present = S.a.allPlayers.filter(p => S.a.attendance[p.name]).length;
+                const absent = total - present;
+                el('sa-att-summary').innerHTML =
+                    `<span class="att-count pres-count">✅ ${present} Present</span>
+         <span class="att-count abs-count">❌ ${absent} Absent</span>`;
+                el('sa-att-btn').disabled = present === 0;
+            }
+
+            function confirmAttendance() {
+                S.a.present = S.a.allPlayers.filter(p => S.a.attendance[p.name]);
+                S.a.absent = S.a.allPlayers.filter(p => !S.a.attendance[p.name]);
+
+                if (S.a.present.length === 0) {
+                    alert('No present players! Mark at least one player as present.'); return;
+                }
+
+                // Push absent players into Slot B
+                S.b.absentPre = S.a.absent.map(p => ({ ...p }));
+                renderSlotBAbsent();
+
+                // Hide attendance, start tournament
+                el('sa-att-section').style.display = 'none';
+                el('sa-tournament-phase').style.display = 'block';
+
+                const c = S.a.present.length;
+                el('sa-stats').innerHTML = `✅ <strong>${c}</strong> present, <strong>${S.a.absent.length}</strong> absent → see Group B`;
+
+                S.a.active = shuffle(S.a.present);
+                startRound('a');
+            }
+
+            // ══════════════════════════════════════════
+            // SLOT B — Absent chips + manual
+            // ══════════════════════════════════════════
+            function renderSlotBAbsent() {
+                if (S.b.absentPre.length === 0) return;
+                el('sb-absent-label').style.display = 'block';
+                el('sb-absent-chips').innerHTML = S.b.absentPre.map(p =>
+                    `<div class="chip absent-chip" id="absent-chip-${sanitizeId(p.name)}">
+            ${p.name}
+            <span class="chip-x" onclick="removeAbsentChip('${esc(p.name)}')">✕</span>
+        </div>`
+                ).join('');
+                updateBStats();
+            }
+
+            function removeAbsentChip(name) {
+                S.b.absentPre = S.b.absentPre.filter(p => p.name !== name);
+                const chip = el('absent-chip-' + sanitizeId(name));
+                if (chip) chip.remove();
+                if (S.b.absentPre.length === 0) el('sb-absent-label').style.display = 'none';
+                updateBStats();
+            }
+
+            function addManualPlayerB() {
+                const input = el('sb-input');
+                const name = (input.value || '').trim();
+                if (!name) return;
+                const allB = [...S.b.absentPre, ...S.b.manualExtra];
+                if (allB.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                    alert('Player already listed!'); return;
+                }
+                S.b.manualExtra.push({ name, regId: 'Manual', college: '—' });
+                input.value = '';
+                renderManualChipsB();
+                updateBStats();
+            }
+
+            function removeManualChipB(name) {
+                S.b.manualExtra = S.b.manualExtra.filter(p => p.name !== name);
+                renderManualChipsB();
+                updateBStats();
+            }
+
+            function renderManualChipsB() {
+                el('sb-manual-chips').innerHTML = S.b.manualExtra.map(p =>
+                    `<div class="chip">
+            ${p.name}
+            <span class="chip-x" onclick="removeManualChipB('${esc(p.name)}')">✕</span>
+        </div>`
+                ).join('');
+            }
+
+            function updateBStats() {
+                const total = S.b.absentPre.length + S.b.manualExtra.length;
+                el('sb-stats').innerHTML = total > 0
+                    ? `👥 <strong>${total}</strong> player${total !== 1 ? 's' : ''} in Group B`
+                    : 'Absent players will appear here after attendance. You can also add manually.';
+            }
+
+            function assignSlot(slot) {
+                const s = slot === 'b'
+                    ? [...S.b.absentPre, ...S.b.manualExtra]
+                    : S.a.present;
+
+                if (s.length === 0) {
+                    alert(slot === 'a' ? 'No present players found.' : 'Add at least one player to Group B.');
+                    return;
+                }
+
+                if (slot === 'b') {
+                    S.b.allPlayers = s;
+                    S.b.active = shuffle(s);
+                    el('sb-entry-phase').style.display = 'none';
+                    el('sb-tournament-phase').style.display = 'block';
+                } else {
+                    S.a.active = shuffle(s);
+                }
+                startRound(slot);
+            }
+
+            // ══════════════════════════════════════════
+            // SHARED TOURNAMENT LOGIC
+            // ══════════════════════════════════════════
+            function startRound(slot) {
+                const s = slot === 'a' ? S.a : S.b;
+                const pfx = 's' + slot;
+
+                s.round++;
+                s.winners = {};
+                s.boards = [];
+
+                el(`${pfx}-round-badge`).textContent = `Round ${s.round}`;
+                el(`${pfx}-round-badge`).style.display = 'inline-block';
+                el(`${pfx}-next-btn`).style.display = 'none';
+                el(`${pfx}-prog-wrap`).style.display = 'none';
+                el(`${pfx}-loading`).style.display = 'block';
+                el(`${pfx}-boards`).innerHTML = '';
+
+                setTimeout(() => {
+                    const shuffled = shuffle(s.active);
+                    const total = Math.ceil(shuffled.length / 2);
+                    let html = '';
+
+                    for (let i = 0; i < total; i++) {
+                        const p1 = shuffled[i * 2] || null;
+                        const p2 = shuffled[i * 2 + 1] || null;
+                        s.boards.push({ p1, p2 });
+
+                        const extra = slot === 'b' ? ' slot-b' : '';
+
+                        const p1html = p1 ? `
+                <div class="player-slot" id="${pfx}-s${i}-1">
+                    <div style="flex:1;"><div class="pname">${p1.name}</div><div class="pid">${p1.regId}</div></div>
+                    <button class="win-btn" onclick="selectWinner('${slot}',${i},1)">🏆 Won</button>
+                </div>` : '';
+
+                        let p2html;
+                        if (p2) {
+                            p2html = `
+                <div class="player-slot" id="${pfx}-s${i}-2">
+                    <div style="flex:1;"><div class="pname">${p2.name}</div><div class="pid">${p2.regId}</div></div>
+                    <button class="win-btn" onclick="selectWinner('${slot}',${i},2)">🏆 Won</button>
+                </div>`;
+                        } else if (p1) {
+                            p2html = `
+                <div class="player-slot" id="${pfx}-s${i}-2" style="justify-content:center;">
+                    <button class="vol-btn" onclick="assignVol('${slot}',${i})">🙋 Assign Volunteer</button>
+                </div>`;
+                        } else { p2html = ''; }
+
+                        html += `
+                <div class="board-card${extra}" id="${pfx}-b${i}">
+                    <div class="board-label">♟ Board ${i + 1}</div>
+                    ${p1html}
+                    <div class="vs-tag">⚔ VS</div>
+                    ${p2html}
+                    <div class="winner-banner" id="${pfx}-ban${i}"></div>
+                </div>`;
+                    }
+
+                    el(`${pfx}-boards`).innerHTML = html;
+                    el(`${pfx}-loading`).style.display = 'none';
+                    el(`${pfx}-prog-wrap`).style.display = 'block';
+                    updateProg(slot);
+                    syncLiveState();
+                }, 350);
+            }
+
+            function reassignSlot(slot) {
+                const s = slot === 'a' ? S.a : S.b;
+                s.round--;            // will be re-incremented in startRound
+                s.active = shuffle(slot === 'a' ? S.a.present : S.b.allPlayers);
+                startRound(slot);
+            }
+
+            function selectWinner(slot, bi, pNum) {
+                const s = slot === 'a' ? S.a : S.b;
+                const pfx = 's' + slot;
+                const board = s.boards[bi];
+                const winner = pNum === 1 ? board.p1 : board.p2;
+                const lNum = pNum === 1 ? 2 : 1;
+
+                const ws = el(`${pfx}-s${bi}-${pNum}`);
+                const ls = el(`${pfx}-s${bi}-${lNum}`);
+                if (ws) { ws.classList.add('winner'); ws.classList.remove('loser'); }
+                if (ls) { ls.classList.add('loser'); ls.classList.remove('winner'); }
+
+                el(`${pfx}-b${bi}`).querySelectorAll('.win-btn').forEach((btn, idx) => {
+                    btn.classList.toggle('selected', idx === pNum - 1);
+                    btn.disabled = true;
+                });
+
+                const ban = el(`${pfx}-ban${bi}`);
+                ban.textContent = `🏆 Winner: ${winner.name}`;
+                ban.classList.add('show');
+                el(`${pfx}-b${bi}`).classList.add('done');
+
+                s.winners[bi] = winner;
+                updateProg(slot);
+                checkDone(slot);
+                syncLiveState();
+            }
+
+            function assignVol(slot, bi) {
+                const pfx = 's' + slot;
+                const cell = el(`${pfx}-s${bi}-2`);
+                cell.innerHTML = `
+        <div class="vol-wrap">
+            <input id="${pfx}-v${bi}" placeholder="Volunteer name…" maxlength="60"
+                onkeydown="if(event.key==='Enter') confirmVol('${slot}',${bi})" />
+            <button class="vol-ok" onclick="confirmVol('${slot}',${bi})">✅</button>
+        </div>`;
+                el(`${pfx}-v${bi}`).focus();
+            }
+
+            function confirmVol(slot, bi) {
+                const pfx = 's' + slot;
+                const input = el(`${pfx}-v${bi}`);
+                const name = (input ? input.value : '').trim();
+                if (!name) { alert('Enter a volunteer name.'); return; }
+                const s = slot === 'a' ? S.a : S.b;
+                s.boards[bi].p2 = { name, regId: 'Volunteer', college: '—' };
+                const cell = el(`${pfx}-s${bi}-2`);
+                cell.innerHTML = `
+        <div style="flex:1;"><div class="pname">🙋 ${name}</div><div class="pid" style="color:#16a34a;">Volunteer</div></div>
+        <button class="win-btn" onclick="selectWinner('${slot}',${bi},2)">🏆 Won</button>`;
+                updateProg(slot);
+            }
+
+            function updateProg(slot) {
+                const s = slot === 'a' ? S.a : S.b;
+                const pfx = 's' + slot;
+                const total = s.boards.length;
+                const decided = Object.keys(s.winners).length;
+                const pct = total > 0 ? Math.round(decided / total * 100) : 0;
+                el(`${pfx}-prog-text`).textContent = `${decided} of ${total} board${total !== 1 ? 's' : ''} decided`;
+                el(`${pfx}-prog-fill`).style.width = pct + '%';
+            }
+
+            function checkDone(slot) {
+                const s = slot === 'a' ? S.a : S.b;
+                const pfx = 's' + slot;
+                const total = s.boards.length;
+                const decided = Object.keys(s.winners).length;
+                if (decided >= total) {
+                    const btn = el(`${pfx}-next-btn`);
+                    btn.style.display = 'inline-block';
+                    btn.disabled = false;
+                    btn.textContent = `➡️ Next Round (${decided} Winners)`;
+                }
+            }
+
+            function nextRound(slot) {
+                const s = slot === 'a' ? S.a : S.b;
+                const pfx = 's' + slot;
+
+                s.history.push({
+                    round: s.round,
+                    matches: s.boards.map((b, i) => ({ p1: b.p1, p2: b.p2, winner: s.winners[i] || null }))
+                });
+                renderHistory(slot);
+
+                const winners = Object.values(s.winners);
+                if (winners.length === 1) {
+                    const champ = winners[0];
+                    const col = slot === 'a' ? 'var(--emirates-red)' : '#2563eb';
+                    el(`${pfx}-boards`).innerHTML = `
+            <div class="champion-card">
+                <div class="trophy">🏆</div>
+                <h3>${slot === 'a' ? 'Group A' : 'Group B'} Champion!</h3>
+                <p>${champ.name}</p>
+                <p class="sub">${champ.regId !== 'Volunteer' ? champ.regId : 'Volunteer'}</p>
+                <button onclick="resetSlot('${slot}')"
+                    style="margin-top:16px;background:${col};color:white;border:none;padding:9px 20px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.82rem;">
+                    🔄 New Tournament</button>
+            </div>`;
+                    el(`${pfx}-next-btn`).style.display = 'none';
+                    el(`${pfx}-prog-wrap`).style.display = 'none';
+                    el(`${pfx}-round-badge`).textContent = '🏆 Complete';
+                    el(`${pfx}-round-badge`).className = 'badge badge-done';
+
+                    // Store champion and try to open Grand Final
+                    GrandFinal.champions[slot] = champ;
+                    checkGrandFinal();
+                    syncLiveState();
+                    return;
+                }
+
+                s.active = winners;
+                startRound(slot);
+            }
+
+            function renderHistory(slot) {
+                const s = slot === 'a' ? S.a : S.b;
+                const pfx = 's' + slot;
+                el(`${pfx}-history`).style.display = 'block';
+                el(`${pfx}-history-list`).innerHTML = s.history.map(rh => `
+        <div class="h-round">
+            <div class="h-rtitle">Round ${rh.round}</div>
+            ${rh.matches.map((m, i) => {
+                    const p1n = m.p1 ? m.p1.name : '—';
+                    const p2n = m.p2 ? m.p2.name : 'Bye';
+                    const w = m.winner ? m.winner.name : '—';
+                    const p1c = m.winner && m.p1 && m.winner.name === m.p1.name ? 'hw' : 'hl';
+                    const p2c = m.winner && m.p2 && m.winner.name === m.p2.name ? 'hw' : 'hl';
+                    return `<div class="h-match">
+                    <span>B${i + 1}:</span>
+                    <span class="${p1c}">${p1n}</span>
+                    <span style="color:#94a3b8;">vs</span>
+                    <span class="${p2c}">${p2n}</span>
+                    ${m.winner ? `<span style="margin-left:auto;color:#16a34a;font-size:0.7rem;font-weight:700;">🏆 ${w}</span>` : ''}
+                </div>`;
+                }).join('')}
+        </div>`).join('');
+            }
+
+            function resetSlot(slot) {
+                if (slot === 'a') {
+                    Object.assign(S.a, { allPlayers: [], attendance: {}, present: [], absent: [], round: 0, active: [], winners: {}, boards: [], history: [] });
+                    el('sa-att-section').style.display = 'none';
+                    el('sa-tournament-phase').style.display = 'none';
+                    el('sa-stats').textContent = '⏳ Loading from database…';
+                    el('sa-round-badge').style.display = 'none';
+                    el('sa-history').style.display = 'none';
+                    fetchChessPlayers();
+                } else {
+                    Object.assign(S.b, { absentPre: [], manualExtra: [], allPlayers: [], round: 0, active: [], winners: {}, boards: [], history: [] });
+                    el('sb-absent-chips').innerHTML = '';
+                    el('sb-absent-label').style.display = 'none';
+                    el('sb-manual-chips').innerHTML = '';
+                    el('sb-entry-phase').style.display = 'block';
+                    el('sb-tournament-phase').style.display = 'none';
+                    el('sb-round-badge').style.display = 'none';
+                    el('sb-history').style.display = 'none';
+                    el('sb-stats').textContent = 'Absent players will appear here after attendance. You can also add manually.';
+                }
+                syncLiveState();
+            }
+
+            // ── Grand Final ──
+            const GrandFinal = { champions: {}, overallWinner: null };
+
+            async function syncLiveState() {
+                if (!window.db) return;
+                const liveData = {
+                    target: 'chessLive',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    a: {
+                        round: S.a.round,
+                        champion: GrandFinal.champions['a'] || null,
+                        boards: S.a.boards.map((b, i) => ({
+                            p1: b.p1, p2: b.p2, winner: S.a.winners[i] || null
+                        }))
+                    },
+                    b: {
+                        round: S.b.round,
+                        champion: GrandFinal.champions['b'] || null,
+                        boards: S.b.boards.map((b, i) => ({
+                            p1: b.p1, p2: b.p2, winner: S.b.winners[i] || null
+                        }))
+                    },
+                    grandFinal: {
+                        active: !!(GrandFinal.champions['a'] && GrandFinal.champions['b']),
+                        winner: GrandFinal.overallWinner || null
+                    }
+                };
+
+                try {
+                    await window.db.collection('public_data').doc('chessLive').set(liveData);
+                    console.log("Live state synced to Firebase.");
+                } catch (err) {
+                    console.error("Error syncing live state:", err);
+                }
+            }
+
+            function checkGrandFinal() {
+                const gf = el('grand-final');
+                gf.classList.add('show');
+
+                const ca = GrandFinal.champions['a'] || null;
+                const cb = GrandFinal.champions['b'] || null;
+
+                // Update waiting badges
+                const wa = el('gf-wait-a'); const wb = el('gf-wait-b');
+                el('gf-wait-a-text').textContent = ca ? `✅ ${ca.name}` : 'In progress…';
+                el('gf-wait-b-text').textContent = cb ? `✅ ${cb.name}` : 'Not started';
+                if (ca) wa.classList.add('ready');
+                if (cb) wb.classList.add('ready');
+
+                if (ca && cb) {
+                    // Both ready — show the final match
+                    el('gf-waiting').style.display = 'none';
+                    el('gf-p1-name').textContent = ca.name;
+                    el('gf-p1-id').textContent = ca.regId !== 'Volunteer' ? ca.regId : 'Volunteer';
+                    el('gf-p2-name').textContent = cb.name;
+                    el('gf-p2-id').textContent = cb.regId !== 'Volunteer' ? cb.regId : 'Volunteer';
+                    el('gf-match').style.display = 'block';
+                }
+            }
+
+            function selectGrandFinalWinner(pNum) {
+                const ca = GrandFinal.champions['a'];
+                const cb = GrandFinal.champions['b'];
+                const winner = pNum === 1 ? ca : cb;
+
+                // Style player slots
+                el('gf-p1').classList.toggle('winner', pNum === 1);
+                el('gf-p1').classList.toggle('loser', pNum !== 1);
+                el('gf-p2').classList.toggle('winner', pNum === 2);
+                el('gf-p2').classList.toggle('loser', pNum !== 2);
+
+                // Lock buttons
+                const b1 = el('gf-btn-1'); const b2 = el('gf-btn-2');
+                b1.disabled = true; b2.disabled = true;
+                b1.classList.toggle('selected', pNum === 1);
+                b2.classList.toggle('selected', pNum === 2);
+
+                // Show result
+                GrandFinal.overallWinner = winner;
+                el('gf-champion-name').textContent = `🎖️ ${winner.name} — Overall Champion!`;
+                el('gf-result').classList.add('show');
+                syncLiveState();
+            }
+
+            // ── Certificate Portal Logic ──
+            async function loadCertPlayers() {
+                const listEl = el('cert-player-list');
+                const loadingEl = el('cert-loading');
+
+                try {
+                    const snap = await db.collection('registrations').where('event', '==', 'Chess').get();
+                    loadingEl.style.display = 'none';
+
+                    if (snap.empty) {
+                        listEl.innerHTML = '<div class="empty-msg">No chess players found.</div>';
+                        return;
+                    }
+
+                    const players = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    // Sort by name
+                    players.sort((a, b) => a.name.localeCompare(b.name));
+
+                    listEl.innerHTML = players.map(p => `
+                    <div class="cert-card">
+                        <div class="cert-info">
+                            <div class="cert-name">${p.name}</div>
+                            <div class="cert-sub">${p.regId} | ${p.email}</div>
+                        </div>
+                        <div class="cert-actions">
+                            <span class="cert-status ${p.chessCertificateData ? 'status-ready' : 'status-none'}">
+                                ${p.chessCertificateData ? '✅ Ready' : '⏳ Missing'}
+                            </span>
+                            <button class="btn-upload" onclick="triggerFileSelect('${p.id}')">
+                                📤 ${p.chessCertificateData ? 'Replace' : 'Upload'}
+                            </button>
+                            <input type="file" id="file-${p.id}" accept="image/*" style="display:none" onchange="handleFileSelect(event, '${p.id}')">
+                        </div>
+                    </div>
+                `).join('');
+
+                } catch (err) {
+                    console.error("Load cert players error:", err);
+                    loadingEl.textContent = "❌ Failed to load players.";
+                }
+            }
+
+            function triggerFileSelect(playerId) {
+                document.getElementById(`file-${playerId}`).click();
+            }
+
+            async function handleFileSelect(event, playerId) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const btn = event.target.parentElement.querySelector('.btn-upload');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Processing...';
+
+                try {
+                    const base64 = await compressImage(file);
+                    await db.collection('registrations').doc(playerId).update({
+                        chessCertificateData: base64,
+                        certReleased: true // Ensure it shows up in their portal
+                    });
+                    alert("Certificate uploaded successfully!");
+                    loadCertPlayers();
+                } catch (err) {
+                    console.error("Upload error:", err);
+                    alert("Upload failed. Image might be too large.");
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            }
+
+            function compressImage(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = e => {
+                        const img = new Image();
+                        img.src = e.target.result;
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+
+                            // Target ~1200px width for good print quality but small size
+                            const maxW = 1200;
+                            if (width > maxW) {
+                                height = Math.round(height * (maxW / width));
+                                width = maxW;
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            // JPEG at 0.7 quality is usually < 200KB for 1200px
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                            resolve(dataUrl);
+                        };
+                    };
+                    reader.onerror = reject;
+                });
+            }
+
+            // ── Init ──
+            document.addEventListener('DOMContentLoaded', () => {
+                waitForDb(fetchChessPlayers);
+                waitForDb(loadCertPlayers);
+            });
+        </script>
+</body>
+
+</html>

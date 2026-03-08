@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com;">
-    <title>Admin Login – Elexsiya 26</title>
+    <title>Chess Admin Login – Elexsiya 26</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -119,17 +119,17 @@
     <div class="page-wrap">
         <div class="login-card">
             <div class="login-header">
-                <div class="lock-icon">🔐</div>
-                <h1>Admin Login</h1>
-                <p>Authorized personnel only</p>
+                <div class="lock-icon">♟️</div>
+                <h1>Chess Admin</h1>
+                <p>Authorized Event Personnel</p>
             </div>
 
-            <div class="login-error" id="loginError">Invalid email or password</div>
+            <div class="login-error" id="loginError">Invalid username or password</div>
 
             <form id="loginForm" novalidate>
                 <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Enter admin username" autocomplete="username" />
+                    <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
                 </div>
 
                 <div class="form-group">
@@ -148,17 +148,21 @@
         </div>
     </div>
 
+    <!-- Firebase for shared utilities (logging) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="shared.js"></script>
     <script>
-        // Anti-Clickjacking
-        if (window.top !== window.self) { window.top.location = window.self.location; }
-
-        if (sessionStorage.getItem('adminLoggedIn') === 'true') {
-            window.location.href = 'dashboard.html';
+        // Use sha256 to hash user input locally
+        async function sha256(str) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
         }
+
+        // Expected hashes for chess28 and hariadmin
+        const CHESS_USER_HASH = '3e760e57d68304f032d8f2e7b419b0961314ba1e0a0d1cce900c37ae1e06f522';
+        const CHESS_PASS_HASH = '590ca3a88b3afafb3076cbddd8c7557cbbde4873c13c093b347a4b930d4fc749';
 
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
@@ -168,49 +172,20 @@
             const errorEl = document.getElementById('loginError');
             const btn = document.querySelector('.btn-login');
 
-            const now = Date.now();
-            const lastAttempt = parseInt(localStorage.getItem('lastAdminLoginAttempt') || '0');
-            const attemptCount = parseInt(localStorage.getItem('adminLoginAttempts') || '0');
-
-            if (attemptCount >= 10 && now - lastAttempt < 60000) {
-                errorEl.textContent = 'Too many failed attempts. Please try again in 1 minute.';
-                errorEl.style.display = 'block';
-                return;
-            }
-
             btn.disabled = true;
             btn.textContent = '⏳ Verifying...';
 
-            const result = await verifyAdmin(username, password);
-            if (result.success) {
-                sessionStorage.setItem('adminLoggedIn', 'true');
-                sessionStorage.setItem('adminToken', result.token); // Secure token
-                if (result.isSuper) {
-                    sessionStorage.setItem('isSuperUser', 'true');
-                    sessionStorage.removeItem('isTreasurer');
-                    sessionStorage.removeItem('isOnSpot');
-                } else if (result.isTreasurer) {
-                    sessionStorage.setItem('isTreasurer', 'true');
-                    sessionStorage.removeItem('isSuperUser');
-                    sessionStorage.removeItem('isOnSpot');
-                } else if (result.isOnSpot) {
-                    sessionStorage.setItem('isOnSpot', 'true');
-                    sessionStorage.removeItem('isSuperUser');
-                    sessionStorage.removeItem('isTreasurer');
-                } else {
-                    sessionStorage.removeItem('isSuperUser');
-                    sessionStorage.removeItem('isTreasurer');
-                    sessionStorage.removeItem('isOnSpot');
-                }
-                localStorage.removeItem('adminLoginAttempts');
-                window.location.href = 'dashboard.html';
-            } else {
-                localStorage.setItem('lastAdminLoginAttempt', now.toString());
-                localStorage.setItem('adminLoginAttempts', (attemptCount + 1).toString());
+            const uHash = await sha256(username);
+            const pHash = await sha256(password);
 
+            if (uHash === CHESS_USER_HASH && pHash === CHESS_PASS_HASH) {
+                // Success
+                sessionStorage.setItem('chessAdminLoggedIn', 'true');
+                window.location.href = 'chess_admin.html';
+            } else {
+                // Fail
                 btn.disabled = false;
                 btn.textContent = '🔓 Login';
-                errorEl.textContent = 'Invalid email or password';
                 errorEl.style.display = 'block';
                 errorEl.style.animation = 'fadeIn .3s ease-out';
             }

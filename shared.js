@@ -10,16 +10,16 @@ const ADMIN_PASS_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef7
 const REG_FEE = 499;
 
 // Super User Hash
-const SUPER_USER_HASH = '1f6cbaaa52d8e0f10c3ece3145afc32d43ed0b471ff03b54d6df1a0c441c00cd'; // sha256('rakulkavi')
-const SUPER_PASS_HASH = '9a31a90c12eabfdf5443fa7a9b0c0340f1a9a83d735c03c5b8b9f1d2e1c7f40d'; // sha256('SuperSecr3t2026!')
+const SUPER_USER_HASH = 'c45c64463077e8bda2da8e9a67d3e3ca067d961818b71693b348f2892b52af65'; // sha256('rakulkavi')
+const SUPER_PASS_HASH = '9f2427212948508570676d14d1249503fa8d01f90ed80e13dcf6b228a46a3f7b'; // sha256('SuperSecr3t2026!')
 
 // Treasurer Hash
-const TREASURER_USER_HASH = '4747766b2c4cdd203673c68b7529323381aeb977717462bbbc9f8ce3242ba4e6'; // sha256('elexsiya26')
-const TREASURER_PASS_HASH = 'f5e6b99b52eb8de32810ce8ea08c1ea98471bd80e4b8555fa39b85c1ec88574d'; // sha256('Treasury$ync#26')
+const TREASURER_USER_HASH = '0c5d4d6f1aa2314053376936227d7185fcce6ead760a4c800dc2447e93997fc7'; // sha256('elexsiya26')
+const TREASURER_PASS_HASH = '48c703a9470312c0070cd91fbe9c3227ebfa97103ca89ea8ee6f43a447ed3a8a'; // sha256('Treasury$ync#26')
 
 // On-Spot Admin Hash
-const ONSPOT_USER_HASH = '4747766b2c4cdd203673c68b7529323381aeb977717462bbbc9f8ce3242ba4e6'; // sha256('elexsiya26')
-const ONSPOT_PASS_HASH = 'd8cc681ba4c9dbe39f50e9bd28ff9634e2c2ddf2dfbdce65b5ec1e959ce5dace'; // sha256('ece@26')
+const ONSPOT_USER_HASH = '0c5d4d6f1aa2314053376936227d7185fcce6ead760a4c800dc2447e93997fc7'; // sha256('elexsiya26')
+const ONSPOT_PASS_HASH = '1c78e06b3165aad56a5d86c2a2fde070002dc673c7d7841724eb7bd6f6aeedde'; // sha256('ece@26')
 
 const EVENT_WHATSAPP_LINKS = {
   'Project Expo': 'https://chat.whatsapp.com/BCWwTp0oD8S3OVqYPQqt2y?mode=gi_t',
@@ -350,6 +350,31 @@ async function uploadPaymentScreenshot(regId, file) {
     return base64; // Return base64 so callers can use it if needed
   } catch (err) {
     console.error('[UPLOAD] uploadPaymentScreenshot error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Delete a screenshot document from Firestore.
+ * @param {string} regId 
+ */
+async function deleteScreenshot(regId) {
+  try {
+    // 1. Delete the screenshot document
+    await window.db.collection('screenshots').doc(regId).delete();
+
+    // 2. Try to update the registration, but only if it exists
+    const regRef = window.db.collection('registrations').doc(regId);
+    const regDoc = await regRef.get();
+
+    if (regDoc.exists) {
+      await regRef.update({
+        hasScreenshot: false,
+        paymentStatus: 'Pending' // Reset to pending if screenshot is deleted
+      });
+    }
+  } catch (err) {
+    console.error('[DB] deleteScreenshot error:', err);
     throw err;
   }
 }

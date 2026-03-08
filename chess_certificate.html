@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com;">
+    <title>Chess Certificate Portal – Elexsiya 26</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --emirates-red: #C60C30;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-dark);
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* ── Certificate Display ── */
+        .cert-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .cert-img-wrap {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid #e2e8f0;
+            background: #f1f5f9;
+        }
+
+        .cert-img {
+            width: 100%;
+            display: block;
+        }
+
+        /* ── Pending State ── */
+        .pending-box {
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .pending-box .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .pending-box h2 {
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .pending-box p {
+            color: var(--text-muted);
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ── Buttons ── */
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+        }
+
+        .btn-red {
+            background: var(--emirates-red);
+            color: white;
+            box-shadow: 0 8px 16px rgba(198, 12, 48, 0.2);
+        }
+
+        .btn-red:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px rgba(198, 12, 48, 0.3);
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--text-muted);
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-outline:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        @media print {
+
+            .btn,
+            .header p,
+            .actions {
+                display: none;
+            }
+
+            body {
+                padding: 0;
+                background: white;
+            }
+
+            .cert-card {
+                box-shadow: none;
+                padding: 0;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loadingOverlay">
+        <div style="text-align:center;">
+            <div style="font-size:2.5rem; margin-bottom:15px;">♟️</div>
+            <p style="font-weight:700;">Loading Chess Portal...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1 id="welcomeText">♟️ Chess Certificate</h1>
+            <p id="playerInfo">Logged in as —</p>
+        </div>
+
+        <div id="certArea">
+            <!-- Content injected here -->
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-red" id="downloadBtn" style="display:none;" onclick="downloadCert()">📥 Download
+                Certificate</button>
+            <a href="login.html" class="btn btn-outline" onclick="sessionStorage.clear()">✕ Logout</a>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="shared.js"></script>
+    <script>
+        async function fetchCert() {
+            const user = JSON.parse(sessionStorage.getItem('partUser'));
+
+            // Auth check
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('playerInfo').textContent = `Logged in as ${user.name} (${user.regId})`;
+
+            try {
+                // Fetch fresh doc to see certificate
+                const snap = await db.collection('registrations').doc(user.regId).get();
+                if (!snap.exists) throw new Error("Document not found");
+
+                const data = snap.data();
+                const certArea = document.getElementById('certArea');
+
+                if (data.chessCertificateData) {
+                    // Certificate found
+                    certArea.innerHTML = `
+                        <div class="cert-card">
+                            <div class="cert-img-wrap">
+                                <img src="${data.chessCertificateData}" class="cert-img" id="certImg" alt="Your Chess Certificate">
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('downloadBtn').style.display = 'flex';
+                } else {
+                    // Pending status
+                    certArea.innerHTML = `
+                        <div class="pending-box">
+                            <div class="icon">🏆</div>
+                            <h2>Tournament in Progress</h2>
+                            <p>Your unique participation certificate will be available here once the Chess Admin completes and uploads it. Thank you for participating!</p>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('loadingOverlay').style.display = 'none';
+
+            } catch (err) {
+                console.error(err);
+                alert("Failed to load certificate data. Please reload.");
+            }
+        }
+
+        function downloadCert() {
+            const img = document.getElementById('certImg');
+            const link = document.createElement('a');
+            link.href = img.src;
+            link.download = `Elexsiya26_Chess_Certificate_${Date.now()}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        fetchCert();
+    </script>
+</body>
+
+</html>

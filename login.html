@@ -148,6 +148,12 @@
             <button type="submit" class="btn-login" id="loginSubmit">Login to Portal</button>
             <div id="errorMsg" class="error-msg"></div>
         </form>
+        <div id="chessLoginPrompt" style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
+            <p style="font-size:0.85rem; color:var(--text-muted); cursor:pointer;" onclick="toggleChessMode()"
+                id="toggleText">
+                ♟️ Chess Participant? <span style="color:var(--emirates-red); font-weight:700;">Login here</span>
+            </p>
+        </div>
         <p style="margin-top: 25px; font-size: 0.85rem; color: var(--text-muted);">
             Need help? Contact the symposium treasurer.
         </p>
@@ -158,6 +164,26 @@
     <script src="firebase-config.js"></script>
     <script src="shared.js"></script>
     <script>
+        let isChessMode = false;
+        function toggleChessMode() {
+            isChessMode = !isChessMode;
+            const h2 = document.querySelector('h2');
+            const btn = document.getElementById('loginSubmit');
+            const toggle = document.getElementById('toggleText');
+
+            if (isChessMode) {
+                h2.textContent = "♟️ Chess Participant Portal";
+                btn.textContent = "Enter Chess ♟️ Portal";
+                toggle.innerHTML = "🔙 Regular Participant? <span style='color:var(--emirates-red); font-weight:700;'>Login here</span>";
+                document.querySelector('.login-card').style.borderColor = "#000";
+            } else {
+                h2.textContent = "Participant Portal";
+                btn.textContent = "Login to Portal";
+                toggle.innerHTML = "♟️ Chess Participant? <span style='color:var(--emirates-red); font-weight:700;'>Login here</span>";
+                document.querySelector('.login-card').style.borderColor = "transparent";
+            }
+        }
+
         document.getElementById('partLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('loginSubmit');
@@ -195,6 +221,10 @@
                     throw new Error('Your registration is pending payment verification.');
                 }
 
+                if (isChessMode && userData.event !== 'Chess') {
+                    throw new Error('This portal is strictly for Chess participants.');
+                }
+
                 // Generate signature for security (Vuln 24)
                 const signature = await _calcChecksum({
                     regId: userData.regId,
@@ -216,7 +246,7 @@
                 }));
 
                 localStorage.removeItem('partLoginAttempts');
-                window.location.href = 'certificate.html';
+                window.location.href = isChessMode ? 'chess_certificate.html' : 'certificate.html';
             } catch (err) {
                 localStorage.setItem('lastPartLoginAttempt', now.toString());
                 localStorage.setItem('partLoginAttempts', (attemptCount + 1).toString());

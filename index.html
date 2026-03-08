@@ -49,6 +49,13 @@
         <li><a href="#contact">Contact</a></li>
         <li><a href="login.html" style="color: var(--primary); font-weight: 700;">Login</a></li>
         <li><a href="admin.html">Admin</a></li>
+        <li class="dropdown-nav">
+          <a href="#" class="dropdown-toggle">Service <span class="arrow">▼</span></a>
+          <ul class="dropdown-menu">
+            <li><a href="#" onclick="openEventModal('chess', true); return false;">Chess</a></li>
+            <li><a href="#" onclick="openEventModal('idea-forge'); return false;">Ideaforge</a></li>
+          </ul>
+        </li>
         <li><a href="events.html" class="nav-cta">Register Now</a></li>
       </ul>
       <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
@@ -380,12 +387,14 @@
       <div id="eventModal" class="emodal-overlay" onclick="if(event.target===this)closeEventModal()">
         <div class="emodal-card" id="eventModalCard">
           <button class="emodal-close" onclick="closeEventModal()">✕</button>
+          <button id="eModalAdminBtn" class="emodal-admin" onclick="openEventAdmin()" style="display:none;"
+            title="Admin Dashboard">⚙️</button>
           <div class="emodal-icon" id="eModalIcon"></div>
           <h2 class="emodal-title" id="eModalTitle"></h2>
           <span class="emodal-tag" id="eModalTag"></span>
           <p class="emodal-desc" id="eModalDesc"></p>
           <div class="emodal-highlights" id="eModalHighlights"></div>
-          <a href="events.html" class="emodal-cta">Register Now →</a>
+          <a href="events.html" class="emodal-cta" id="eModalRegisterBtn">Register Now →</a>
         </div>
       </div>
     </div>
@@ -820,6 +829,32 @@
       background: #20BA5A;
       transform: translateY(-2px);
     }
+
+    /* ---------- Event Modal Admin Button ---------- */
+    .emodal-admin {
+      position: absolute;
+      top: 20px;
+      right: 60px;
+      /* Position to the left of the close button */
+      background: #f5f5f5;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: #666;
+      transition: background 0.2s;
+      z-index: 10;
+    }
+
+    .emodal-admin:hover {
+      background: #eee;
+    }
   </style>
 
   <script>
@@ -1220,7 +1255,7 @@
     };
 
     /* ── Open modal ──────────────────────────────────────────── */
-    function openEventModal(id) {
+    function openEventModal(id, fetchLive = false) {
       const d = EVENT_DATA[id]; if (!d) return;
       document.getElementById('eModalIcon').textContent = d.icon;
       document.getElementById('eModalTitle').textContent = d.name;
@@ -1236,8 +1271,143 @@
           `<div class="emodal-highlight-item"><span>${ico}</span>${txt}</div>`
         ).join('');
       }
+
+      const adminBtn = document.getElementById('eModalAdminBtn');
+      if (adminBtn) {
+        if (id === 'chess' || id === 'idea-forge') {
+          adminBtn.style.display = 'flex';
+          adminBtn.dataset.eventId = id;
+        } else {
+          adminBtn.style.display = 'none';
+        }
+      }
+
+      // Hide Register button for Live Chess view
+      const regBtn = document.getElementById('eModalRegisterBtn');
+      if (regBtn) {
+        if (id === 'chess' && fetchLive) {
+          regBtn.style.display = 'none';
+        } else {
+          regBtn.style.display = '';
+        }
+      }
+
       document.getElementById('eventModal').classList.add('open');
       document.body.style.overflow = 'hidden';
+
+      // Live Chess Tournament Data Fetch
+      if (id === 'chess' && fetchLive) {
+        fetchChessLive(hl);
+      }
+    }
+
+    async function fetchChessLive(hlNode) {
+      // Show loading state
+      hlNode.innerHTML = `
+            <div style="text-align:center; padding: 40px 20px;">
+                <div class="loader-spinner" style="margin: 0 auto 15px;"></div>
+                <div style="font-weight:600; color:var(--text-muted); font-size: 0.9rem;">Fetching Live Tournament Status...</div>
+                <style>
+                    .loader-spinner { width:34px; height:34px; border:3px solid #f3f3f3; border-top:3px solid var(--emirates-red); border-radius:50%; animation:spin 1s linear infinite; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                </style>
+            </div>
+        `;
+
+      try {
+        if (!window.db) throw new Error("Firebase not ready");
+        const docRef = window.db.collection('public_data').doc('chessLive');
+        const snap = await docRef.get();
+
+        if (!snap.exists) {
+          hlNode.innerHTML = `<div style="text-align:center; padding: 30px; font-weight:600; color:var(--text-muted);">The tournament has not started yet.</div>`;
+          return;
+        }
+
+        const data = snap.data();
+        let html = '';
+
+        // Grand Final Winner
+        if (data.grandFinal && data.grandFinal.winner) {
+          html += `
+                <div style="background:linear-gradient(135deg, var(--emirates-red) 0%, #1d1d1d 100%); padding:20px; border-radius:12px; margin-bottom:20px; text-align:center; color:white; box-shadow:0 8px 24px rgba(198,12,48,.2);">
+                    <div style="font-size:3rem; line-height:1; margin-bottom:8px;">🏆</div>
+                    <div style="font-size:0.8rem; text-transform:uppercase; letter-spacing:1px; opacity:0.8; font-weight:700;">Overall Elexsiya 26 Chess Champion</div>
+                    <div style="font-size:1.6rem; font-family:var(--font-heading); font-weight:800; margin-top:4px;">${data.grandFinal.winner.name}</div>
+                    <div style="font-size:0.85rem; opacity:0.8; margin-top:4px;">${data.grandFinal.winner.regId}</div>
+                </div>`;
+        }
+
+        // Function to render a group
+        const renderGroup = (gData, title, color, badgeClass) => {
+          let gHtml = `<div style="margin-bottom: 24px;">
+                    <div style="font-size:1.05rem; font-weight:800; color:${color}; margin-bottom: 12px; display:flex; align-items:center; gap:8px;">
+                        <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${color};"></span>
+                        ${title}
+                    </div>`;
+
+          if (gData.champion) {
+            gHtml += `
+                    <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:8px; padding:14px; text-align:center; margin-bottom:12px;">
+                        <span style="font-size:1.5rem;">🥇</span>
+                        <div style="font-weight:700; font-size:1.1rem; color:var(--text-dark); margin-top:4px;">${gData.champion.name}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${gData.champion.regId !== 'Volunteer' ? gData.champion.regId : 'Volunteer'}</div>
+                    </div>`;
+          } else if (gData.boards && gData.boards.length > 0) {
+            gHtml += `<div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Round ${gData.round} Active Boards</div>`;
+            gData.boards.forEach((b, i) => {
+              const p1n = b.p1 ? b.p1.name : "—";
+              const p2n = b.p2 ? b.p2.name : "Waiting/Bye";
+
+              let p1Style = "flex:1; text-align:center; padding:8px 4px; font-weight:600; font-size:0.9rem;";
+              let p2Style = "flex:1; text-align:center; padding:8px 4px; font-weight:600; font-size:0.9rem;";
+
+              if (b.winner) {
+                if (b.winner.name === p1n) {
+                  p1Style += " background:#f0fdf4; color:#16a34a; border-radius:6px;";
+                  p2Style += " opacity:0.4; text-decoration:line-through;";
+                } else if (b.winner.name === p2n) {
+                  p2Style += " background:#f0fdf4; color:#16a34a; border-radius:6px;";
+                  p1Style += " opacity:0.4; text-decoration:line-through;";
+                }
+              }
+
+              gHtml += `
+                        <div style="display:flex; align-items:center; padding:10px; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:8px; background:white;">
+                            <div style="width:28px; height:28px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; color:#64748b; margin-right:10px;">${i + 1}</div>
+                            <div style="${p1Style}">${p1n}</div>
+                            <div style="font-size:0.7rem; font-weight:800; color:var(--emirates-red); padding:0 10px;">VS</div>
+                            <div style="${p2Style}">${p2n}</div>
+                        </div>`;
+            });
+          } else {
+            gHtml += `<div style="font-size:0.85rem; color:var(--text-muted); font-style:italic;">No active matches.</div>`;
+          }
+          gHtml += `</div>`;
+          return gHtml;
+        };
+
+        // Render groups
+        if (data.a) html += renderGroup(data.a, "Group A (Registered)", "var(--emirates-red)");
+        if (data.b) html += renderGroup(data.b, "Group B (Late Entry)", "#2563eb");
+
+        hlNode.innerHTML = html || `<div style="text-align:center; padding: 30px; font-weight:600; color:var(--text-muted);">The tournament is currently idle.</div>`;
+
+      } catch (e) {
+        console.error(e);
+        hlNode.innerHTML = `<div style="text-align:center; padding: 30px; color:var(--emirates-red); font-weight:600;">Error fetching live data. Please try again later.</div>`;
+      }
+    }
+
+    /* ── Handle Event Admin Click ────────────────────────────── */
+    function openEventAdmin() {
+      const btn = document.getElementById('eModalAdminBtn');
+      const eventId = btn.dataset.eventId;
+      if (eventId === 'chess') {
+        window.location.href = 'chess_admin_login.html';
+      } else {
+        window.location.href = 'admin.html';
+      }
     }
 
     /* ── Close modal ─────────────────────────────────────────── */
