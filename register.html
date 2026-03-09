@@ -972,16 +972,27 @@
             async function submitForm(e) {
                 e.preventDefault();
 
-                // Rate Limiting (Vulnerability 7 Fix)
+                // Rate Limiting (Relaxed to 10s for multiple registrations)
                 const lastAttempt = localStorage.getItem('lastRegAttempt');
-                if (lastAttempt && Date.now() - parseInt(lastAttempt) < 60000) {
-                    alert('Please wait at least 60 seconds between registration attempts to prevent spam.');
+                if (lastAttempt && Date.now() - parseInt(lastAttempt) < 10000) {
+                    alert('Please wait at least 10 seconds between registration attempts.');
                     return;
                 }
-                localStorage.setItem('lastRegAttempt', Date.now().toString());
 
                 const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Saving...'; }
+                if (!submitBtn || submitBtn.disabled) return; // Prevent double submission
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = '⏳ Saving...';
+
+                // Safety Timeout: re-enable button if it takes more than 15s
+                const submissionTimeout = setTimeout(() => {
+                    if (submitBtn.disabled && submitBtn.textContent.includes('Saving')) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '🚀 Proceed to Payment';
+                        alert("⚠️ Saving is taking longer than expected. Please check your internet and try again. If it still fails, contact support.");
+                    }
+                }, 15000);
 
                 // Fetch registrations once for all validations (major performance fix)
                 let existingRegistrations = [];
@@ -1038,12 +1049,14 @@
                     allSectionData.push(sectionData);
                 }
 
-
-
                 if (!valid) {
-                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🚀 Proceed to Payment'; }
+                    clearTimeout(submissionTimeout);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '🚀 Proceed to Payment';
                     return;
                 }
+
+                localStorage.setItem('lastRegAttempt', Date.now().toString());
 
                 try {
                     const feeInfo = getFeeInfo();
@@ -1078,12 +1091,15 @@
                         registeredAt: new Date().toISOString()
                     });
 
+                    clearTimeout(submissionTimeout);
                     sessionStorage.setItem('currentRegId', regId);
                     window.location.href = 'payment.html';
                 } catch (error) {
+                    clearTimeout(submissionTimeout);
                     console.error("Submission failed:", error);
                     alert("⚠️ Registration failed. Please try again.");
-                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🚀 Proceed to Payment'; }
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '🚀 Proceed to Payment';
                 }
             }
 

@@ -142,6 +142,7 @@ async function addRegistration(reg) {
 
   try {
     await window.db.collection('registrations').doc(reg.regId).set(reg);
+    _registrationsCache = null; // Clear cache to ensure next fetch gets fresh data
   } catch (err) {
     console.error('[DB] addRegistration error:', err);
     if (err.code === 'permission-denied') {
@@ -397,6 +398,9 @@ async function deleteScreenshot(regId) {
 async function generateRegId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let id;
+  let attempts = 0;
+  const MAX_ATTEMPTS = 5;
+
   do {
     id = 'ELX-';
     const randomArray = new Uint32Array(8);
@@ -404,15 +408,19 @@ async function generateRegId() {
     for (let i = 0; i < 8; i++) {
       id += chars[randomArray[i] % chars.length];
     }
-    // Check Firestore for this ID. Catch permissions error so it doesn't hang!
+
+    attempts++;
+
+    // Check Firestore for this ID.
     try {
       const doc = await window.db.collection('registrations').doc(id).get();
       if (!doc.exists) break;
     } catch (err) {
-      console.warn("Could not check reg ID uniqueness (likely permissions):", err);
-      break; // Assume it's unique enough for now if we can't read the DB
+      console.warn("Could not check reg ID uniqueness:", err);
+      break;
     }
-  } while (true);
+  } while (attempts < MAX_ATTEMPTS);
+
   return id;
 }
 
