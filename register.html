@@ -515,6 +515,19 @@
     <script src="shared.js" onerror="alert('Failed to load shared.js.')"></script>
     <script>
 
+        /* ---------- Debounce Helper ---------- */
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         async function pasteToField(inputId, btnEl) {
             if (!navigator.clipboard || !navigator.clipboard.readText) { alert('Please paste manually (Ctrl+V).'); return; }
             try {
@@ -816,19 +829,29 @@
                             document.getElementById('hostelInput_' + mPrefix).value = this.classList.contains('active') ? 'Yes' : 'No';
                         });
                         const em = document.getElementById(mPrefix + '_email');
-                        if (em) em.addEventListener('input', () => {
-                            updateFeeDisplay();
-                            validateMemberContact(mPrefix, sectionPrefix, ev.event, 'email');
-                        });
+                        if (em) {
+                            const debouncedEmailValidate = debounce(() => {
+                                updateFeeDisplay();
+                                validateMemberContact(mPrefix, sectionPrefix, ev.event, 'email');
+                            }, 500);
+                            em.addEventListener('input', debouncedEmailValidate);
+                        }
+
                         const ph = document.getElementById(mPrefix + '_phone');
-                        if (ph) ph.addEventListener('input', function () {
-                            this.value = this.value.replace(/\D/g, '');
-                            validateMemberContact(mPrefix, sectionPrefix, ev.event, 'phone');
-                        });
+                        if (ph) {
+                            const debouncedPhoneValidate = debounce(function () {
+                                this.value = this.value.replace(/\D/g, '');
+                                validateMemberContact(mPrefix, sectionPrefix, ev.event, 'phone');
+                            }.bind(ph), 500);
+                            ph.addEventListener('input', debouncedPhoneValidate);
+                        }
                     }
                     if (ev.teamSize > 1) {
                         const tnEl = document.getElementById(`teamName_${sectionPrefix}`);
-                        if (tnEl) tnEl.addEventListener('input', () => checkTeamNameDuplicate(sectionPrefix, ev.event));
+                        if (tnEl) {
+                            const debouncedTeamNameValidate = debounce(() => checkTeamNameDuplicate(sectionPrefix, ev.event), 500);
+                            tnEl.addEventListener('input', debouncedTeamNameValidate);
+                        }
                     }
                 });
 
@@ -861,7 +884,9 @@
                     }
                 }
 
+                /* 
                 // 2. Database check (across all registrations for THIS event)
+                // REMOVED as per user request to allow multiple registrations with same email/phone
                 const existing = cachedRegs || await getRegistrations();
                 const conflictReg = existing.find(r => {
                     // Check main registration contact
@@ -895,6 +920,7 @@
                     }
                     return false;
                 }
+                */
 
 
                 group.classList.remove('has-error');

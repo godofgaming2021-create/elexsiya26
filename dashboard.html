@@ -2545,7 +2545,7 @@
             if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-muted);">&#9203; Loading registrations from database...</div>';
 
             // Parallel fetch for speed
-            const promises = [getRegistrations()];
+            const promises = [getRegistrations(true)]; // Force refresh for live admin data
             if (isTreasurer) {
                 promises.push(getSponsorships());
                 promises.push(getExpenditures());

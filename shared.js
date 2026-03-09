@@ -87,23 +87,34 @@ async function logActivity(action, details = {}) {
    All functions are async â€” always use `await` when calling.
    ============================================================ */
 
+let _registrationsCache = null;
+
 /**
  * Fetch all registrations from Firestore, ordered by date (newest first).
+ * Includes a simple cache to avoid redundant network calls.
+ * @param {boolean} forceRefresh - If true, bypass cache and fetch fresh data.
  * @returns {Promise<Array>} Array of registration objects.
  */
-async function getRegistrations() {
+async function getRegistrations(forceRefresh = false) {
   if (!window.db) { console.warn('[DB] window.db not ready'); return []; }
+
+  // Return cached data if available and refresh not forced
+  if (_registrationsCache && !forceRefresh) {
+    return _registrationsCache;
+  }
+
   try {
     const snapshot = await window.db.collection('registrations')
       .orderBy('registeredAt', 'desc')
       .get();
-    return snapshot.docs.map(doc => doc.data());
+    _registrationsCache = snapshot.docs.map(doc => doc.data());
+    return _registrationsCache;
   } catch (err) {
     console.error('[DB] getRegistrations error:', err);
     if (err.code === 'permission-denied') {
-      alert("âš ï¸ Firebase Permission Denied. Your Cloud Firestore Rules are blocking read access. Please update your rules to allow read/write (see README-FIREBASE.txt).");
+      alert("⚠️ Firebase Permission Denied. Your Cloud Firestore Rules are blocking read access. Please update your rules to allow read/write (see README-FIREBASE.txt).");
     }
-    return [];
+    return _registrationsCache || []; // Return stale cache if fetch fails
   }
 }
 
