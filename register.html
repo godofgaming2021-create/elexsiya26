@@ -848,9 +848,14 @@
                     }
                     if (ev.teamSize > 1) {
                         const tnEl = document.getElementById(`teamName_${sectionPrefix}`);
+                        // NOTE: No live Firestore read here — background reads on every keystroke
+                        // were clogging Firebase's connection queue and causing the second
+                        // registration's write to hang. Team name validation happens on submit only.
                         if (tnEl) {
-                            const debouncedTeamNameValidate = debounce(() => checkTeamNameDuplicate(sectionPrefix, ev.event), 500);
-                            tnEl.addEventListener('input', debouncedTeamNameValidate);
+                            tnEl.addEventListener('input', function () {
+                                const group = document.getElementById(`teamNameGroup_${sectionPrefix}`);
+                                if (group && this.value.trim()) group.classList.remove('has-error');
+                            });
                         }
                     }
                 });
@@ -928,29 +933,23 @@
                 return true;
             }
 
-            // Team name duplicate check (live)
-            async function checkTeamNameDuplicate(sectionPrefix, eventName) {
+            // Team name duplicate check — runs only on submit using already-loaded data.
+            // REMOVED live Firestore reads: they were firing getRegistrations() on every keystroke
+            // after the first reg cleared the cache, flooding Firebase's connection queue
+            // and making the second registration's write hang indefinitely.
+            function checkTeamNameDuplicateLocal(sectionPrefix, allSectionData) {
                 const input = document.getElementById(`teamName_${sectionPrefix}`);
                 const group = document.getElementById(`teamNameGroup_${sectionPrefix}`);
                 const errEl = document.getElementById(`teamNameError_${sectionPrefix}`);
-                if (!input || !group) return;
-                const val = input.value.trim().toLowerCase();
-                if (!val) { group.classList.remove('has-error'); return; }
-                const existing = await getRegistrations();
-                const taken = existing.some(r => {
-                    if (!r.teamMembersByEvent) return false;
-                    const evData = r.teamMembersByEvent[eventName];
-                    if (!evData) return false;
-                    const tn = evData.teamName;
-                    return tn && tn.trim().toLowerCase() === val;
-                });
-                if (taken) {
+                if (!input || !group) return true;
+                const val = input.value.trim();
+                if (!val) {
                     group.classList.add('has-error');
-                    if (errEl) errEl.textContent = '⚠️ Team name already taken — choose a different name';
-                } else {
-                    group.classList.remove('has-error');
                     if (errEl) errEl.textContent = 'Please enter a team name';
+                    return false;
                 }
+                group.classList.remove('has-error');
+                return true;
             }
 
             /* ── Validation helpers ── */

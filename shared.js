@@ -104,9 +104,15 @@ async function getRegistrations(forceRefresh = false) {
   }
 
   try {
-    const snapshot = await window.db.collection('registrations')
+    // 8-second timeout: prevents a stale Firestore connection from hanging
+    // background reads (e.g. from dashboard) which could block writes.
+    const fetchOp = window.db.collection('registrations')
       .orderBy('registeredAt', 'desc')
       .get();
+    const fetchTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('READ_TIMEOUT')), 8000)
+    );
+    const snapshot = await Promise.race([fetchOp, fetchTimeout]);
     _registrationsCache = snapshot.docs.map(doc => doc.data());
     return _registrationsCache;
   } catch (err) {
@@ -141,14 +147,16 @@ async function addRegistration(reg) {
   reg._checksum = await _calcChecksum(reg);
 
   try {
-    // Force re-enable Firestore network before writing.
-    // On mobile, WebSocket connections get suspended when the browser navigates between pages.
-    // This re-establishes the connection so the second (and third, etc.) registration succeeds.
-    try { await window.db.enableNetwork(); } catch (_) { /* ignore if already enabled */ }
+    // Full network reset cycle before writing.
+    // disableNetwork() + enableNetwork() is a HARD reconnect — it forces Firebase to drop
+    // the current (possibly stale) WebSocket and open a new one. This is what makes
+    // the 2nd, 3rd, etc. registrations on the same mobile device reliable.
+    try {
+      await window.db.disableNetwork();
+      await window.db.enableNetwork();
+    } catch (_) { /* safe to ignore — db will still work in online mode */ }
 
-    // Wrap the write with a 20-second timeout as a last-resort safeguard.
-    // With offline persistence enabled, the write resolves instantly from local IndexedDB cache —
-    // this timeout only fires if Firebase is completely unreachable.
+    // 20-second write timeout as final safeguard.
     const writeOp = window.db.collection('registrations').doc(reg.regId).set(reg);
     const timeout = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('WRITE_TIMEOUT')), 20000)
