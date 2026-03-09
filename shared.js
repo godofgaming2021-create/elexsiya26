@@ -141,8 +141,8 @@ async function addRegistration(reg) {
   reg._checksum = await _calcChecksum(reg);
 
   try {
-    // Vulnerability Fix: Enforce a strict 10s timeout on Firestore write to prevent UI hang
-    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout after 10 seconds')), 10000));
+    // Allow up to 30s for the Firestore write — first write needs to establish a WebSocket connection
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout after 30 seconds. Please check your internet connection and try again.')), 30000));
     const writeOp = window.db.collection('registrations').doc(reg.regId).set(reg);
 
     await Promise.race([writeOp, timeout]);

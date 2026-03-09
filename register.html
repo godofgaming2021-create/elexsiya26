@@ -972,6 +972,18 @@
             async function submitForm(e) {
                 e.preventDefault();
 
+                // Block submission if opened via file:// — Firebase won't work
+                if (window.location.protocol === 'file:') {
+                    alert("⚠️ This page is opened directly from your folder (file:// protocol).\n\nFirebase cannot connect in this mode. Please use a live server (e.g. VS Code Live Server, or host on Netlify) to register.");
+                    return;
+                }
+
+                // Block if Firebase DB is not ready
+                if (!window.db) {
+                    alert("⚠️ Firebase is not ready yet. Please wait a moment and try again, or reload the page.");
+                    return;
+                }
+
                 // Rate Limiting (Relaxed to 10s for multiple registrations)
                 const lastAttempt = localStorage.getItem('lastRegAttempt');
                 if (lastAttempt && Date.now() - parseInt(lastAttempt) < 10000) {
@@ -985,14 +997,14 @@
                 submitBtn.disabled = true;
                 submitBtn.textContent = '⏳ Saving...';
 
-                // Safety Timeout: re-enable button if it takes more than 15s
+                // Safety Timeout: re-enable button if it takes more than 35s
                 const submissionTimeout = setTimeout(() => {
                     if (submitBtn.disabled && submitBtn.textContent.includes('Saving')) {
                         submitBtn.disabled = false;
                         submitBtn.textContent = '🚀 Proceed to Payment';
-                        alert("⚠️ Saving is taking longer than expected. Please check your internet and try again. If it still fails, contact support.");
+                        alert("⚠️ Saving is taking longer than expected (>35s). Please check your internet connection and try again. If the issue persists, contact support.");
                     }
-                }, 15000);
+                }, 35000);
 
                 // Removed redundant fetch as DB duplicate checks are now disabled
                 let existingRegistrations = [];
@@ -1092,7 +1104,17 @@
                 } catch (error) {
                     clearTimeout(submissionTimeout);
                     console.error("Submission failed:", error);
-                    alert("⚠️ Registration failed. Please try again.");
+                    let errMsg = "⚠️ Registration failed. Please try again.";
+                    if (error.message && error.message.includes('timeout')) {
+                        errMsg = "⚠️ Connection timed out. Firebase is taking too long to respond.\n\nPlease:\n1. Check your internet connection\n2. Try again in a few seconds\n3. If on a slow network, wait a moment before retrying";
+                    } else if (error.code === 'permission-denied') {
+                        errMsg = "⚠️ Permission Denied. The database is blocking this registration. Please contact support.";
+                    } else if (error.message && error.message.includes('Firebase not initialized')) {
+                        errMsg = "⚠️ Firebase is not loaded yet. Please reload the page and try again.";
+                    } else if (error.message && error.message.includes('Time conflict')) {
+                        errMsg = "⚠️ Two of your selected events clash in schedule. Please go back and choose non-conflicting events.";
+                    }
+                    alert(errMsg);
                     submitBtn.disabled = false;
                     submitBtn.textContent = '🚀 Proceed to Payment';
                 }
