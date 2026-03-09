@@ -431,8 +431,8 @@
           <div class="upi-id">gunasekaran.g7111@okaxis</div>
           
           <div id="upiPayContainer" style="cursor:pointer; position:relative;">
-            <a href="upi://pay?pa=gunasekaran.g7111@okaxis&pn=GUNA&am=${reg.amount}&cu=INR&tn=${reg.regId}" class="upi-qr-container" id="upiLink" style="text-decoration:none; display:block;">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=gunasekaran.g7111@okaxis&pn=GUNA&am=${reg.amount}&cu=INR&tn=${reg.regId}`)}" alt="Payment QR Code" class="upi-qr-img">
+            <a href="upi://pay?pa=gunasekaran.g7111@okaxis&pn=GUNA&am=${parseFloat(reg.amount).toFixed(2)}&cu=INR&tn=${reg.regId}" class="upi-qr-container" id="upiLink" style="text-decoration:none; display:block;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=gunasekaran.g7111@okaxis&pn=GUNA&am=${parseFloat(reg.amount).toFixed(2)}&cu=INR&tn=${reg.regId}`)}" alt="Payment QR Code" class="upi-qr-img">
               <p style="font-size: 0.7rem; color: var(--emirates-red); margin-top: 10px; font-weight: 700; letter-spacing: 0.05em;">&#128242; TAP TO PAY DIRECTLY VIA GPAY/UPI</p>
             </a>
           </div>
