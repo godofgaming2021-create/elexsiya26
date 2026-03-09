@@ -1075,7 +1075,7 @@
                         teamMembersByEvent[sd.event] = { teamName: sd.teamName || '', members: sd.members };
                     });
 
-                    await addRegistration({
+                    const regPayload = {
                         regId,
                         name: firstMember.name,
                         email: firstMember.email,
@@ -1095,10 +1095,13 @@
                         amount: feeInfo.totalFee,
                         paymentStatus: 'Pending',
                         registeredAt: new Date().toISOString()
-                    });
+                    };
+
+                    await addRegistration(regPayload);
 
                     clearTimeout(submissionTimeout);
                     sessionStorage.setItem('currentRegId', regId);
+                    sessionStorage.setItem('currentRegData', JSON.stringify(regPayload)); // For immediate UI access
                     window.location.href = 'payment.html';
                 } catch (error) {
                     clearTimeout(submissionTimeout);

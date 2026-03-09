@@ -319,26 +319,42 @@
       card.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-muted);">&#9203; Loading your registration...</div>';
 
       const regId = sessionStorage.getItem('currentRegId');
+      const storedData = sessionStorage.getItem('currentRegData');
 
       if (!regId) {
         card.innerHTML = `
           <div class="no-reg">
-            <h2>&#9888;&#65039; No Registration Found</h2>
+            <h2>⚠️ No Registration Found</h2>
             <p style="color:var(--text-muted);margin-bottom:24px;">Please register first before proceeding to payment.</p>
             <a href="register.html" class="btn btn-red">Go to Registration</a>
           </div>`;
         return;
       }
 
-      const regs = await getRegistrations();
-      const reg = regs.find(r => r.regId === regId);
+      let reg = null;
 
+      // 1. Try to load from optimistic local storage first (fastest, prevents 'not found' on mobile sync delay)
+      if (storedData) {
+        try {
+          reg = JSON.parse(storedData);
+        } catch (e) {
+          console.error("Failed to parse stored reg data:", e);
+        }
+      }
+
+      // 2. Fallback to Database fetch if not in sessionStorage (e.g. they refreshed the page)
       if (!reg) {
+        const regs = await getRegistrations();
+        reg = regs.find(r => r.regId === regId);
+      }
+
+      if (!reg || reg.regId !== regId) {
         card.innerHTML = `
           <div class="no-reg">
             <h2>⚠️ Registration Not Found</h2>
-            <p style="color:var(--text-muted);margin-bottom:24px;">Something went wrong. Please register again.</p>
+            <p style="color:var(--text-muted);margin-bottom:24px;">Something went wrong or the registration is still syncing. Please wait a moment and refresh the page.</p>
             <a href="register.html" class="btn btn-red">Register Again</a>
+            <button onclick="location.reload()" class="btn btn-red" style="margin-left:10px; background:var(--gold);">Refresh Page</button>
           </div>`;
         return;
       }
