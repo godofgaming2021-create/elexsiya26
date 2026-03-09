@@ -431,35 +431,31 @@
           <div class="upi-id">gunasekaran.g7111@okaxis</div>
           
           <div id="upiPayContainer" style="text-align:center; margin: 20px 0;">
-            <!-- Pay with UPI Button -->
-            <a href="upi://pay?pa=gunasekaran.g7111@okaxis&pn=${encodeURIComponent('Mr Guna Sekaran G')}&tr=${reg.regId}&tn=${reg.regId}&am=${parseFloat(reg.amount).toFixed(2)}&cu=INR" id="upiLink" style="
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              gap: 12px;
-              width: 100%;
-              max-width: 360px;
-              padding: 18px 28px;
+            <!-- QR Code for scanning -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=gunasekaran.g7111@okaxis&pn=Mr Guna Sekaran G&am=${reg.amount}&cu=INR&tn=${reg.regId}`)}" alt="Payment QR Code" class="upi-qr-img" style="display:block; margin: 0 auto; border-radius: 12px; border: 2px solid var(--border-light); padding: 8px; background: #fff;">
+            
+            <p style="font-size: 0.78rem; color: var(--text-dark); margin-top: 14px; font-weight: 600;">
+              📷 Scan QR with any UPI App to pay &#8377;${reg.amount}
+            </p>
+
+            <button onclick="navigator.clipboard.writeText('gunasekaran.g7111@okaxis').then(()=>{this.textContent='✅ Copied!';setTimeout(()=>{this.textContent='📋 Copy UPI ID';},2000);})" style="
+              margin-top: 12px;
               background: linear-gradient(135deg, #5f259f 0%, #3d1a6e 100%);
               color: #fff;
-              font-size: 1.1rem;
-              font-weight: 700;
-              letter-spacing: 0.04em;
-              border-radius: 14px;
-              text-decoration: none;
-              box-shadow: 0 6px 24px rgba(95, 37, 159, 0.35);
-              transition: transform 0.15s ease, box-shadow 0.15s ease;
+              border: none;
+              padding: 10px 24px;
+              border-radius: 10px;
               cursor: pointer;
+              font-size: 0.85rem;
+              font-weight: 600;
               font-family: var(--font-body);
-            " onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'" ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform='scale(1)'">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="24" height="24" rx="6" fill="white"/>
-                <text x="4" y="17" font-size="11" font-weight="900" fill="#5f259f" font-family="sans-serif">UPI</text>
-              </svg>
-              Pay &#8377;${reg.amount} with UPI
-            </a>
-            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 12px;">
-              Opens GPay, PhonePe, Paytm or any UPI app
+              box-shadow: 0 4px 16px rgba(95, 37, 159, 0.25);
+              transition: transform 0.15s ease;
+            " onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
+              📋 Copy UPI ID
+            </button>
+            <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 8px;">
+              Or copy the UPI ID and pay manually in any app
             </p>
           </div>
 
