@@ -147,14 +147,20 @@ async function addRegistration(reg) {
   reg._checksum = await _calcChecksum(reg);
 
   try {
-    // 20-second write timeout as final safeguard.
-    // We let Firebase SDK manage its own connection state. Manual network
-    // toggling here was causing the SDK to hang.
+    // 🚀 OPTIMISTIC WRITE: Fire and forget.
+    // We intentionally DO NOT `await` the .set() promise here.
+    // Firebase .set() only resolves when the *backend sync* succeeds (or explicitly offline).
+    // On mobile, connections often become "zombies" after returning from a background 
+    // tab lock, meaning the write hangs for a long time before Firebase realizes it 
+    // needs to fall back to the offline cache.
+    // By not awaiting it, the UI proceeds to the payment page instantly, and the 
+    // Firestore SDK safely queues and syncs the data in the background.
     const writeOp = window.db.collection('registrations').doc(reg.regId).set(reg);
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('WRITE_TIMEOUT')), 20000)
-    );
-    await Promise.race([writeOp, timeout]);
+
+    writeOp.catch(err => {
+      console.error('[DB] Background sync error:', err);
+    });
+
     _registrationsCache = null; // Clear cache to ensure next fetch gets fresh data
   } catch (err) {
     console.error('[DB] addRegistration error:', err);
