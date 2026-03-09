@@ -994,13 +994,8 @@
                     }
                 }, 15000);
 
-                // Fetch registrations once for all validations (major performance fix)
+                // Removed redundant fetch as DB duplicate checks are now disabled
                 let existingRegistrations = [];
-                try {
-                    existingRegistrations = await getRegistrations();
-                } catch (err) {
-                    console.warn("Could not pre-fetch registrations:", err);
-                }
 
                 let valid = true;
 

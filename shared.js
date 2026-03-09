@@ -141,7 +141,11 @@ async function addRegistration(reg) {
   reg._checksum = await _calcChecksum(reg);
 
   try {
-    await window.db.collection('registrations').doc(reg.regId).set(reg);
+    // Vulnerability Fix: Enforce a strict 10s timeout on Firestore write to prevent UI hang
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Database timeout after 10 seconds')), 10000));
+    const writeOp = window.db.collection('registrations').doc(reg.regId).set(reg);
+
+    await Promise.race([writeOp, timeout]);
     _registrationsCache = null; // Clear cache to ensure next fetch gets fresh data
   } catch (err) {
     console.error('[DB] addRegistration error:', err);
@@ -392,35 +396,18 @@ async function deleteScreenshot(regId) {
 }
 
 /**
- * Generate a unique registration ID by checking Firestore for collisions.
- * @returns {Promise<string>} Unique ELX-XXXXXXXX ID.
+ * Generate a unique registration ID synchronously.
+ * Removed network-check to prevent hangs; collision risk is negligible for this scale.
+ * @returns {string} ELX-XXXXXXXX ID.
  */
-async function generateRegId() {
+function generateRegId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let id;
-  let attempts = 0;
-  const MAX_ATTEMPTS = 5;
-
-  do {
-    id = 'ELX-';
-    const randomArray = new Uint32Array(8);
-    crypto.getRandomValues(randomArray);
-    for (let i = 0; i < 8; i++) {
-      id += chars[randomArray[i] % chars.length];
-    }
-
-    attempts++;
-
-    // Check Firestore for this ID.
-    try {
-      const doc = await window.db.collection('registrations').doc(id).get();
-      if (!doc.exists) break;
-    } catch (err) {
-      console.warn("Could not check reg ID uniqueness:", err);
-      break;
-    }
-  } while (attempts < MAX_ATTEMPTS);
-
+  let id = 'ELX-';
+  const randomArray = new Uint32Array(8);
+  crypto.getRandomValues(randomArray);
+  for (let i = 0; i < 8; i++) {
+    id += chars[randomArray[i] % chars.length];
+  }
   return id;
 }
 
