@@ -147,16 +147,9 @@ async function addRegistration(reg) {
   reg._checksum = await _calcChecksum(reg);
 
   try {
-    // Full network reset cycle before writing.
-    // disableNetwork() + enableNetwork() is a HARD reconnect — it forces Firebase to drop
-    // the current (possibly stale) WebSocket and open a new one. This is what makes
-    // the 2nd, 3rd, etc. registrations on the same mobile device reliable.
-    try {
-      await window.db.disableNetwork();
-      await window.db.enableNetwork();
-    } catch (_) { /* safe to ignore — db will still work in online mode */ }
-
     // 20-second write timeout as final safeguard.
+    // We let Firebase SDK manage its own connection state. Manual network
+    // toggling here was causing the SDK to hang.
     const writeOp = window.db.collection('registrations').doc(reg.regId).set(reg);
     const timeout = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('WRITE_TIMEOUT')), 20000)

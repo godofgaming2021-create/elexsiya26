@@ -34,6 +34,13 @@ if (!firebase.apps.length) {
 var db;
 try {
   db = firebase.firestore();
+
+  // FIX FOR MOBILE DISCONNECTS: Use Long-Polling instead of WebSockets.
+  // Mobile browsers aggressively kill WebSockets when a tab is backgrounded.
+  // When users return for a second registration, the dead WebSocket causes
+  // the 'timeout' error. Long-polling prevents this hang completely.
+  db.settings({ experimentalForceLongPolling: true, merge: true });
+
   window.db = db;
 
   // Enable offline persistence — writes succeed from local cache even on flaky mobile connections.
