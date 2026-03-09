@@ -984,10 +984,10 @@
                     return;
                 }
 
-                // Rate Limiting (Relaxed to 10s for multiple registrations)
+                // Rate Limiting: 3s window prevents accidental double-clicks only
                 const lastAttempt = localStorage.getItem('lastRegAttempt');
-                if (lastAttempt && Date.now() - parseInt(lastAttempt) < 10000) {
-                    alert('Please wait at least 10 seconds between registration attempts.');
+                if (lastAttempt && Date.now() - parseInt(lastAttempt) < 3000) {
+                    alert('Please wait a moment before trying again.');
                     return;
                 }
 
