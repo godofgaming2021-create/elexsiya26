@@ -44,13 +44,14 @@ try {
   window.db = db;
 
   // Enable offline persistence — writes succeed from local cache even on flaky mobile connections.
-  // This is the key fix for "second registration fails on the same device".
-  db.enablePersistence({ synchronizeTabs: false })
+  // We use synchronizeTabs: true so if the user has a background tab open from the first
+  // registration, the second registration tab can still use the local cache instead of failing
+  // and reverting to direct network writes (which hang on mobile).
+  db.enablePersistence({ synchronizeTabs: true })
     .then(() => console.log('✅ Firestore offline persistence enabled.'))
     .catch(err => {
       if (err.code === 'failed-precondition') {
-        // Multiple tabs open — persistence only works in one tab at a time. Safe to ignore.
-        console.warn('⚠️ Firestore persistence unavailable: multiple tabs open.');
+        console.warn('⚠️ Firestore persistence unavailable: multiple tabs open and browser does not support tab sync.');
       } else if (err.code === 'unimplemented') {
         // Older browser that doesn't support IndexedDB.
         console.warn('⚠️ Firestore persistence not supported in this browser.');
