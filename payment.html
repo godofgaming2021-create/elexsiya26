@@ -430,24 +430,21 @@
           <div class="upi-box-label">UPI ID</div>
           <div class="upi-id">gunasekaran.g7111@okaxis</div>
           
-          <div id="upiPayContainer" style="cursor:pointer; position:relative; margin-bottom:20px;">
-            <!-- Clickable Link Restored: Matching exact bank name and adding 'tr' (transaction reference) to satisfy UPI idempotency/fraud checks. -->
-            <a href="upi://pay?pa=gunasekaran.g7111@okaxis&pn=${encodeURIComponent('Mr Guna Sekaran G')}&mc=0000&tr=${reg.regId}&tn=${reg.regId}&am=${parseFloat(reg.amount).toFixed(2)}&cu=INR" class="upi-qr-container" id="upiLink" style="text-decoration:none; display:block;">
+          <div id="upiPayContainer" style="cursor:pointer; position:relative; margin-bottom:20px; display: inline-block;">
+            <!-- Clickable Link with Overlay: QR image is clickable and shows the UPI ID on top -->
+            <a href="upi://pay?pa=gunasekaran.g7111@okaxis&pn=${encodeURIComponent('Mr Guna Sekaran G')}&mc=0000&tr=${reg.regId}&tn=${reg.regId}&am=${parseFloat(reg.amount).toFixed(2)}&cu=INR" class="upi-qr-container" id="upiLink" style="text-decoration:none; display:inline-block; position:relative;">
               <!-- QR Code -->
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=gunasekaran.g7111@okaxis&pn=${encodeURIComponent('Mr Guna Sekaran G')}&mc=0000&tr=${reg.regId}&tn=${reg.regId}&am=${parseFloat(reg.amount).toFixed(2)}&cu=INR`)}" alt="Payment QR Code" class="upi-qr-img">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=gunasekaran.g7111@okaxis&pn=${encodeURIComponent('Mr Guna Sekaran G')}&mc=0000&tr=${reg.regId}&tn=${reg.regId}&am=${parseFloat(reg.amount).toFixed(2)}&cu=INR`)}" alt="Payment QR Code" class="upi-qr-img" style="display:block;">
+              
+              <!-- UPI ID Overlay -->
+              <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 4px 8px; border: 1.5px solid var(--border-light); border-radius: 4px; font-size: 0.65rem; font-weight: 800; color: var(--text-dark); pointer-events: none; opacity: 0.95; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                gunasekaran.g7111@okaxis
+              </div>
+
               <p style="font-size: 0.75rem; color: var(--emirates-red); margin-top: 15px; font-weight: 700; text-transform:uppercase; letter-spacing: 0.05em;">
-                &#128242; TAP HERE TO PAY VIA GPAY/UPI
-              </p>
-              <p style="font-size: 0.65rem; color: #666; margin-top: 5px; font-weight: normal; text-transform:none;">
-                (If clicking fails, copy UPI ID below)
+                &#128242; TAP TO PAY DIRECTLY
               </p>
             </a>
-            
-            <div style="text-align:center; margin-top:10px;">
-              <button onclick="navigator.clipboard.writeText('gunasekaran.g7111@okaxis'); alert('UPI ID Copied: gunasekaran.g7111@okaxis');" style="background:var(--border-light); color:var(--text-dark); border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:0.75rem; font-weight:600;">
-                &#128203; Copy UPI ID
-              </button>
-            </div>
           </div>
 
           <div class="upi-note">Pay &#8377;${reg.amount} · Use Reg ID <strong style="color:var(--text-dark);">${reg.regId}</strong> as remark</div>
