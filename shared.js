@@ -141,9 +141,19 @@ async function addRegistration(reg) {
   reg._checksum = await _calcChecksum(reg);
 
   try {
-    // Direct Firestore write — Firebase manages its own WebSocket connection and retry logic internally.
-    // The UI safety timeout in register.html handles the user-facing hang prevention.
-    await window.db.collection('registrations').doc(reg.regId).set(reg);
+    // Force re-enable Firestore network before writing.
+    // On mobile, WebSocket connections get suspended when the browser navigates between pages.
+    // This re-establishes the connection so the second (and third, etc.) registration succeeds.
+    try { await window.db.enableNetwork(); } catch (_) { /* ignore if already enabled */ }
+
+    // Wrap the write with a 20-second timeout as a last-resort safeguard.
+    // With offline persistence enabled, the write resolves instantly from local IndexedDB cache —
+    // this timeout only fires if Firebase is completely unreachable.
+    const writeOp = window.db.collection('registrations').doc(reg.regId).set(reg);
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('WRITE_TIMEOUT')), 20000)
+    );
+    await Promise.race([writeOp, timeout]);
     _registrationsCache = null; // Clear cache to ensure next fetch gets fresh data
   } catch (err) {
     console.error('[DB] addRegistration error:', err);

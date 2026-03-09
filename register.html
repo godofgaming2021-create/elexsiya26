@@ -1105,8 +1105,8 @@
                     clearTimeout(submissionTimeout);
                     console.error("Submission failed:", error);
                     let errMsg = "⚠️ Registration failed. Please try again.";
-                    if (error.message && error.message.includes('timeout')) {
-                        errMsg = "⚠️ Connection timed out. Firebase is taking too long to respond.\n\nPlease:\n1. Check your internet connection\n2. Try again in a few seconds\n3. If on a slow network, wait a moment before retrying";
+                    if (error.message === 'WRITE_TIMEOUT' || (error.message && error.message.includes('timeout'))) {
+                        errMsg = "⚠️ Could not reach the server in time.\n\nPlease check your internet and tap 'Proceed to Payment' again.";
                     } else if (error.code === 'permission-denied') {
                         errMsg = "⚠️ Permission Denied. The database is blocking this registration. Please contact support.";
                     } else if (error.message && error.message.includes('Firebase not initialized')) {
