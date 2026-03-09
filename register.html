@@ -837,7 +837,7 @@
             }
 
             // Real-time intra-form and DB duplicate check
-            async function validateMemberContact(mPrefix, sectionPrefix, eventName, type) {
+            async function validateMemberContact(mPrefix, sectionPrefix, eventName, type, cachedRegs = null) {
                 const input = document.getElementById(`${mPrefix}_${type}`);
                 const group = document.getElementById(`${mPrefix}_${type}Group`);
                 const errEl = document.getElementById(`${mPrefix}_${type}Error`);
@@ -862,7 +862,7 @@
                 }
 
                 // 2. Database check (across all registrations for THIS event)
-                const existing = await getRegistrations();
+                const existing = cachedRegs || await getRegistrations();
                 const conflictReg = existing.find(r => {
                     // Check main registration contact
                     if (r.event.toLowerCase().includes(eventName.toLowerCase())) {
@@ -954,6 +954,17 @@
                 }
                 localStorage.setItem('lastRegAttempt', Date.now().toString());
 
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Saving...'; }
+
+                // Fetch registrations once for all validations (major performance fix)
+                let existingRegistrations = [];
+                try {
+                    existingRegistrations = await getRegistrations();
+                } catch (err) {
+                    console.warn("Could not pre-fetch registrations:", err);
+                }
+
                 let valid = true;
 
                 const college = document.getElementById('college').value.trim();
@@ -990,9 +1001,9 @@
                         if (!validateField(`${mPrefix}_phone`, `${mPrefix}_phoneGroup`, mp && phoneRx.test(mp))) valid = false;
                         if (!mf) valid = false;
 
-                        // Extra cross-check on submit
-                        const emailOk = await validateMemberContact(mPrefix, sectionPrefix, ev.event, 'email');
-                        const phoneOk = await validateMemberContact(mPrefix, sectionPrefix, ev.event, 'phone');
+                        // Extra cross-check on submit using cached data
+                        const emailOk = await validateMemberContact(mPrefix, sectionPrefix, ev.event, 'email', existingRegistrations);
+                        const phoneOk = await validateMemberContact(mPrefix, sectionPrefix, ev.event, 'phone', existingRegistrations);
                         if (!emailOk || !phoneOk) valid = false;
 
                         sectionData.members.push({ name: mn, email: me, phone: mp, food: mf || '', hostel: mh });
@@ -1003,10 +1014,10 @@
 
 
 
-                if (!valid) return;
-
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Saving...'; }
+                if (!valid) {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '🚀 Proceed to Payment'; }
+                    return;
+                }
 
                 try {
                     const feeInfo = getFeeInfo();
