@@ -344,8 +344,8 @@ async function deleteExpenditure(id) {
  */
 async function uploadPaymentScreenshot(regId, file) {
   try {
-    // â”€â”€ Step 1: Compress image via Canvas (max 900px, 70% JPEG quality) â”€â”€
-    const base64 = await new Promise((resolve, reject) => {
+    // ── Step 1: Compress image via Canvas (max 900px, 70% JPEG quality) ──
+    const compressedBlob = await new Promise((resolve, reject) => {
       const img = new Image();
       const reader = new FileReader();
       reader.onload = (e) => { img.src = e.target.result; };
@@ -359,26 +359,35 @@ async function uploadPaymentScreenshot(regId, file) {
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.70));
+        canvas.toBlob((blob) => {
+          if (blob) resolve(blob);
+          else reject(new Error('Canvas compression failed'));
+        }, 'image/jpeg', 0.70);
       };
       img.onerror = reject;
     });
 
-    // â”€â”€ Step 2: Save compressed image to Firestore screenshots collection â”€â”€
+    // ── Step 2: Upload compressed image to Firebase Storage ──
+    const storageRef = window.storage.ref(`payment_screenshots/${regId}.jpg`);
+    await storageRef.put(compressedBlob, { contentType: 'image/jpeg' });
+    const downloadURL = await storageRef.getDownloadURL();
+
+    // ── Step 3: Save reference in Firestore screenshots collection ──
+    // imageData is set to the download URL for backward compatibility with dashboard
     await window.db.collection('screenshots').doc(regId).set({
       regId,
-      imageData: base64,
+      imageData: downloadURL,
       uploadedAt: new Date().toISOString(),
       fileName: file.name
     });
 
-    // â”€â”€ Step 3: Update registration status â”€â”€
+    // ── Step 4: Update registration status ──
     await window.db.collection('registrations').doc(regId).update({
       paymentStatus: 'Verification Required',
       hasScreenshot: true
     });
 
-    return base64; // Return base64 so callers can use it if needed
+    return downloadURL;
   } catch (err) {
     console.error('[UPLOAD] uploadPaymentScreenshot error:', err);
     throw err;
@@ -391,10 +400,17 @@ async function uploadPaymentScreenshot(regId, file) {
  */
 async function deleteScreenshot(regId) {
   try {
-    // 1. Delete the screenshot document
+    // 1. Delete the file from Firebase Storage (ignore if it doesn't exist)
+    try {
+      await window.storage.ref(`payment_screenshots/${regId}.jpg`).delete();
+    } catch (storageErr) {
+      console.warn('[DB] Storage file may not exist (old base64 entry):', storageErr.code);
+    }
+
+    // 2. Delete the screenshot document from Firestore
     await window.db.collection('screenshots').doc(regId).delete();
 
-    // 2. Try to update the registration, but only if it exists
+    // 3. Try to update the registration, but only if it exists
     const regRef = window.db.collection('registrations').doc(regId);
     const regDoc = await regRef.get();
 

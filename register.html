@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -1123,6 +1123,17 @@
             }
 
             buildForm();
+
+            // Fix: Reset submit button when page is restored from back-forward cache (bfcache).
+            // Without this, pressing the browser back button from payment.html leaves the
+            // button stuck in the disabled "⏳ Saving..." state.
+            window.addEventListener('pageshow', function (event) {
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn && (submitBtn.disabled || submitBtn.textContent.includes('Saving'))) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '🚀 Proceed to Payment';
+                }
+            });
         })();
     </script>
 </body>
