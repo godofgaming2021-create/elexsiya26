@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Select Event – Elexsiya 26</title>
     <meta name="description" content="Choose your event for Elexsiya 26 – National Level Technical Symposium." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -849,6 +852,53 @@
                 window.location.href = 'register.html';
             });
 
+        })();
+    </script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        // ── Dynamic Site Config (CMS) ──
+        (async function loadPublicConfig() {
+            try {
+                if (!window.db) return;
+                const doc = await window.db.collection('settings').doc('publicConfig').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // 1. Maintenance Mode
+                    if (data.maintenanceMode === true) {
+                        const overlay = document.createElement('div');
+                        overlay.id = 'maintenanceOverlay';
+                        overlay.innerHTML = `
+                            <div style="position:fixed;inset:0;z-index:999999;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#0a0a0a 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;text-align:center;padding:40px;">
+                                <div style="font-size:4rem;margin-bottom:20px;">🔧</div>
+                                <h1 style="font-family:'Cinzel',serif;font-size:2rem;margin-bottom:16px;color:#ffd700;">Under Maintenance</h1>
+                                <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:500px;line-height:1.6;">We are performing scheduled updates. Please check back soon!</p>
+                            </div>`;
+                        document.body.innerHTML = '';
+                        document.body.appendChild(overlay);
+                        return;
+                    }
+
+                    // 2. Registrations Locked
+                    if (data.registrationOpen === false) {
+                        const overlay = document.createElement('div');
+                        overlay.id = 'registrationLockedOverlay';
+                        overlay.innerHTML = `
+                            <div style="position:fixed;inset:0;z-index:999999;background:rgba(10,10,10,0.95);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;text-align:center;padding:40px;">
+                                <div style="font-size:4rem;margin-bottom:20px;">🔒</div>
+                                <h1 style="font-family:'Cinzel',serif;font-size:2rem;margin-bottom:16px;color:#ffd700;">Registrations Closed</h1>
+                                <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:500px;line-height:1.6;">Online registrations are currently closed.</p>
+                                <button onclick="window.location.href='index.html'" style="margin-top:24px;background:#c60c30;color:white;border:none;padding:12px 24px;border-radius:4px;font-weight:700;cursor:pointer;">Return Home</button>
+                            </div>`;
+                        document.body.appendChild(overlay);
+                        const proceedBtn = document.getElementById('proceedBtn');
+                        if (proceedBtn) proceedBtn.disabled = true;
+                    }
+                }
+            } catch (e) { console.warn('Public config load failed:', e); }
         })();
     </script>
 </body>

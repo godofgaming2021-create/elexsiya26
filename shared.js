@@ -106,14 +106,31 @@ async function getRegistrations(forceRefresh = false) {
   try {
     // 8-second timeout: prevents a stale Firestore connection from hanging
     // background reads (e.g. from dashboard) which could block writes.
-    const fetchOp = window.db.collection('registrations')
-      .orderBy('registeredAt', 'desc')
-      .get();
-    const fetchTimeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('READ_TIMEOUT')), 8000)
-    );
-    const snapshot = await Promise.race([fetchOp, fetchTimeout]);
-    _registrationsCache = snapshot.docs.map(doc => doc.data());
+    const collection = window.db.collection('registrations');
+    let fetchOp;
+    
+    try {
+      // Primary attempt: Ordered query (requires index)
+      fetchOp = collection.orderBy('registeredAt', 'desc').get();
+      const fetchTimeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('READ_TIMEOUT')), 8000)
+      );
+      const snapshot = await Promise.race([fetchOp, fetchTimeout]);
+      _registrationsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (queryErr) {
+      console.warn('[DB] Ordered fetch failed, attempting simple fetch fallback...', queryErr);
+      // Fallback: Simple get (works even if index is missing)
+      const simpleSnap = await collection.get();
+      const unsorted = simpleSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Sort in memory instead
+      unsorted.sort((a, b) => {
+        const da = new Date(a.registeredAt || 0);
+        const db = new Date(b.registeredAt || 0);
+        return db - da;
+      });
+      _registrationsCache = unsorted;
+    }
+    
     return _registrationsCache;
   } catch (err) {
     console.error('[DB] getRegistrations error:', err);
@@ -121,6 +138,44 @@ async function getRegistrations(forceRefresh = false) {
       alert("⚠️ Firebase Permission Denied. Your Cloud Firestore Rules are blocking read access. Please update your rules to allow read/write (see README-FIREBASE.txt).");
     }
     return _registrationsCache || []; // Return stale cache if fetch fails
+  }
+}
+
+/**
+ * Fetch registrations with pagination.
+ * @param {Object} lastVisibleDoc - The last document snapshot.
+ * @param {number} pageSize - Page size.
+ */
+async function getPaginatedRegistrations(lastVisibleDoc = null, pageSize = 50) {
+  if (!window.db) throw new Error('Firebase not initialized');
+  try {
+    let query = window.db.collection('registrations')
+      .orderBy('registeredAt', 'desc')
+      .limit(pageSize);
+
+    if (lastVisibleDoc) {
+      query = query.startAfter(lastVisibleDoc);
+    }
+
+    const snapshot = await query.get();
+    return {
+      docs: snapshot.docs,
+      data: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+      lastVisible: snapshot.docs[snapshot.docs.length - 1]
+    };
+  } catch (err) {
+    console.warn('[DB] Paginated ordered fetch failed, falling back to simple fetch...', err);
+    // Fallback: If orderBy fails, just get EVERYTHING and let the UI handle it.
+    // This is better than showing 0.
+    const snapshot = await window.db.collection('registrations').get();
+    const all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    all.sort((a, b) => new Date(b.registeredAt || 0) - new Date(a.registeredAt || 0));
+    
+    return {
+      docs: snapshot.docs,
+      data: all.slice(0, pageSize), // Still respect pageSize for the first page
+      lastVisible: null // Pagination is broken in fallback mode
+    };
   }
 }
 
@@ -344,8 +399,10 @@ async function deleteExpenditure(id) {
  */
 async function uploadPaymentScreenshot(regId, file) {
   try {
-    // ── Step 1: Aggressively compress image via Canvas to base64 ──
-    const base64Data = await new Promise((resolve, reject) => {
+    if (!window.storage) throw new Error('Firebase Storage not initialized');
+
+    // ── Step 1: Compress image via Canvas for Storage ──
+    const blob = await new Promise((resolve, reject) => {
       const img = new Image();
       const reader = new FileReader();
       reader.onload = (e) => { img.src = e.target.result; };
@@ -353,8 +410,8 @@ async function uploadPaymentScreenshot(regId, file) {
       reader.readAsDataURL(file);
 
       img.onload = () => {
-        // Use a smaller max width (600px) to ensure it stays well under the 1MB Firestore limit
-        const MAX_W = 600;
+        // Use a better quality (1200px) since we are using Storage now
+        const MAX_W = 1200;
         let w = img.width, h = img.height;
         if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
         
@@ -363,34 +420,35 @@ async function uploadPaymentScreenshot(regId, file) {
         canvas.height = h;
         const ctx = canvas.getContext('2d');
         
-        // Solid white background for transparent PNGs
         ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
         
-        // Convert directly to base64 JPEG at 60% quality (~40-90KB)
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.60);
-        resolve(dataUrl);
+        canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.85);
       };
       img.onerror = reject;
     });
 
-    // ── Step 2: Save to Firestore directly (Optimistic) ──
-    // This bypasses Firebase Storage entirely, avoiding its hanging/rules issues!
-    window.db.collection('screenshots').doc(regId).set({
+    // ── Step 2: Upload to Firebase Storage ──
+    const storageRef = window.storage.ref(`payment_screenshots/${regId}_${Date.now()}.jpg`);
+    const uploadTask = await storageRef.put(blob);
+    const downloadURL = await uploadTask.ref.getDownloadURL();
+
+    // ── Step 3: Save metadata to Firestore ──
+    await window.db.collection('screenshots').doc(regId).set({
       regId,
-      imageData: base64Data,
+      storageURL: downloadURL,
       uploadedAt: new Date().toISOString(),
       fileName: file.name
-    }).catch(err => console.error('[DB] Background sync error (screenshots):', err));
+    });
 
-    // ── Step 3: Update registration status (Optimistic) ──
-    window.db.collection('registrations').doc(regId).update({
+    // ── Step 4: Update registration status ──
+    await window.db.collection('registrations').doc(regId).update({
       paymentStatus: 'Verification Required',
       hasScreenshot: true
-    }).catch(err => console.error('[DB] Background sync error (reg update):', err));
+    });
 
-    return base64Data;
+    return downloadURL;
   } catch (err) {
     console.error('[UPLOAD] uploadPaymentScreenshot error:', err);
     throw err;

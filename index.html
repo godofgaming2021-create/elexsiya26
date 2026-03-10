@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Elexsiya 26 – National Level Technical Symposium</title>
   <meta name="description"
     content="Elexsiya 26 – National Level Technical Symposium at Anna University Regional Campus Madurai. Innovate. Inspire. Ignite." />
@@ -53,7 +56,7 @@
           <a href="#" class="dropdown-toggle">Service <span class="arrow">▼</span></a>
           <ul class="dropdown-menu">
             <li><a href="#" onclick="openEventModal('chess', true); return false;">Chess</a></li>
-            <li><a href="#" onclick="openEventModal('idea-forge'); return false;">Ideaforge</a></li>
+            <li><a href="#" onclick="openEventModal('idea-forge', true); return false;">Ideaforge</a></li>
           </ul>
         </li>
         <li><a href="events.html" class="nav-cta">Register Now</a></li>
@@ -245,7 +248,7 @@
               <div style="display: flex; gap: 8px;">
                 <button class="event-info-btn" onclick="openContactModal('Idea Forge', '+91 9363306893')">📞
                   Contact</button>
-                <button class="event-info-btn" onclick="openEventModal('idea-forge')">ⓘ Details</button>
+                <button class="event-info-btn" onclick="openEventModal('idea-forge', true)">ⓘ Details</button>
               </div>
             </div>
           </div>
@@ -464,34 +467,40 @@
           <div class="venue-icon">&#128652;</div>
           <h3>Public Transport</h3>
 
-          <p style="margin-bottom: 8px; color: var(--emirates-red); font-weight: 700;">From Aarapalayam:</p>
-          <ol
-            style="text-align: left; margin: 0 0 16px 20px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.6;">
-            <li>Take Bus <span class="bus-badge">48AD</span> to Thirumangalam.</li>
-            <li>Get down at <strong>Thirunagar 3rd Stop</strong>.</li>
-            <li>Take an auto to Anna University Regional Campus.</li>
-          </ol>
+          <button id="viewRoutesBtn" onclick="toggleBusRoutes()" class="btn btn-outline-dark btn-sm" style="margin-bottom: 20px; width: 100%;">
+            <span>🚌</span> View Bus Routes
+          </button>
 
-          <p style="margin-bottom: 8px; color: var(--emirates-red); font-weight: 700;">From Periyar Bus Stand:</p>
-          <ol
-            style="text-align: left; margin: 0 0 16px 20px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.6;">
-            <li>Take Bus <span class="bus-badge">48</span> to Thirumangalam.</li>
-            <li>Get down at <strong>Thirunagar 3rd Stop</strong>.</li>
-            <li>Take an auto to Anna University Regional Campus.</li>
-          </ol>
+          <div id="busRoutesContent" style="display: none; animation: fadeIn 0.4s ease;">
+            <p style="margin-bottom: 8px; color: var(--emirates-red); font-weight: 700;">From Aarapalayam:</p>
+            <ol
+              style="text-align: left; margin: 0 0 16px 20px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.6;">
+              <li>Take Bus <span class="bus-badge">48AD</span> to Thirumangalam.</li>
+              <li>Get down at <strong>Thirunagar 3rd Stop</strong>.</li>
+              <li>Take an auto to Anna University Regional Campus.</li>
+            </ol>
 
-          <p style="margin-bottom: 8px; color: var(--emirates-red); font-weight: 700;">From Thirumangalam:</p>
-          <ol
-            style="text-align: left; margin: 0 0 0 20px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.6;">
-            <li><strong style="color: var(--gold-dark);">Option 1:</strong> Take Bus <span class="bus-badge">48UT</span>
-              direct to Anna University <br><span style="font-size: 0.8rem; color: var(--text-muted);">(Timing: 8:10 AM
-                - 8:20 AM only)</span></li>
-            <li style="margin-top: 8px;"><strong style="color: var(--gold-dark);">Option 2:</strong> Take a bus to
-              <strong>Thirunagar 3rd Stop</strong> <br><span style="font-size: 0.8rem; color: var(--text-muted);">(Buses
-                from Periyar, Aarapalayam, MGR Bus Stand, etc.)</span><br>Then take an auto to Anna University Regional
-              Campus.
-            </li>
-          </ol>
+            <p style="margin-bottom: 8px; color: var(--emirates-red); font-weight: 700;">From Periyar Bus Stand:</p>
+            <ol
+              style="text-align: left; margin: 0 0 16px 20px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.6;">
+              <li>Take Bus <span class="bus-badge">48</span> to Thirumangalam.</li>
+              <li>Get down at <strong>Thirunagar 3rd Stop</strong>.</li>
+              <li>Take an auto to Anna University Regional Campus.</li>
+            </ol>
+
+            <p style="margin-bottom: 8px; color: var(--emirates-red); font-weight: 700;">From Thirumangalam:</p>
+            <ol
+              style="text-align: left; margin: 0 0 0 20px; font-size: 0.9rem; color: var(--text-dark); line-height: 1.6;">
+              <li><strong style="color: var(--gold-dark);">Option 1:</strong> Take Bus <span class="bus-badge">48UT</span>
+                direct to Anna University <br><span style="font-size: 0.8rem; color: var(--text-muted);">(Timing: 8:10 AM
+                  - 8:20 AM only)</span></li>
+              <li style="margin-top: 8px;"><strong style="color: var(--gold-dark);">Option 2:</strong> Take a bus to
+                <strong>Thirunagar 3rd Stop</strong> <br><span style="font-size: 0.8rem; color: var(--text-muted);">(Buses
+                  from Periyar, Aarapalayam, MGR Bus Stand, etc.)</span><br>Then take an auto to Anna University Regional
+                Campus.
+              </li>
+            </ol>
+          </div>
 
           <div
             style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-light); display: flex; flex-direction: column; gap: 10px;">
@@ -576,6 +585,10 @@
     </div>
   </section>
 
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <script>
     /* ── FAQ Accordion Logic ──────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
@@ -965,7 +978,7 @@
           </div>`
       },
       'tazky-among-uz': {
-        icon: '🤖', name: 'Tasky Among Uz', tag: 'Team of 3', cat: '',
+        icon: '🤖', name: 'Tazky Among Uz', tag: 'Team of 3', cat: '',
         desc: 'A fast-paced, multi-stage team competition blending quiz rounds with practical challenges. Test your speed, accuracy, teamwork, and strategic thinking under pressure!',
         body: `
           <div class="emodal-section">
@@ -1282,10 +1295,10 @@
         }
       }
 
-      // Hide Register button for Live Chess view
+      // Hide Register button for Live Chess/Ideaforge view
       const regBtn = document.getElementById('eModalRegisterBtn');
       if (regBtn) {
-        if (id === 'chess' && fetchLive) {
+        if ((id === 'chess' || id === 'idea-forge') && fetchLive) {
           regBtn.style.display = 'none';
         } else {
           regBtn.style.display = '';
@@ -1295,9 +1308,121 @@
       document.getElementById('eventModal').classList.add('open');
       document.body.style.overflow = 'hidden';
 
-      // Live Chess Tournament Data Fetch
-      if (id === 'chess' && fetchLive) {
-        fetchChessLive(hl);
+      // Live Ideaforge Tournament Data Fetch
+      if (id === 'idea-forge' && fetchLive) {
+        fetchIdeaForgeLive(hl);
+      }
+    }
+
+    async function fetchIdeaForgeLive(hlNode) {
+      // Show loading state
+      hlNode.innerHTML = `
+            <div style="text-align:center; padding: 40px 20px;">
+                <div class="loader-spinner" style="margin: 0 auto 15px;"></div>
+                <div style="font-weight:600; color:var(--text-muted); font-size: 0.9rem;">Fetching Live Participants...</div>
+                <style>
+                    .loader-spinner { width:34px; height:34px; border:3px solid #f3f3f3; border-top:3px solid var(--emirates-red); border-radius:50%; animation:spin 1s linear infinite; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+                </style>
+            </div>
+        `;
+
+      try {
+        if (!window.db) throw new Error("Firebase not ready");
+        const snap = await window.db.collection('registrations').get();
+        let participants = [];
+
+        const normalize = (s) => (s || '').toString().toLowerCase().replace(/-/g, ' ').trim();
+        const targetEvent = 'idea forge';
+
+        snap.forEach(doc => {
+          const data = doc.data();
+          let matched = false;
+
+          // Check main event field
+          if (normalize(data.event) === targetEvent) matched = true;
+
+          // Check events array (multi-event support)
+          if (!matched && Array.isArray(data.events)) {
+            if (data.events.some(ev => normalize(ev.event || ev) === targetEvent)) matched = true;
+          }
+
+          // Loosen payment check: Show both Paid and Verification Required
+          const isEligible = data.paymentStatus === 'Paid' || data.paymentStatus === 'Verification Required';
+
+          if (matched && isEligible) {
+            participants.push({
+              id: doc.id,
+              name: data.name, // Restored name
+              regId: data.regId,
+              teamMembers: data.teamMembers || [],
+              points: (data.ideaForgeMeta && data.ideaForgeMeta.points) ? parseInt(data.ideaForgeMeta.points) : 0,
+              order: (data.ideaForgeMeta && data.ideaForgeMeta.order) ? parseInt(data.ideaForgeMeta.order) : 99999
+            });
+          }
+        });
+
+        if (participants.length === 0) {
+          hlNode.innerHTML = `<div style="text-align:center; padding: 30px; font-weight:600; color:var(--text-muted);">No participants have been confirmed for Ideaforge yet.</div>`;
+          return;
+        }
+
+        // Sort: Priority to 'order' (admin set rank), then by points
+        participants.sort((a, b) => {
+          if (a.order !== b.order) return a.order - b.order;
+          return b.points - a.points;
+        });
+
+        let html = `
+          <div style="margin-top:10px;">
+            <div style="font-size:0.85rem; font-weight:700; color:var(--emirates-red); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.05em;">Ideaforge Live Leaderboard</div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                <thead>
+                  <tr style="border-bottom:2px solid #eee; text-align:left;">
+                    <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem;">RANK</th>
+                    <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem;">TEAM / PARTICIPANTS</th>
+                    <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem; text-align:right;">POINTS</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+
+        participants.forEach((p, i) => {
+          const isTop3 = i < 3;
+          const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : ''));
+          const rowBg = isTop3 ? 'rgba(200, 169, 81, 0.05)' : 'transparent';
+          
+          const teamStr = (p.teamMembers && p.teamMembers.length > 0) 
+            ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>Team:</strong> ${[p.name, ...p.teamMembers.map(m => m.name)].join(', ')}</div>`
+            : `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>Individual:</strong> ${p.name}</div>`;
+
+          html += `
+                <tr style="border-bottom:1px solid #f5f5f5; background:${rowBg};">
+                  <td style="padding:12px 5px; font-weight:800; color:${isTop3 ? 'var(--gold-dark)' : '#666'};">
+                    ${medal || (i + 1)}
+                  </td>
+                  <td style="padding:12px 5px;">
+                    <div style="font-weight:700; color:var(--text-dark);">${p.name} <span style="font-weight:400; font-size:0.8rem; color:var(--text-muted);">(${p.regId})</span></div>
+                    ${teamStr}
+                  </td>
+                  <td style="padding:12px 5px; text-align:right; font-family:monospace; font-weight:700; font-size:1.1rem; color:var(--emirates-red);">
+                    ${p.points}
+                  </td>
+                </tr>`;
+        });
+
+        html += `
+                </tbody>
+              </table>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:15px; font-style:italic; text-align:center;">📊 Scores are updated in real-time by event moderators.</p>
+          </div>`;
+
+        hlNode.innerHTML = html;
+
+      } catch (e) {
+        console.error(e);
+        hlNode.innerHTML = `<div style="text-align:center; padding: 30px; color:var(--emirates-red); font-weight:600;">Error fetching live stats. Please try again later.</div>`;
       }
     }
 
@@ -1452,6 +1577,17 @@
       tick();
       setInterval(tick, 1000);
     })();
+    function toggleBusRoutes() {
+      const content = document.getElementById('busRoutesContent');
+      const btn = document.getElementById('viewRoutesBtn');
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        btn.innerHTML = '<span>🚌</span> Hide Bus Routes';
+      } else {
+        content.style.display = 'none';
+        btn.innerHTML = '<span>🚌</span> View Bus Routes';
+      }
+    }
     /* ── Transport UX Script ──────────────────────────────────────── */
     const BUS_DIRECTIONS_TEXT = `*Elexsiya 26 - Bus Route Directions* 🚌\n\n*From Aarapalayam:*\n1. Take Bus 48AD to Thirumangalam.\n2. Get down at Thirunagar 3rd Stop.\n3. Take an auto to Anna University Regional Campus.\n\n*From Periyar Bus Stand:*\n1. Take Bus 48 to Thirumangalam.\n2. Get down at Thirunagar 3rd Stop.\n3. Take an auto to Anna University Regional Campus.\n\n*From Thirumangalam:*\nOption 1: Take Bus 48UT direct to Anna University (Timing: 8:10 AM - 8:20 AM only)\nOption 2: Take any bus to Thirunagar 3rd Stop, then take an auto to Anna University Regional Campus.\n\n📍 *Venue Link:* https://maps.app.goo.gl/o1bZ6KWe22m9qgY47`;
 
@@ -1548,55 +1684,53 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="firebase-config.js"></script>
   <script>
-    // ── Maintenance Mode Overlay ──
-    (async function checkMaintenance() {
+    // ── Dynamic Site Config (CMS) ──
+    (async function loadPublicConfig() {
       try {
-        const doc = await window.db.collection('settings').doc('maintenance').get();
-        if (doc.exists && doc.data().enabled) {
-          const msg = doc.data().message || 'We are performing scheduled updates. Please check back soon!';
-          const overlay = document.createElement('div');
-          overlay.id = 'maintenanceOverlay';
-          overlay.innerHTML = `
-            <div style="position:fixed;inset:0;z-index:999999;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#0a0a0a 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;text-align:center;padding:40px;">
-              <div style="font-size:4rem;margin-bottom:20px;">🔧</div>
-              <h1 style="font-family:'Cinzel',serif;font-size:2rem;margin-bottom:16px;color:#ffd700;">Under Maintenance</h1>
-              <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:500px;line-height:1.6;">${msg}</p>
-              <p style="font-size:0.85rem;color:rgba(255,255,255,0.4);margin-top:30px;">— Team Elexsiya</p>
-            </div>`;
-          document.body.innerHTML = '';
-          document.body.appendChild(overlay);
-        }
-      } catch (e) { console.warn('Maintenance check failed:', e); }
-    })();
+        const doc = await window.db.collection('settings').doc('publicConfig').get();
+        if (doc.exists) {
+          const data = doc.data();
+          
+          // 1. Maintenance Mode
+          if (data.maintenanceMode === true) {
+            const overlay = document.createElement('div');
+            overlay.id = 'maintenanceOverlay';
+            overlay.innerHTML = `
+              <div style="position:fixed;inset:0;z-index:999999;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#0a0a0a 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;text-align:center;padding:40px;">
+                <div style="font-size:4rem;margin-bottom:20px;">🔧</div>
+                <h1 style="font-family:'Cinzel',serif;font-size:2rem;margin-bottom:16px;color:#ffd700;">Under Maintenance</h1>
+                <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:500px;line-height:1.6;">We are performing scheduled updates. Please check back soon!</p>
+                <p style="font-size:0.85rem;color:rgba(255,255,255,0.4);margin-top:30px;">— Team Elexsiya</p>
+              </div>`;
+            document.body.innerHTML = '';
+            document.body.appendChild(overlay);
+            return; // stop execution if maintenance is on
+          }
 
-    // ── Dynamic Marquee ──
-    (async function loadDynamicMarquee() {
-      try {
-        const doc = await window.db.collection('settings').doc('marquee').get();
-        if (doc.exists && doc.data().enabled && doc.data().text) {
-          const track = document.querySelector('.marquee-track');
-          if (!track) return;
-          const announcement = `<span style="color:#ffd700;font-weight:800;">📢 ${doc.data().text}</span><span class="marquee-dot">✦</span>`;
-          // Insert at start of both duplicated halves
-          track.insertAdjacentHTML('afterbegin', announcement);
-        }
-      } catch (e) { console.warn('Marquee load failed:', e); }
-    })();
+          // 2. Marquee Updates
+          if (data.marqueeText) {
+            const track = document.querySelector('.marquee-track');
+            if (track) {
+              const announcement = `<span style="color:#ffd700;font-weight:800;">📢 ${data.marqueeText}</span><span class="marquee-dot">✦</span>`;
+              track.insertAdjacentHTML('afterbegin', announcement);
+              // The track is duplicated for infinite scroll, but prepending to the parent is usually fine 
+              // or replacing the text entirely
+            }
+          }
 
-    // ── Emergency Broadcast Banner ──
-    (async function loadBroadcast() {
-      try {
-        const doc = await window.db.collection('settings').doc('broadcast').get();
-        if (doc.exists && doc.data().enabled && doc.data().text) {
-          const banner = document.createElement('div');
-          banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99998;background:linear-gradient(90deg,#ef4444,#dc2626);color:white;text-align:center;padding:12px 20px;font-size:0.9rem;font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;gap:8px;';
-          banner.innerHTML = `<span>🚨</span><span>${doc.data().text}</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;font-size:1.2rem;cursor:pointer;margin-left:12px;">✕</button>`;
-          document.body.prepend(banner);
-          // Push navbar down
-          const nav = document.querySelector('.navbar');
-          if (nav) nav.style.top = banner.offsetHeight + 'px';
+          // 3. Prize Pool Updates
+          if (data.prizePoolText) {
+            // Find the prize pool stat element. It's the second strip-stat.
+            const stats = document.querySelectorAll('.strip-stat-value');
+            if (stats.length > 1) {
+              // The original is 15k+
+              stats[1].textContent = data.prizePoolText;
+            }
+          }
+
+          // 4. Registration Locking is handled in registration pages.
         }
-      } catch (e) { console.warn('Broadcast load failed:', e); }
+      } catch (e) { console.warn('Public config load failed:', e); }
     })();
   </script>
 </body>

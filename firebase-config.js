@@ -90,3 +90,20 @@ function tryInitAuth(attempts = 0) {
   }
 }
 tryInitAuth();
+
+// Initialize App Check (Vulnerability Protection)
+// Requires: <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check-compat.js"></script>
+if (typeof firebase.appCheck === 'function') {
+  try {
+    const appCheck = firebase.appCheck();
+    // Activation with Recaptcha Enterprise
+    // Note: Project owners must configure this in Firebase Console -> App Check
+    appCheck.activate(
+      new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcR8pApAAAAAK8oYm1N1gXGfVv_LqO8S9hV9jHn'), // Example Key
+      true 
+    );
+    console.log('✅ Firebase App Check Activated.');
+  } catch (e) {
+    console.warn('⚠️ App Check Init Error (Expected in localhost without debug token):', e);
+  }
+}

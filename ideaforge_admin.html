@@ -181,28 +181,46 @@
         let dragSrcEl = null;
 
         async function fetchData() {
+            console.log("[DB] Starting Idea Forge data fetch...");
             try {
                 const snap = await db.collection('registrations').get();
+                console.log(`[DB] Fetched ${snap.size} total registrations.`);
                 allData = [];
 
                 snap.forEach(doc => {
                     const data = doc.data();
-                    const evt = (data.event || '').toString().toLowerCase().replace(/-/g, ' ').trim();
-                    if (evt === 'idea forge' || evt === 'idea-forge' || evt === 'ideaforge') {
-                        // Normalize meta
+                    let isIdeaForge = false;
+
+                    const normalize = (s) => (s || '').toString().toLowerCase().replace(/-/g, ' ').trim();
+                    const target = 'idea forge';
+
+                    // Check single event field
+                    if (normalize(data.event) === target) isIdeaForge = true;
+
+                    // Check multi-event array (support both direct strings and objects with .event)
+                    if (data.events && Array.isArray(data.events)) {
+                        if (data.events.some(e => normalize(e.event || e) === target)) {
+                            isIdeaForge = true;
+                        }
+                    }
+
+                    if (isIdeaForge) {
                         data.ideaForgeMeta = data.ideaForgeMeta || { order: 99999, points: 0, locked: false };
                         allData.push({ id: doc.id, ...data });
                     }
                 });
 
+                console.log(`[DB] Found ${allData.length} matches for Idea Forge.`);
+
                 // Check if already locked (scoring mode)
-                isScoringMode = allData.some(d => d.ideaForgeMeta.locked);
+                isScoringMode = allData.some(d => d.ideaForgeMeta && d.ideaForgeMeta.locked);
 
                 // Sort data
                 sortData();
                 updateUIState();
                 
                 document.getElementById('totalCount').textContent = allData.length;
+                document.getElementById('loadingState').style.display = 'none';
             } catch (error) {
                 console.error("Error fetching data:", error);
                 document.getElementById('loadingState').innerHTML = `
@@ -518,7 +536,7 @@
             csvContent += "Rank,Points,Reg ID,Team Leader,Email,Phone,College,Department,Year,Event,Payment Status,Reg Date\n";
 
             allData.forEach(row => {
-                const escapeCsv = (str) => \`"\${(str || '').toString().replace(/"/g, '""')}"\`;
+                const escapeCsv = (str) => `"${(str || '').toString().replace(/"/g, '""')}"`;
                 
                 const m2 = row.teamMembers && row.teamMembers[0] ? row.teamMembers[0] : {};
                 const m3 = row.teamMembers && row.teamMembers[1] ? row.teamMembers[1] : {};
@@ -541,13 +559,13 @@
                     escapeCsv(dStr)
                 ].join(',');
 
-                csvContent += line + "\\n";
+                csvContent += line + "\n";
             });
 
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", \`ideaforge_registrations_\${new Date().toISOString().split('T')[0]}.csv\`);
+            link.setAttribute("download", `ideaforge_registrations_${new Date().toISOString().split('T')[0]}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

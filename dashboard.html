@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.netlify.com;">
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Admin Dashboard – Elexsiya 26</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -732,6 +734,11 @@
             display: none !important;
         }
 
+        /* General Admin Restrictions */
+        body.general-admin .general-admin-hidden {
+            display: none !important;
+        }
+
         .treasurer-badge,
         .super-user-badge {
             display: none;
@@ -1337,17 +1344,19 @@
             <!-- Tabs Navigation -->
             <div class="dash-tabs">
                 <div class="dash-tab active" data-tab="analysis">📊 Analysis</div>
-                <div class="dash-tab" data-tab="payments">💸 Payments</div>
+                <div class="dash-tab general-admin-hidden" data-tab="payments">💸 Payments</div>
                 <div class="dash-tab" data-tab="participants">👥 Participants</div>
-                <div class="dash-tab" data-tab="tools">🛠️ Tools</div>
+                <div class="dash-tab general-admin-hidden" data-tab="tools">🛠️ Tools</div>
                 <div class="dash-tab super-only-flex" data-tab="netlify" id="tabBtnNetlify">⚡ Netlify</div>
                 <div class="dash-tab super-only-flex" data-tab="commandcenter" id="tabBtnCC">🎛️ Command Center</div>
-                <div class="dash-tab" data-tab="scanner" id="tabBtnScanner">📷 Scanner</div>
+                <div class="dash-tab super-only-flex" data-tab="sitesettings" id="tabBtnSiteSettings">⚙️ Site Settings
+                </div>
+                <div class="dash-tab general-admin-hidden" data-tab="scanner" id="tabBtnScanner">📷 Scanner</div>
                 <div class="dash-tab" data-tab="attendance">📋 Attendance</div>
                 <div class="dash-tab treasurer-only-flex" data-tab="sponsorship">🤝 Sponsorship</div>
                 <div class="dash-tab treasurer-only-flex" data-tab="expenditure" id="tabBtnExpenditure">📉 Expenditure
                 </div>
-                <div class="dash-tab" data-tab="onspot">🎫 On-Spot</div>
+                <div class="dash-tab general-admin-hidden" data-tab="onspot">🎫 On-Spot</div>
             </div>
 
             <!-- Tab Content: Analysis -->
@@ -1495,10 +1504,14 @@
                     Delete Selected</button>
             </div>
 
-            <div class="table-section">
+            <div class="table-section" style="border-bottom:none;">
                 <div class="table-wrap" id="tableWrap">
                     <!-- Populated by JS -->
                 </div>
+            </div>
+            <div id="paginationWrap" style="text-align:center; padding: 20px 0; background:white; border: 1px solid var(--border-light); border-top:none; border-radius: 0 0 var(--radius-lg) var(--radius-lg); margin-bottom: 24px;">
+                <button class="btn-csv" id="loadMoreBtn" onclick="loadMoreRegistrations()" style="background:#f0f9ff; color:#0369a1; border-color:#bae6fd; min-width: 200px;">&#8681; Load More Participants</button>
+                <div id="paginationStatus" style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;"></div>
             </div>
         </div>
 
@@ -2135,6 +2148,79 @@
 
         </div>
 
+        <!-- Tab Content: Site Settings (CMS) -->
+        <div id="tab-sitesettings" class="tab-content super-only-block" style="display:none;">
+            <div class="dash-header" style="margin-bottom: 24px; padding: 0 20px;">
+                <h1 style="font-size:1.5rem; margin-bottom:8px;">⚙️ Site Settings</h1>
+                <p>Manage the live website directly from this panel</p>
+            </div>
+
+            <div class="cc-section open" style="margin-bottom: 24px; margin: 0 20px;">
+                <div class="cc-section-header">
+                    <h3 style="display:flex; align-items:center; gap:8px;">🌐 Global Website Controls</h3>
+                </div>
+                <div class="cc-section-body" style="max-height: 2000px;">
+                    <div class="cc-section-inner">
+                        <div class="cc-grid">
+                            <!-- Registrations Toggle -->
+                            <div class="cc-card">
+                                <h4>📝 Registrations Open</h4>
+                                <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;">Toggle whether
+                                    the public can register for the symposium.</p>
+                                <div class="cc-toggle-wrap">
+                                    <label class="cc-toggle">
+                                        <input type="checkbox" id="cmsToggleRegistrations" checked
+                                            onchange="document.getElementById('cmsLabelRegistrations').textContent = this.checked ? 'Open' : 'Closed';">
+                                        <span class="cc-toggle-slider"></span>
+                                    </label>
+                                    <span class="cc-toggle-label" id="cmsLabelRegistrations">Open</span>
+                                </div>
+                            </div>
+
+                            <!-- Maintenance Toggle -->
+                            <div class="cc-card">
+                                <h4>🚧 Maintenance Mode</h4>
+                                <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:14px;">Put the website
+                                    into maintenance mode (blocks all access).</p>
+                                <div class="cc-toggle-wrap">
+                                    <label class="cc-toggle">
+                                        <input type="checkbox" id="cmsToggleMaintenance"
+                                            onchange="document.getElementById('cmsLabelMaintenance').textContent = this.checked ? 'ON — Blocked' : 'Off';">
+                                        <span class="cc-toggle-slider"></span>
+                                    </label>
+                                    <span class="cc-toggle-label" id="cmsLabelMaintenance">Off</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 24px; border-top: 1px solid var(--border-light); padding-top: 24px;">
+                            <h4 style="margin-bottom: 12px;">📢 Marquee Announcement</h4>
+                            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px;">This text scrolls
+                                constantly at the top of the landing page.</p>
+                            <input type="text" id="cmsMarqueeText" class="cc-input"
+                                placeholder="e.g. Welcome to Elexsiya 26! Registrations are now open.">
+                        </div>
+
+                        <div style="margin-top: 24px; border-top: 1px solid var(--border-light); padding-top: 24px;">
+                            <h4 style="margin-bottom: 12px;">🏆 Prize Pool Amount</h4>
+                            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:10px;">Updates the prize
+                                pool number in the stats section on the home page.</p>
+                            <input type="text" id="cmsPrizePoolText" class="cc-input" placeholder="e.g. 15k+">
+                        </div>
+
+                        <div
+                            style="margin-top: 24px; padding-top: 20px; text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 16px;">
+                            <span id="cmsSaveStatus"
+                                style="font-size:0.85rem; color:#16a34a; font-weight:700; opacity:0; transition:0.3s;">✅
+                                Saved!</span>
+                            <button class="cc-btn cc-btn-red" id="cmsSaveBtn" onclick="saveCMSConfig()"
+                                style="font-size:1rem; padding: 12px 32px;">💾 Save Settings Live</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Tab Content: Scanner -->
         <div id="tab-scanner" class="tab-content">
             <div class="premium-card"
@@ -2336,6 +2422,7 @@
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -2408,6 +2495,13 @@
             document.querySelectorAll('.dash-tab').forEach(t => {
                 if (t.dataset.tab !== 'onspot') t.style.display = 'none';
             });
+        }
+
+        // General Admin check (ece26)
+        const isGeneralAdmin = token === ADMIN_PASS_HASH;
+        if (isGeneralAdmin) {
+            document.body.classList.add('general-admin');
+            document.querySelector('.admin-name').textContent = '🛡️ General Admin';
         }
 
         // ── Netlify Logic ──
@@ -2506,6 +2600,11 @@
 
         let allRegistrations = [], allSponsors = [], allExpenditures = [];
         let eventChartInst = null, timelineChartInst = null;
+        
+        let lastVisibleDoc = null;
+        let pageSize = 50;
+        let isEOF = false;
+        let isFetchingPaginated = false;
 
         function getAllPersons(r) {
             // Use email-based deduplication to avoid counting the same person
@@ -2544,36 +2643,104 @@
             const wrap = document.getElementById('tableWrap');
             if (wrap) wrap.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text-muted);">&#9203; Loading registrations from database...</div>';
 
+            // Reset pagination
+            lastVisibleDoc = null;
+            allRegistrations = [];
+            isEOF = false;
+
+            // Update Stats separately (fetches all for now, but will be moved to meta doc)
             // Parallel fetch for speed
-            const promises = [getRegistrations(true)]; // Force refresh for live admin data
+            const promises = [getRegistrations(true)]; // Still needed for stats and filters until meta doc exists
             if (isTreasurer) {
                 promises.push(getSponsorships());
                 promises.push(getExpenditures());
             }
 
-            const results = await Promise.all(promises);
-            allRegistrations = results[0];
-            if (isTreasurer) {
-                allSponsors = results[1] || [];
-                allExpenditures = results[2] || [];
-            }
+            try {
+                const results = await Promise.all(promises);
+                const fullList = results[0];
+                if (isTreasurer) {
+                    allSponsors = results[1] || [];
+                    allExpenditures = results[2] || [];
+                }
 
-            updateStats();
-            populateEventFilter();
-            buildCharts();
-            renderTable(allRegistrations);
+                // Initial Paginated Fetch
+                const pagRes = await getPaginatedRegistrations(null, pageSize);
+                allRegistrations = pagRes.data;
+                lastVisibleDoc = pagRes.lastVisible;
+                if (pagRes.data.length < pageSize) isEOF = true;
+
+                fullListCache = fullList;
+                updateStats(fullList); // Pass full list for accurate counts
+                populateEventFilter(fullList);
+                // buildCharts(fullList); // Removed for Lazy Loading
+                renderTable(allRegistrations);
+                updatePaginationUI();
+            } catch (err) {
+                console.error(err);
+                if (wrap) wrap.innerHTML = '<div class="no-data" style="color:#ef4444;">❌ Error loading data. Please check connection.</div>';
+            }
         }
 
-        function updateStats() {
-            const onspot = allRegistrations.filter(r => r.onSpot === true).length;
-            const online = allRegistrations.length - onspot;
-            const paid = allRegistrations.filter(r => r.paymentStatus === 'Paid').length;
-            const revenue = allRegistrations.filter(r => r.paymentStatus === 'Paid').reduce((sum, r) => sum + r.amount, 0);
+        async function loadMoreRegistrations() {
+            if (isEOF || isFetchingPaginated) return;
+            isFetchingPaginated = true;
+            const btn = document.getElementById('loadMoreBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Loading more...';
+            btn.disabled = true;
+
+            try {
+                const res = await getPaginatedRegistrations(lastVisibleDoc, pageSize);
+                if (res.data.length === 0) {
+                    isEOF = true;
+                } else {
+                    allRegistrations = [...allRegistrations, ...res.data];
+                    lastVisibleDoc = res.lastVisible;
+                    if (res.data.length < pageSize) isEOF = true;
+                    renderTable(allRegistrations);
+                }
+                updatePaginationUI();
+            } catch (err) {
+                console.error(err);
+                alert("Failed to load more participants.");
+            } finally {
+                isFetchingPaginated = false;
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function updatePaginationUI() {
+            const wrap = document.getElementById('paginationWrap');
+            const btn = document.getElementById('loadMoreBtn');
+            const status = document.getElementById('paginationStatus');
+            if (isEOF) {
+                btn.style.display = 'none';
+                status.textContent = `Showing all ${allRegistrations.length} registrations.`;
+            } else {
+                btn.style.display = 'inline-block';
+                status.textContent = `Showing ${allRegistrations.length} latest registrations. Data is paginated for performance.`;
+            }
+        }
+
+        function updateStats(list) {
+            if (!list) list = allRegistrations;
+            const onspot = list.filter(r => r.onSpot === true).length;
+            const online = list.length - onspot;
+            const paid = list.filter(r => r.paymentStatus === 'Paid').length;
+            const revenue = list.filter(r => r.paymentStatus === 'Paid').reduce((sum, r) => sum + r.amount, 0);
 
             const onlineEl = document.getElementById('onlineRegs');
             const onspotEl = document.getElementById('onspotRegs');
             if (onlineEl) onlineEl.textContent = online;
             if (onspotEl) onspotEl.textContent = onspot;
+
+            const paidEl = document.getElementById('totalPaid');
+            if (paidEl) paidEl.textContent = paid;
+
+            const pendingEl = document.getElementById('totalPending');
+            if (pendingEl) pendingEl.textContent = list.length - paid;
 
             const revEl = document.getElementById('totalRevenue');
             if (revEl) revEl.textContent = '₹' + revenue.toLocaleString('en-IN');
@@ -2589,7 +2756,7 @@
             }
 
             let veg = 0, nonVeg = 0, hostel = 0;
-            allRegistrations.forEach(r => {
+            list.forEach(r => {
                 getAllPersons(r).forEach(p => {
                     if (p.food === 'Veg') veg++;
                     else if (p.food === 'Non-Veg') nonVeg++;
@@ -2604,13 +2771,15 @@
             if (sHostel) sHostel.textContent = hostel;
         }
 
-        function populateEventFilter() {
+        function populateEventFilter(list) {
+            if (!list) list = allRegistrations;
             const events = new Set();
-            allRegistrations.forEach(r => {
+            list.forEach(r => {
                 if (r.events && r.events.length > 0) r.events.forEach(e => events.add(e.event || e));
                 else if (r.event) events.add(r.event);
             });
             const sel = document.getElementById('filterEvent');
+            if (!sel) return;
             while (sel.options.length > 1) sel.remove(1);
             [...events].sort().forEach(ev => {
                 const opt = document.createElement('option');
@@ -2619,9 +2788,10 @@
             });
         }
 
-        function buildCharts() {
+        function buildCharts(list) {
+            if (!list) list = allRegistrations;
             const eventCounts = {};
-            allRegistrations.forEach(r => {
+            list.forEach(r => {
                 const evs = (r.events && r.events.length > 0) ? r.events.map(e => e.event || e) : [r.event || 'Unknown'];
                 evs.forEach(ev => { eventCounts[ev] = (eventCounts[ev] || 0) + 1; });
             });
@@ -2643,7 +2813,7 @@
             });
 
             const dateCounts = {};
-            allRegistrations.forEach(r => {
+            list.forEach(r => {
                 if (!r.registeredAt) return;
                 const d = new Date(r.registeredAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
                 dateCounts[d] = (dateCounts[d] || 0) + 1;
@@ -3022,9 +3192,10 @@
                     const dt = s.uploadedAt ? new Date(s.uploadedAt) : null;
                     const dateStr = dt ? dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '—';
                     const isPaid = reg.paymentStatus === 'Paid';
+                    const imgSrc = s.storageURL || s.imageData; // Backward compatibility
                     return `<div class="screenshot-card">
-                        <div class="screenshot-img-wrap" onclick="openLightbox('${s.imageData}','${s.regId}')">
-                            <img src="${s.imageData}" alt="Screenshot ${s.regId}" loading="lazy" />
+                        <div class="screenshot-img-wrap" onclick="openLightbox('${imgSrc}','${s.regId}')">
+                            <img src="${imgSrc}" alt="Screenshot ${s.regId}" loading="lazy" />
                             <div class="view-overlay">&#128269; View Full Size</div>
                         </div>
                         <div class="screenshot-meta">
@@ -3033,7 +3204,7 @@
                             <div class="screenshot-date">${dateStr}</div>
                             <div class="screenshot-actions">
                                 ${!isPaid ? `<button class="btn-verify" onclick="markPaid('${s.regId}',this)">&#10003; Mark Paid</button>` : `<button class="btn-verify verified" disabled>&#10003; Paid</button>`}
-                                <button class="btn-view-full" onclick="downloadScreenshot('${s.regId}','${s.imageData}')">&#8595; Save</button>
+                                <button class="btn-view-full" onclick="downloadScreenshot('${s.regId}','${imgSrc}')">&#8595; Save</button>
                                 ${isSuperUser ? `<button class="btn-delete-screenshot" onclick="deleteScreenshotUI('${s.regId}')" title="Delete Screenshot" style="background:var(--emirates-red); color:white; border:none; padding:8px; border-radius:4px; cursor:pointer;">🗑️</button>` : ''}
                             </div>
                         </div>
@@ -3173,6 +3344,9 @@
         }
 
         // ── Tabs Logic ──
+        let chartsInitialized = false;
+        let fullListCache = null;
+
         document.querySelectorAll('.dash-tab').forEach(tab => {
             tab.addEventListener('click', function () {
                 // UI Switch
@@ -3180,12 +3354,16 @@
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
                 this.classList.add('active');
-                const targetId = `tab-${this.dataset.tab}`;
+                const tabId = this.dataset.tab;
+                const targetId = `tab-${tabId}`;
                 const targetContent = document.getElementById(targetId);
                 if (targetContent) targetContent.classList.add('active');
 
-                // Tab Specific Actions
-                const tabId = this.dataset.tab;
+                // Tab Specific Actions (Lazy Loading)
+                if (tabId === 'analysis' && !chartsInitialized && fullListCache) {
+                    buildCharts(fullListCache);
+                    chartsInitialized = true;
+                }
                 if (tabId === 'payments') renderScreenshotsInTab();
                 if (tabId === 'sponsorship') loadSponsorships();
                 if (tabId === 'expenditure') loadExpenditures();
@@ -3908,10 +4086,11 @@
                 grid.innerHTML = docs.map(s => {
                     const reg = allRegistrations.find(r => r.regId === s.regId) || {};
                     const isPaid = reg.paymentStatus === 'Paid';
+                    const imgSrc = s.storageURL || s.imageData; // Support for both storage URLs and old base64 strings
                     return `
                         <div class="screenshot-card">
-                            <div class="screenshot-img-wrap" onclick="openLightbox('${s.imageData}','${s.regId}')">
-                                <img src="${s.imageData}" alt="${s.regId}" loading="lazy" />
+                            <div class="screenshot-img-wrap" onclick="openLightbox('${imgSrc}','${s.regId}')">
+                                <img src="${imgSrc}" alt="${s.regId}" loading="lazy" />
                                 <div class="view-overlay">&#128269; View Verification Receipt</div>
                             </div>
                             <div class="screenshot-meta">
@@ -3920,7 +4099,7 @@
                                 <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px;">${reg.college || 'No college details'}</div>
                                 <div class="screenshot-actions">
                                     ${!isPaid ? `<button class="btn-verify" onclick="markPaid('${s.regId}',this)">&#10003; Verify Payment</button>` : `<button class="btn-verify verified" disabled>&#128504; Verified</button>`}
-                                    <button class="btn-view-full" onclick="downloadScreenshot('${s.regId}','${s.imageData}')">&#8595; Save</button>
+                                    <button class="btn-view-full" onclick="downloadScreenshot('${s.regId}','${imgSrc}')">&#8595; Save</button>
                                     ${isSuperUser ? `<button class="btn-delete-screenshot" onclick="deleteScreenshotUI('${s.regId}')" title="Delete Screenshot" style="background:var(--emirates-red); color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-size:1.1rem;">🗑️</button>` : ''}
                                 </div>
                             </div>
@@ -4304,9 +4483,69 @@
             } catch (err) { alert('Error: ' + err.message); }
         }
 
+        // ── CMS Site Settings ──
+        async function loadCMSConfig() {
+            try {
+                const doc = await window.db.collection('settings').doc('publicConfig').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    const rCheck = document.getElementById('cmsToggleRegistrations');
+                    const mCheck = document.getElementById('cmsToggleMaintenance');
+                    if (rCheck) rCheck.checked = data.registrationOpen !== false;
+                    if (mCheck) mCheck.checked = data.maintenanceMode === true;
+
+                    const rLabel = document.getElementById('cmsLabelRegistrations');
+                    const mLabel = document.getElementById('cmsLabelMaintenance');
+                    if (rLabel) rLabel.textContent = data.registrationOpen !== false ? 'Open' : 'Closed';
+                    if (mLabel) mLabel.textContent = data.maintenanceMode === true ? 'ON — Blocked' : 'Off';
+
+                    const marq = document.getElementById('cmsMarqueeText');
+                    const prize = document.getElementById('cmsPrizePoolText');
+                    if (marq) marq.value = data.marqueeText || '';
+                    if (prize) prize.value = data.prizePoolText || '';
+                }
+            } catch (err) {
+                console.error("Failed to load CMS config:", err);
+            }
+        }
+
+        async function saveCMSConfig() {
+            const btn = document.getElementById('cmsSaveBtn');
+            const statusLabel = document.getElementById('cmsSaveStatus');
+            btn.disabled = true;
+            btn.textContent = '⏳ Saving...';
+
+            const config = {
+                registrationOpen: document.getElementById('cmsToggleRegistrations').checked,
+                maintenanceMode: document.getElementById('cmsToggleMaintenance').checked,
+                marqueeText: document.getElementById('cmsMarqueeText').value.trim(),
+                prizePoolText: document.getElementById('cmsPrizePoolText').value.trim(),
+                updatedAt: new Date().toISOString()
+            };
+
+            try {
+                await window.db.collection('settings').doc('publicConfig').set(config, { merge: true });
+                if (typeof logAdminAction === 'function') {
+                    await logAdminAction('SuperUser', 'CMS_SETTINGS_UPDATED', config);
+                }
+
+                statusLabel.style.opacity = '1';
+                setTimeout(() => { statusLabel.style.opacity = '0'; }, 3000);
+            } catch (err) {
+                alert('Failed to save settings: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Save Settings Live';
+
+                document.getElementById('cmsLabelRegistrations').textContent = config.registrationOpen ? 'Open' : 'Closed';
+                document.getElementById('cmsLabelMaintenance').textContent = config.maintenanceMode ? 'ON — Blocked' : 'Off';
+            }
+        }
+
         // Initial load
         loadData();
         loadCertTemplate();
+        loadCMSConfig();
     </script>
 </body>
 

@@ -4,6 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Payment – Elexsiya 26</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -308,6 +311,7 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
   <script src="firebase-config.js"></script>
@@ -630,6 +634,30 @@
 
     })();
   </script>
+    <script>
+        // ── Dynamic Site Config (CMS) ──
+        (async function loadPublicConfig() {
+            try {
+                if (!window.db) return;
+                const doc = await window.db.collection('settings').doc('publicConfig').get();
+                if (doc.exists) {
+                    const data = doc.data();
+                    if (data.maintenanceMode === true) {
+                        const overlay = document.createElement('div');
+                        overlay.id = 'maintenanceOverlay';
+                        overlay.innerHTML = `
+                            <div style="position:fixed;inset:0;z-index:999999;background:linear-gradient(135deg,#0a0a0a 0%,#1a1a2e 50%,#0a0a0a 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;color:white;text-align:center;padding:40px;">
+                                <div style="font-size:4rem;margin-bottom:20px;">🔧</div>
+                                <h1 style="font-family:'Cinzel',serif;font-size:2rem;margin-bottom:16px;color:#ffd700;">Under Maintenance</h1>
+                                <p style="font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:500px;line-height:1.6;">We are performing scheduled updates. Please check back soon!</p>
+                            </div>`;
+                        document.body.innerHTML = '';
+                        document.body.appendChild(overlay);
+                    }
+                }
+            } catch (e) { console.warn('Public config load failed:', e); }
+        })();
+    </script>
 </body>
 
 </html>
