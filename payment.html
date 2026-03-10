@@ -567,6 +567,14 @@
           this.innerHTML = '⏳ Uploading Proof...';
 
           try {
+            // Block submission if opened via file:// — Firebase won't work
+            if (window.location.protocol === 'file:') {
+                alert("⚠️ This page is opened directly from your folder (file:// protocol).\n\nFirebase Storage cannot connect in this mode. Please use a live server (e.g. VS Code Live Server) to upload.");
+                this.disabled = false;
+                this.innerHTML = '&#10003; Upload & Confirm Registration';
+                return;
+            }
+
             // Safety timeout to prevent permanent UI freeze on severely dropped connections
             const uploadPromise = uploadPaymentScreenshot(reg.regId, file);
             const timeoutPromise = new Promise((_, reject) => 
@@ -579,9 +587,11 @@
             window.location.href = 'success.html';
           } catch (err) {
             console.error("Upload failed:", err);
-            let errMsg = "❌ Upload failed. Please check your connection and try again.";
+            let errMsg = "❌ Upload failed. Please check your connection and try again.\n\nDetails: " + err.message;
             if (err.message === 'UPLOAD_TIMEOUT') {
                errMsg = "⚠️ Upload is taking too long. Please check your internet connection and try again.";
+            } else if (err.code === 'storage/unauthorized') {
+               errMsg = "⚠️ Permission Denied: Firebase Storage rules are blocking the upload. Please check Firebase rules.";
             }
             alert(errMsg);
             this.disabled = false;
