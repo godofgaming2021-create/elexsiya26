@@ -567,12 +567,23 @@
           this.innerHTML = '⏳ Uploading Proof...';
 
           try {
-            await uploadPaymentScreenshot(reg.regId, file);
+            // Safety timeout to prevent permanent UI freeze on severely dropped connections
+            const uploadPromise = uploadPaymentScreenshot(reg.regId, file);
+            const timeoutPromise = new Promise((_, reject) => 
+               setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 35000)
+            );
+            
+            await Promise.race([uploadPromise, timeoutPromise]);
+            
             sessionStorage.setItem('allowSuccessView', reg.regId);
             window.location.href = 'success.html';
           } catch (err) {
             console.error("Upload failed:", err);
-            alert("❌ Upload failed. Please check your connection and try again.");
+            let errMsg = "❌ Upload failed. Please check your connection and try again.";
+            if (err.message === 'UPLOAD_TIMEOUT') {
+               errMsg = "⚠️ Upload is taking too long. Please check your internet connection and try again.";
+            }
+            alert(errMsg);
             this.disabled = false;
             this.innerHTML = '&#10003; Upload & Confirm Registration';
           }
@@ -586,6 +597,26 @@
           console.log("UPI Link clicked:", this.href);
         });
       }
+
+      // ── Back-navigation button-reset fix ──
+      // Resets the button if the user presses the back button from success.html
+      function resetUploadButton() {
+        const cBtn = document.getElementById('confirmPaymentBtn');
+        if (cBtn && (cBtn.disabled || cBtn.textContent.includes('Uploading'))) {
+            cBtn.disabled = false;
+            cBtn.innerHTML = '&#10003; Upload &amp; Confirm Registration';
+        }
+      }
+
+      window.addEventListener('pageshow', function (event) {
+          if (event.persisted) resetUploadButton();
+          setTimeout(resetUploadButton, 100);
+      });
+      document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'visible') resetUploadButton();
+      });
+      window.addEventListener('focus', resetUploadButton);
+      setTimeout(resetUploadButton, 0);
 
     })();
   </script>

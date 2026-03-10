@@ -1124,16 +1124,41 @@
 
             buildForm();
 
-            // Fix: Reset submit button when page is restored from back-forward cache (bfcache).
-            // Without this, pressing the browser back button from payment.html leaves the
-            // button stuck in the disabled "⏳ Saving..." state.
-            window.addEventListener('pageshow', function (event) {
+            // ── Back-navigation button-reset fix ──
+            // When the user submits successfully and navigates to payment.html,
+            // then presses the browser back button, the button may remain in its
+            // disabled "⏳ Saving..." state. We use THREE mechanisms to cover
+            // all browser behaviors (bfcache, full reload, mobile tab switch):
+            function resetSubmitButton() {
                 const submitBtn = document.getElementById('submitBtn');
                 if (submitBtn && (submitBtn.disabled || submitBtn.textContent.includes('Saving'))) {
                     submitBtn.disabled = false;
                     submitBtn.textContent = '🚀 Proceed to Payment';
                 }
+            }
+
+            // 1. pageshow — fires when page is restored from bfcache
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted) {
+                    resetSubmitButton();
+                }
+                // Also reset after a tiny delay in case DOM isn't fully restored yet
+                setTimeout(resetSubmitButton, 100);
             });
+
+            // 2. visibilitychange — fires when tab becomes visible again (mobile)
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'visible') {
+                    resetSubmitButton();
+                }
+            });
+
+            // 3. focus — fires when the window regains focus (desktop back-nav)
+            window.addEventListener('focus', resetSubmitButton);
+
+            // 4. Immediate check — covers the case where the IIFE re-runs on full reload
+            //    but the browser pre-fills the form with stale DOM state
+            setTimeout(resetSubmitButton, 0);
         })();
     </script>
 </body>

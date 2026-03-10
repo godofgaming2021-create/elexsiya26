@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    COLLEGE SYMPOSIUM â€“ SHARED UTILITIES
    Firebase Firestore data store + helpers
    ============================================================ */
@@ -372,20 +372,21 @@ async function uploadPaymentScreenshot(regId, file) {
     await storageRef.put(compressedBlob, { contentType: 'image/jpeg' });
     const downloadURL = await storageRef.getDownloadURL();
 
-    // ── Step 3: Save reference in Firestore screenshots collection ──
-    // imageData is set to the download URL for backward compatibility with dashboard
-    await window.db.collection('screenshots').doc(regId).set({
+    // ── Step 3: Save reference in Firestore screenshots collection (Optimistic) ──
+    // We intentionally DO NOT `await` these Firestore writes so the UI doesn't hang
+    // if the WebSocket connection is stale on mobile.
+    window.db.collection('screenshots').doc(regId).set({
       regId,
       imageData: downloadURL,
       uploadedAt: new Date().toISOString(),
       fileName: file.name
-    });
+    }).catch(err => console.error('[DB] Background sync error (screenshots):', err));
 
-    // ── Step 4: Update registration status ──
-    await window.db.collection('registrations').doc(regId).update({
+    // ── Step 4: Update registration status (Optimistic) ──
+    window.db.collection('registrations').doc(regId).update({
       paymentStatus: 'Verification Required',
       hasScreenshot: true
-    });
+    }).catch(err => console.error('[DB] Background sync error (reg update):', err));
 
     return downloadURL;
   } catch (err) {

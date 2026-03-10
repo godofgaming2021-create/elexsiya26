@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.netlify.com;">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <title>Idea Forge Admin – Elexsiya 26</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        body { background: var(--bg-warm); }
+        /* Top bar */
+        .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(255, 255, 255, .97); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border-light); box-shadow: 0 2px 12px rgba(0, 0, 0, .06); padding: 14px 0; }
+        .topbar .container { display: flex; align-items: center; justify-content: space-between; }
+        .topbar .logo { font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--emirates-red); letter-spacing: 0.06em; text-decoration: none; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .admin-name { color: var(--text-muted); font-size: .9rem; font-family: var(--font-body); }
+        .btn-logout { padding: 8px 20px; font-size: .85rem; background: rgba(198, 12, 48, .08); border: 1px solid rgba(198, 12, 48, .25); color: var(--emirates-red); border-radius: 50px; cursor: pointer; font-family: var(--font-body); font-weight: 600; transition: var(--transition); }
+        .btn-logout:hover { background: rgba(198, 12, 48, .15); }
+        
+        /* Dashboard */
+        .dashboard { padding: 90px 0 60px; }
+        .dash-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .dash-header h1 { font-family: var(--font-heading); font-size: 1.8rem; margin-bottom: 4px; color: var(--text-dark); letter-spacing: 0.05em; text-transform: uppercase; }
+        .dash-header p { color: var(--text-muted); font-size: .95rem; }
+        .stats-badge { background: var(--white); border: 1px solid var(--border-light); padding: 12px 24px; border-radius: var(--radius-lg); font-size: 1rem; font-weight: 700; color: var(--emirates-red); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
+        .stats-badge span { color: var(--text-dark); }
+        
+        /* Toolbar */
+        .toolbar { display: flex; margin-bottom: 24px; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 15px;}
+        .toolbar-left { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; flex: 1; }
+        .toolbar-right { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        .toolbar input { min-width: 220px; max-width: 300px; padding: 12px 18px; background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius-sm); color: var(--text-dark); font-family: var(--font-body); font-size: .95rem; outline: none; transition: var(--transition); }
+        .toolbar input:focus { border-color: var(--emirates-red); box-shadow: 0 0 0 3px rgba(198, 12, 48, .08); }
+        
+        .btn-action { padding: 12px 24px; border-radius: var(--radius-sm); cursor: pointer; font-family: var(--font-body); font-weight: 600; font-size: .9rem; transition: var(--transition); white-space: nowrap; border: none; color: white; display: inline-flex; align-items: center; gap: 8px;}
+        .btn-csv { background: rgba(200, 169, 81, .1); border: 1px solid rgba(200, 169, 81, .3); color: var(--gold-dark); }
+        .btn-csv:hover { background: rgba(200, 169, 81, .2); }
+        .btn-confirm { background: #16a34a; }
+        .btn-confirm:hover { background: #15803d; }
+        .btn-confirm:disabled { background: #a7f3d0; cursor: not-allowed; }
+        .btn-edit { background: var(--emirates-red); }
+        .btn-edit:hover { background: #a20a27; }
+
+        /* Table */
+        .table-section { margin-bottom: 24px; background: var(--white); border: 1px solid var(--border-light); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); }
+        .no-data { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        
+        /* Table Styles */
+        .table-container { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; font-family: var(--font-body); }
+        th, td { text-align: left; padding: 14px 20px; border-bottom: 1px solid var(--border-light); white-space: nowrap; vertical-align: middle;}
+        th { background: rgba(0, 0, 0, 0.02); color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; }
+        tbody tr:hover { background: rgba(0, 0, 0, 0.015); }
+        tbody tr:last-child td { border-bottom: none; }
+        
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; }
+        .status-paid { background: rgba(22, 163, 74, 0.1); color: #16a34a; }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+        
+        .team-inline { font-size: 0.8rem; color: #666; margin-top: 5px; display: block; }
+
+        /* Drag & Drop */
+        .drag-handle { cursor: grab; font-size: 1.2rem; color: #ccc; margin-right: 10px; user-select: none; display: inline-block; width: 24px; text-align: center; vertical-align: middle;}
+        .drag-handle:active { cursor: grabbing; }
+        tr.draggable { transition: background-color 0.2s, opacity 0.2s; }
+        tr.dragging { opacity: 0.5; background: #f8fafc; }
+        tr.drag-over { border-top: 2px solid var(--emirates-red); }
+        tr.drag-over-bottom { border-bottom: 2px solid var(--emirates-red); }
+
+        .rank-num { font-weight: 800; font-size: 1rem; color: var(--gold-dark); background: rgba(200, 169, 81, 0.15); padding: 4px 10px; border-radius: 6px; display: inline-block; min-width: 32px; text-align: center; vertical-align: middle;}
+        
+        .points-input { width: 80px; padding: 8px 12px; border: 1.5px solid var(--border-light); border-radius: 6px; font-weight: 600; font-family: var(--font-body); outline: none; transition: 0.2s; }
+        .points-input:focus { border-color: #16a34a; }
+        
+        /* Modes */
+        .scoring-mode .drag-handle { display: none; }
+        .ordering-mode .points-col { display: none; }
+        .scoring-mode .rank-col { text-align: center; } 
+
+        @media (max-width: 768px) {
+            .dashboard { padding: 80px 0 40px; }
+            .toolbar { flex-direction: column; align-items: stretch; gap: 15px;}
+            .toolbar-left, .toolbar-right { flex-direction: column; align-items: stretch; }
+            .toolbar input { max-width: none; width: 100%;}
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Topbar -->
+    <header class="topbar">
+        <div class="container">
+            <a href="index.html" class="logo">ELEXSIYA 26</a>
+            <div class="topbar-right">
+                <span class="admin-name">🌐 Idea Forge Admin</span>
+                <button class="btn-logout" id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Main -->
+    <main class="dashboard">
+        <div class="container">
+
+            <div class="dash-header">
+                <div>
+                    <h1>Idea Forge Manage</h1>
+                    <p>Order participants for presentation and evaluate scores.</p>
+                </div>
+                <div class="stats-badge">
+                    Participants: <span id="totalCount">0</span>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <input type="text" id="searchInput" placeholder="Search by name, email, REG ID..." />
+                </div>
+                <div class="toolbar-right" id="actionBtns">
+                    <!-- Buttons dynamically populated -->
+                </div>
+                <div class="toolbar-right" style="margin-left: 10px;">
+                    <button class="btn-action btn-csv" id="downloadCsvBtn">⤓ Download CSV</button>
+                </div>
+            </div>
+
+            <div class="table-section table-container" id="dataTableSection">
+                <table id="dataTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th class="rank-col" style="width: 80px;">Rank</th>
+                            <th class="points-col" style="width: 100px;">Points</th>
+                            <th>Reg ID</th>
+                            <th>Team Leader</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>College</th>
+                            <th>Payment Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+                <div class="no-data" id="loadingState">
+                    <h3>⏳ Loading data...</h3>
+                    <p>Fetching Idea Forge registrations...</p>
+                </div>
+                <div class="no-data" id="emptyState" style="display: none;">
+                    <h3>No Registrations Found</h3>
+                    <p>There are no registrations manually fetched or they don't match your criteria.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script>
+        // Check Auth
+        if (sessionStorage.getItem('ideaForgeAdminLoggedIn') !== 'true') {
+            window.location.href = 'ideaforge_admin_login.html';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.removeItem('ideaForgeAdminLoggedIn');
+            window.location.href = 'index.html';
+        });
+
+        let allData = [];
+        let isScoringMode = false;
+        let dragSrcEl = null;
+
+        async function fetchData() {
+            try {
+                const snap = await db.collection('registrations').get();
+                allData = [];
+
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const evt = (data.event || '').toString().toLowerCase().replace(/-/g, ' ').trim();
+                    if (evt === 'idea forge' || evt === 'idea-forge' || evt === 'ideaforge') {
+                        // Normalize meta
+                        data.ideaForgeMeta = data.ideaForgeMeta || { order: 99999, points: 0, locked: false };
+                        allData.push({ id: doc.id, ...data });
+                    }
+                });
+
+                // Check if already locked (scoring mode)
+                isScoringMode = allData.some(d => d.ideaForgeMeta.locked);
+
+                // Sort data
+                sortData();
+                updateUIState();
+                
+                document.getElementById('totalCount').textContent = allData.length;
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                document.getElementById('loadingState').innerHTML = `
+                    <h3 style="color:var(--emirates-red);">❌ Error</h3>
+                    <p>Failed to load data. Please check connection.</p>
+                `;
+            }
+        }
+
+        function sortData() {
+            if (isScoringMode || allData.some(d => d.ideaForgeMeta.order !== 99999)) {
+                // sort by order, then by date
+                allData.sort((a, b) => {
+                    if (a.ideaForgeMeta.order !== b.ideaForgeMeta.order) {
+                        return a.ideaForgeMeta.order - b.ideaForgeMeta.order;
+                    }
+                    return new Date(a.registeredAt) - new Date(b.registeredAt);
+                });
+                // Ensure array index correctly matches order assignment sequentially if ordered
+                allData.forEach((item, index) => {
+                    if(item.ideaForgeMeta.order !== 99999) item.ideaForgeMeta.order = index + 1;
+                });
+            } else {
+                // Initial creation sort
+                allData.sort((a, b) => new Date(a.registeredAt) - new Date(b.registeredAt));
+            }
+        }
+
+        function updateUIState() {
+            const tableSection = document.getElementById('dataTableSection');
+            if (isScoringMode) {
+                tableSection.classList.remove('ordering-mode');
+                tableSection.classList.add('scoring-mode');
+                document.getElementById('actionBtns').innerHTML = `
+                    <button class="btn-action btn-edit" id="editOrderBtn">✏️ Edit List Order</button>
+                    <button class="btn-action btn-confirm" id="savePointsBtn">💾 Save All Points</button>
+                `;
+                document.getElementById('editOrderBtn').addEventListener('click', () => toggleMode(false));
+                document.getElementById('savePointsBtn').addEventListener('click', savePoints);
+            } else {
+                tableSection.classList.remove('scoring-mode');
+                tableSection.classList.add('ordering-mode');
+                document.getElementById('actionBtns').innerHTML = `
+                    <button class="btn-action btn-confirm" id="confirmOrderBtn">✔️ Confirm Order & Start Scoring</button>
+                `;
+                document.getElementById('confirmOrderBtn').addEventListener('click', confirmOrder);
+            }
+            renderTable(allData);
+        }
+
+        function toggleMode(locked) {
+            isScoringMode = locked;
+            
+            // Note: If they toggle to order, we unlock locally. We don't save to DB until they hit confirm.
+            if (!locked) {
+                allData.forEach(item => item.ideaForgeMeta.locked = false);
+            }
+            
+            updateUIState();
+        }
+
+        async function confirmOrder() {
+            const btn = document.getElementById('confirmOrderBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Saving...';
+
+            // Extract order from DOM directly in case search was not used, otherwise rely on the sorted allData
+            // If they searched, we shouldn't confirm a partial list. Let's warn them if there is a search filter.
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                alert("Please clear your search before confirming the order.");
+                btn.disabled = false;
+                btn.innerHTML = '✔️ Confirm Order & Start Scoring';
+                return;
+            }
+
+            // Sync visual order to allData
+            const rows = document.querySelectorAll('#tableBody tr');
+            const orderedIds = Array.from(rows).map(r => r.dataset.id);
+
+            const newData = [];
+            orderedIds.forEach((id, idx) => {
+                const item = allData.find(d => d.id === id);
+                if (item) {
+                    item.ideaForgeMeta.order = idx + 1;
+                    item.ideaForgeMeta.locked = true;
+                    newData.push(item);
+                }
+            });
+            
+            // Add any missing rows at the end (shouldn't happen without search but just in case)
+            allData.forEach(item => {
+                if(!orderedIds.includes(item.id)) {
+                    item.ideaForgeMeta.locked = true;
+                    newData.push(item);
+                }
+            });
+            allData = newData;
+
+            try {
+                const batch = db.batch();
+                allData.forEach(item => {
+                    const ref = db.collection('registrations').doc(item.id);
+                    batch.update(ref, { ideaForgeMeta: item.ideaForgeMeta });
+                });
+                await batch.commit();
+                
+                toggleMode(true);
+            } catch (err) {
+                console.error("Save order error", err);
+                alert("Could not save order. Please try again.");
+                btn.disabled = false;
+                btn.innerHTML = '✔️ Confirm Order & Start Scoring';
+            }
+        }
+
+        async function savePoints() {
+            const btn = document.getElementById('savePointsBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Saving...';
+
+            // Sync points from inputs
+            const inputs = document.querySelectorAll('.points-input');
+            inputs.forEach(inp => {
+                const id = inp.dataset.id;
+                const points = Number(inp.value) || 0;
+                const item = allData.find(d => d.id === id);
+                if (item) {
+                    item.ideaForgeMeta.points = points;
+                }
+            });
+
+            try {
+                const batch = db.batch();
+                allData.forEach(item => {
+                    const ref = db.collection('registrations').doc(item.id);
+                    // Update only what changed, though entire object replaces is fine here
+                    batch.update(ref, { ideaForgeMeta: item.ideaForgeMeta });
+                });
+                await batch.commit();
+                
+                btn.innerHTML = '✅ Saved';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '💾 Save All Points';
+                }, 2000);
+            } catch (err) {
+                console.error("Save points error", err);
+                alert("Could not save points. Please try again.");
+                btn.disabled = false;
+                btn.innerHTML = '💾 Save All Points';
+            }
+        }
+
+        // --- Drag & Drop Handlers ---
+        function handleDragStart(e) {
+            if (isScoringMode) return e.preventDefault();
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+            this.classList.add('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (isScoringMode) return;
+            if (e.preventDefault) e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const bounding = this.getBoundingClientRect();
+            const offset = bounding.y + (bounding.height / 2);
+            if ( e.clientY - offset > 0 ) {
+                this.classList.add('drag-over-bottom');
+                this.classList.remove('drag-over');
+            } else {
+                this.classList.add('drag-over');
+                this.classList.remove('drag-over-bottom');
+            }
+            return false;
+        }
+
+        function handleDragEnter(e) { /* visual cue */ }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+            this.classList.remove('drag-over-bottom');
+        }
+
+        function handleDrop(e) {
+            if (isScoringMode) return;
+            if (e.stopPropagation) e.stopPropagation();
+
+            this.classList.remove('drag-over');
+            this.classList.remove('drag-over-bottom');
+
+            if (dragSrcEl !== this) {
+                // To keep JS array purely synced, we just manipulate the DOM here,
+                // then run a resync function to update visual numbers immediately.
+                
+                const bounding = this.getBoundingClientRect();
+                const offset = bounding.y + (bounding.height / 2);
+                
+                if ( e.clientY - offset > 0 ) {
+                    this.parentNode.insertBefore(dragSrcEl, this.nextSibling);
+                } else {
+                    this.parentNode.insertBefore(dragSrcEl, this);
+                }
+                updateVisualRanks();
+            }
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            let rows = document.querySelectorAll('#tableBody tr');
+            [].forEach.call(rows, function (row) {
+                row.classList.remove('drag-over');
+                row.classList.remove('drag-over-bottom');
+            });
+        }
+
+        function updateVisualRanks() {
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach((row, idx) => {
+                const numSpan = row.querySelector('.rank-num');
+                if (numSpan) numSpan.textContent = idx + 1;
+            });
+        }
+
+        function renderTable(dataArray) {
+            const tbody = document.getElementById('tableBody');
+            const table = document.getElementById('dataTable');
+            const loading = document.getElementById('loadingState');
+            const empty = document.getElementById('emptyState');
+
+            loading.style.display = 'none';
+
+            if (dataArray.length === 0) {
+                table.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            empty.style.display = 'none';
+            tbody.innerHTML = '';
+
+            dataArray.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = item.id;
+                tr.draggable = !isScoringMode;
+
+                // Bind drag events
+                tr.addEventListener('dragstart', handleDragStart, false);
+                tr.addEventListener('dragenter', handleDragEnter, false);
+                tr.addEventListener('dragover', handleDragOver, false);
+                tr.addEventListener('dragleave', handleDragLeave, false);
+                tr.addEventListener('drop', handleDrop, false);
+                tr.addEventListener('dragend', handleDragEnd, false);
+                
+                let paymentBadge = `<span class="status-badge status-pending">${item.paymentStatus || 'Pending'}</span>`;
+                if(item.paymentStatus === 'Paid') paymentBadge = `<span class="status-badge status-paid">Paid</span>`;
+                
+                let teamStr = '';
+                if(item.teamMembers && Array.isArray(item.teamMembers)) {
+                    teamStr = `<span class="team-inline"><strong>Team:</strong> ${item.teamMembers.map(m => m.name).join(', ')}</span>`;
+                }
+
+                const visualRank = item.ideaForgeMeta.order === 99999 ? index + 1 : item.ideaForgeMeta.order;
+
+                tr.innerHTML = `
+                    <td class="rank-col">
+                        <span class="drag-handle">☰</span>
+                        <span class="rank-num">${visualRank}</span>
+                    </td>
+                    <td class="points-col">
+                        <input type="number" class="points-input" data-id="${item.id}" value="${item.ideaForgeMeta.points}" placeholder="0"/>
+                    </td>
+                    <td><strong>${item.regId || 'N/A'}</strong></td>
+                    <td>
+                        <div style="font-weight: 600;">${item.name || 'N/A'}</div>
+                        ${teamStr}
+                    </td>
+                    <td>${item.email || 'N/A'}</td>
+                    <td>${item.phone || 'N/A'}</td>
+                    <td>${item.college || 'N/A'}</td>
+                    <td>${paymentBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Search
+        document.getElementById('searchInput').addEventListener('input', function (e) {
+            const q = e.target.value.toLowerCase();
+            const filtered = allData.filter(d => {
+                const s = Object.values(d).join(' ').toLowerCase();
+                let memS = '';
+                if(d.teamMembers) {
+                    memS = d.teamMembers.map(m => Object.values(m).join(' ')).join(' ').toLowerCase();
+                }
+                return s.includes(q) || memS.includes(q);
+            });
+            renderTable(filtered);
+        });
+
+        // CSV Download
+        document.getElementById('downloadCsvBtn').addEventListener('click', () => {
+            if (allData.length === 0) return alert('No data to download.');
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            // Header
+            csvContent += "Rank,Points,Reg ID,Team Leader,Email,Phone,College,Department,Year,Event,Payment Status,Reg Date\n";
+
+            allData.forEach(row => {
+                const escapeCsv = (str) => \`"\${(str || '').toString().replace(/"/g, '""')}"\`;
+                
+                const m2 = row.teamMembers && row.teamMembers[0] ? row.teamMembers[0] : {};
+                const m3 = row.teamMembers && row.teamMembers[1] ? row.teamMembers[1] : {};
+
+                const dateObj = row.registeredAt ? new Date(row.registeredAt) : null;
+                const dStr = dateObj ? dateObj.toLocaleString() : '';
+
+                const line = [
+                    row.ideaForgeMeta.order === 99999 ? 'Unset' : row.ideaForgeMeta.order,
+                    row.ideaForgeMeta.points,
+                    escapeCsv(row.regId),
+                    escapeCsv(row.name),
+                    escapeCsv(row.email),
+                    escapeCsv(row.phone),
+                    escapeCsv(row.college),
+                    escapeCsv(row.department),
+                    escapeCsv(row.year),
+                    escapeCsv(row.event),
+                    escapeCsv(row.paymentStatus),
+                    escapeCsv(dStr)
+                ].join(',');
+
+                csvContent += line + "\\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", \`ideaforge_registrations_\${new Date().toISOString().split('T')[0]}.csv\`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Init
+        fetchData();
+    </script>
+</body>
+
+</html>

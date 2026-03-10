@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com;">
+    <title>Idea Forge Admin Login – Elexsiya 26</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        .page-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background: var(--bg-warm);
+            position: relative;
+        }
+
+        .page-wrap::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        .login-card {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 440px;
+            background: var(--white);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 48px 40px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .05);
+            animation: fadeInUp .6s ease-out;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .login-header .icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .login-header h1 {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .login-header p {
+            color: var(--text-muted);
+            font-size: .9rem;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.05rem;
+            margin-top: 8px;
+        }
+
+        .login-error {
+            background: rgba(198, 12, 48, .06);
+            border: 1px solid rgba(198, 12, 48, .25);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            color: var(--emirates-red);
+            font-size: .9rem;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .login-footer a {
+            color: var(--text-muted);
+            font-size: .85rem;
+        }
+
+        .login-footer a:hover {
+            color: var(--emirates-red);
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 32px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page-wrap">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="icon">🌐</div>
+                <h1>Idea Forge Admin</h1>
+                <p>Authorized Event Personnel</p>
+            </div>
+
+            <div class="login-error" id="loginError">Invalid username or password</div>
+
+            <form id="loginForm" novalidate>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter username" autocomplete="username" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password" />
+                </div>
+
+                <button type="submit" class="btn btn-red btn-login">
+                    🔓 Login
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <a href="index.html">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase for shared utilities (logging) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="shared.js"></script>
+    <script>
+        // Use sha256 to hash user input locally
+        async function sha256(str) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // Expected hashes for ideaforge and idea
+        const IDEAFORGE_USER_HASH = '0c14cc42151f5cc0f0c44bae3d33808cd70be9533830b0d066dcdcaf84e85dcb';
+        const IDEAFORGE_PASS_HASH = 'ae0a9ad3227c5420c07dd79abe119876db3d234a066344bd4c90b8f189cd2606';
+
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('loginError');
+            const btn = document.querySelector('.btn-login');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Verifying...';
+
+            const uHash = await sha256(username);
+            const pHash = await sha256(password);
+
+            if (uHash === IDEAFORGE_USER_HASH && pHash === IDEAFORGE_PASS_HASH) {
+                // Success
+                sessionStorage.setItem('ideaForgeAdminLoggedIn', 'true');
+                window.location.href = 'ideaforge_admin.html';
+            } else {
+                // Fail
+                btn.disabled = false;
+                btn.textContent = '🔓 Login';
+                errorEl.style.display = 'block';
+                errorEl.style.animation = 'fadeIn .3s ease-out';
+            }
+        });
+    </script>
+</body>
+
+</html>
