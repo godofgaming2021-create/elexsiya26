@@ -344,8 +344,8 @@ async function deleteExpenditure(id) {
  */
 async function uploadPaymentScreenshot(regId, file) {
   try {
-    // ── Step 1: Compress image via Canvas (max 900px, 70% JPEG quality) ──
-    const compressedBlob = await new Promise((resolve, reject) => {
+    // ── Step 1: Aggressively compress image via Canvas to base64 ──
+    const base64Data = await new Promise((resolve, reject) => {
       const img = new Image();
       const reader = new FileReader();
       reader.onload = (e) => { img.src = e.target.result; };
@@ -353,42 +353,44 @@ async function uploadPaymentScreenshot(regId, file) {
       reader.readAsDataURL(file);
 
       img.onload = () => {
-        const MAX_W = 900;
+        // Use a smaller max width (600px) to ensure it stays well under the 1MB Firestore limit
+        const MAX_W = 600;
         let w = img.width, h = img.height;
         if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+        
         const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        canvas.toBlob((blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error('Canvas compression failed'));
-        }, 'image/jpeg', 0.70);
+        canvas.width = w; 
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        
+        // Solid white background for transparent PNGs
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        
+        // Convert directly to base64 JPEG at 60% quality (~40-90KB)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.60);
+        resolve(dataUrl);
       };
       img.onerror = reject;
     });
 
-    // ── Step 2: Upload compressed image to Firebase Storage ──
-    const storageRef = window.storage.ref(`payment_screenshots/${regId}.jpg`);
-    await storageRef.put(compressedBlob, { contentType: 'image/jpeg' });
-    const downloadURL = await storageRef.getDownloadURL();
-
-    // ── Step 3: Save reference in Firestore screenshots collection (Optimistic) ──
-    // We intentionally DO NOT `await` these Firestore writes so the UI doesn't hang
-    // if the WebSocket connection is stale on mobile.
+    // ── Step 2: Save to Firestore directly (Optimistic) ──
+    // This bypasses Firebase Storage entirely, avoiding its hanging/rules issues!
     window.db.collection('screenshots').doc(regId).set({
       regId,
-      imageData: downloadURL,
+      imageData: base64Data,
       uploadedAt: new Date().toISOString(),
       fileName: file.name
     }).catch(err => console.error('[DB] Background sync error (screenshots):', err));
 
-    // ── Step 4: Update registration status (Optimistic) ──
+    // ── Step 3: Update registration status (Optimistic) ──
     window.db.collection('registrations').doc(regId).update({
       paymentStatus: 'Verification Required',
       hasScreenshot: true
     }).catch(err => console.error('[DB] Background sync error (reg update):', err));
 
-    return downloadURL;
+    return base64Data;
   } catch (err) {
     console.error('[UPLOAD] uploadPaymentScreenshot error:', err);
     throw err;
