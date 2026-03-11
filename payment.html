@@ -424,25 +424,23 @@
           </div>
         </div>
 
-        <a href="#" class="btn btn-red btn-pay" id="phonepeBtn">
-          &#128241; Pay &#8377;${reg.amount} via PhonePe
-        </a>
-
-        <div class="or-divider">— or pay via UPI —</div>
+        <div class="or-divider" style="margin-top: 24px;">— Pay via UPI —</div>
 
         <div class="upi-box">
           <div class="upi-box-label">UPI ID</div>
-          <div class="upi-id">gunasekaran.g7111@okaxis</div>
+          <div class="upi-id">8428436372@okbizaxis</div>
           
           <div id="upiPayContainer" style="text-align:center; margin: 20px 0;">
-            <!-- QR Code for scanning -->
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=gunasekaran.g7111@okaxis&pn=Mr Guna Sekaran G&am=${reg.amount}&cu=INR&tn=${reg.regId}`)}" alt="Payment QR Code" class="upi-qr-img" style="display:block; margin: 0 auto; border-radius: 12px; border: 2px solid var(--border-light); padding: 8px; background: #fff;">
+            <!-- QR Code for scanning or clicking -->
+            <a href="upi://pay?pa=8428436372@okbizaxis&pn=Elexsiya 26&am=${reg.amount}&cu=INR&tn=${reg.regId}" style="text-decoration: none; display: inline-block;">
+              <img src="gpay_qr.jpeg" alt="GPay QR Code" class="upi-qr-img" style="display:block; margin: 0 auto; border-radius: 12px; border: 2px solid var(--border-light); padding: 8px; background: #fff;">
+            </a>
             
             <p style="font-size: 0.78rem; color: var(--text-dark); margin-top: 14px; font-weight: 600;">
               📷 Scan QR with any UPI App to pay &#8377;${reg.amount}
             </p>
 
-            <button onclick="navigator.clipboard.writeText('gunasekaran.g7111@okaxis').then(()=>{this.textContent='✅ Copied!';setTimeout(()=>{this.textContent='📋 Copy UPI ID';},2000);})" style="
+            <button onclick="navigator.clipboard.writeText('8428436372@okbizaxis').then(()=>{this.textContent='✅ Copied!';setTimeout(()=>{this.textContent='📋 Copy UPI ID';},2000);})" style="
               margin-top: 12px;
               background: linear-gradient(135deg, #5f259f 0%, #3d1a6e 100%);
               color: #fff;
@@ -487,19 +485,7 @@
         </p>
       `;
 
-      const PHONEPE_URL = ''; // ← PASTE YOUR REAL PAYMENT LINK HERE
-
-      const phonepeBtn = document.getElementById('phonepeBtn');
-      if (PHONEPE_URL) {
-        phonepeBtn.href = PHONEPE_URL;
-        phonepeBtn.removeAttribute('onclick');
-      } else {
-        phonepeBtn.href = '#';
-        phonepeBtn.addEventListener('click', function (ev) {
-          ev.preventDefault();
-          alert('💳 Online payment gateway will be set up soon.\n\nFor now, please pay via UPI using the ID shown below and upload the screenshot. You can also visit the Registration Desk at the venue for support.');
-        });
-      }
+      // (PhonePe buttons removed)
 
       // File input handling
       const fileInput = document.getElementById('screenshotInput');
