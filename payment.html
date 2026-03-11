@@ -580,7 +580,7 @@
             }
 
             // Safety timeout to prevent permanent UI freeze on severely dropped connections
-            const uploadPromise = uploadPaymentScreenshot(reg.regId, file);
+            const uploadPromise = uploadPaymentScreenshot(reg, file);
             const timeoutPromise = new Promise((_, reject) => 
                setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 35000)
             );

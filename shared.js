@@ -412,11 +412,12 @@ async function deleteExpenditure(id) {
 
 /**
  * Upload a payment screenshot to Firebase Storage.
- * @param {string} regId
+ * @param {Object|string} reg The registration object (or regId string for backward compatibility)
  * @param {File} file
  * @returns {Promise<string>} Download URL of the uploaded image.
  */
-async function uploadPaymentScreenshot(regId, file) {
+async function uploadPaymentScreenshot(reg, file) {
+  const regId = typeof reg === 'string' ? reg : reg.regId;
   // ── HELPER: timeout wrapper ──
   function withTimeout(promise, ms, label) {
     const t = new Promise((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_${label}`)), ms));
@@ -489,13 +490,27 @@ async function uploadPaymentScreenshot(regId, file) {
   );
 
   // ── Step 4: Update registration status (with timeout) ──
-  await withTimeout(
-    window.db.collection('registrations').doc(regId).update({
-      paymentStatus: 'Verification Required',
-      hasScreenshot: true
-    }),
-    10000, 'FIRESTORE_STATUS_UPDATE'
-  );
+  const updateData = {
+    paymentStatus: 'Verification Required',
+    hasScreenshot: true
+  };
+
+  // If the full registration object was passed in, merge it to prevent "No document to update"
+  // on devices where the initial fire-and-forget .set() in addRegistration() was aborted
+  if (typeof reg === 'object' && reg !== null) {
+      await withTimeout(
+        window.db.collection('registrations').doc(regId).set({
+          ...reg,
+          ...updateData
+        }, { merge: true }),
+        10000, 'FIRESTORE_STATUS_UPDATE'
+      );
+  } else {
+      await withTimeout(
+        window.db.collection('registrations').doc(regId).update(updateData),
+        10000, 'FIRESTORE_STATUS_UPDATE'
+      );
+  }
 
   _registrationsCache = null;
   return downloadURL || base64Thumb || 'uploaded';
