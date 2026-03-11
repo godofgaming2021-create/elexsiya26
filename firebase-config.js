@@ -15,7 +15,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDiU3cklV89XEeAmcFWMg1PAGL_-SDN8bo",
   authDomain: "elexsiya-26-2b815.firebaseapp.com",
   projectId: "elexsiya-26-2b815",
-  storageBucket: "elexsiya-26-2b815.firebasestorage.app", // Fixed truncated bucket path
+  storageBucket: "elexsiya-26-2b815.appspot.com",
   messagingSenderId: "1022603880984",
   appId: "1:1022603880984:web:b6b592175646b6f6e1b16d"
 };
@@ -91,19 +91,21 @@ function tryInitAuth(attempts = 0) {
 }
 tryInitAuth();
 
-// Initialize App Check (Vulnerability Protection)
-// Requires: <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check-compat.js"></script>
+// ⚠️ App Check is DISABLED — the ReCaptcha Enterprise key must be registered in
+// Firebase Console (https://console.firebase.google.com → App Check) before enabling.
+// When enabled with a wrong key it silently blocks ALL Storage uploads and Firestore reads.
+// Uncomment the block below ONLY after registering the site in Firebase Console → App Check.
+/*
 if (typeof firebase.appCheck === 'function') {
   try {
     const appCheck = firebase.appCheck();
-    // Activation with Recaptcha Enterprise
-    // Note: Project owners must configure this in Firebase Console -> App Check
     appCheck.activate(
-      new firebase.appCheck.ReCaptchaEnterpriseProvider('6LcR8pApAAAAAK8oYm1N1gXGfVv_LqO8S9hV9jHn'), // Example Key
+      new firebase.appCheck.ReCaptchaEnterpriseProvider('YOUR_RECAPTCHA_ENTERPRISE_KEY'),
       true 
     );
     console.log('✅ Firebase App Check Activated.');
   } catch (e) {
-    console.warn('⚠️ App Check Init Error (Expected in localhost without debug token):', e);
+    console.warn('⚠️ App Check Init Error:', e);
   }
 }
+*/

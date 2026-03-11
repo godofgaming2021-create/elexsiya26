@@ -99,7 +99,8 @@ async function getRegistrations(forceRefresh = false) {
   if (!window.db) { console.warn('[DB] window.db not ready'); return []; }
 
   // Return cached data if available and refresh not forced
-  if (_registrationsCache && !forceRefresh) {
+  // IMPORTANT: Only use cache if it actually has data — never return a stale empty array
+  if (_registrationsCache && _registrationsCache.length > 0 && !forceRefresh) {
     return _registrationsCache;
   }
 
@@ -110,10 +111,11 @@ async function getRegistrations(forceRefresh = false) {
     let fetchOp;
     
     try {
-      // Primary attempt: Ordered query (requires index)
+      // Final attempt: Ordered query (requires index)
+      // Reduced timeout to 3s for faster fallback if index is missing
       fetchOp = collection.orderBy('registeredAt', 'desc').get();
       const fetchTimeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('READ_TIMEOUT')), 8000)
+        setTimeout(() => reject(new Error('READ_TIMEOUT')), 3000)
       );
       const snapshot = await Promise.race([fetchOp, fetchTimeout]);
       _registrationsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -124,8 +126,8 @@ async function getRegistrations(forceRefresh = false) {
       const unsorted = simpleSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       // Sort in memory instead
       unsorted.sort((a, b) => {
-        const da = new Date(a.registeredAt || 0);
-        const db = new Date(b.registeredAt || 0);
+        const da = (a.registeredAt && a.registeredAt.toDate) ? a.registeredAt.toDate() : new Date(a.registeredAt || 0);
+        const db = (b.registeredAt && b.registeredAt.toDate) ? b.registeredAt.toDate() : new Date(b.registeredAt || 0);
         return db - da;
       });
       _registrationsCache = unsorted;
@@ -149,15 +151,20 @@ async function getRegistrations(forceRefresh = false) {
 async function getPaginatedRegistrations(lastVisibleDoc = null, pageSize = 50) {
   if (!window.db) throw new Error('Firebase not initialized');
   try {
-    let query = window.db.collection('registrations')
-      .orderBy('registeredAt', 'desc')
-      .limit(pageSize);
+    const collection = window.db.collection('registrations');
+    let query = collection.orderBy('registeredAt', 'desc').limit(pageSize);
 
     if (lastVisibleDoc) {
       query = query.startAfter(lastVisibleDoc);
     }
 
-    const snapshot = await query.get();
+    // Add 3s timeout to pagination fetch too
+    const fetchOp = query.get();
+    const fetchTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('READ_TIMEOUT')), 3000)
+    );
+    
+    const snapshot = await Promise.race([fetchOp, fetchTimeout]);
     return {
       docs: snapshot.docs,
       data: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
@@ -169,7 +176,11 @@ async function getPaginatedRegistrations(lastVisibleDoc = null, pageSize = 50) {
     // This is better than showing 0.
     const snapshot = await window.db.collection('registrations').get();
     const all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    all.sort((a, b) => new Date(b.registeredAt || 0) - new Date(a.registeredAt || 0));
+    all.sort((a, b) => {
+      const da = (a.registeredAt && a.registeredAt.toDate) ? a.registeredAt.toDate() : new Date(a.registeredAt || 0);
+      const db = (b.registeredAt && b.registeredAt.toDate) ? b.registeredAt.toDate() : new Date(b.registeredAt || 0);
+      return db - da;
+    });
     
     return {
       docs: snapshot.docs,
@@ -325,10 +336,14 @@ async function getCertTemplate() {
 
 async function getSponsorships() {
   try {
-    const snap = await window.db.collection('sponsorships').orderBy('timestamp', 'desc').get();
+    const fetchOp = window.db.collection('sponsorships').orderBy('timestamp', 'desc').get();
+    const fetchTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('READ_TIMEOUT')), 3000)
+    );
+    const snap = await Promise.race([fetchOp, fetchTimeout]);
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.error('[DB] getSponsorships error:', err);
+    console.warn('[DB] getSponsorships error (likely timeout/missing index):', err);
     return [];
   }
 }
@@ -361,10 +376,14 @@ async function deleteSponsorship(id) {
 
 async function getExpenditures() {
   try {
-    const snap = await window.db.collection('expenditures').orderBy('timestamp', 'desc').get();
+    const fetchOp = window.db.collection('expenditures').orderBy('timestamp', 'desc').get();
+    const fetchTimeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('READ_TIMEOUT')), 3000)
+    );
+    const snap = await Promise.race([fetchOp, fetchTimeout]);
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.error('[DB] getExpenditures error:', err);
+    console.warn('[DB] getExpenditures error (likely timeout/missing index):', err);
     return [];
   }
 }
@@ -398,61 +417,95 @@ async function deleteExpenditure(id) {
  * @returns {Promise<string>} Download URL of the uploaded image.
  */
 async function uploadPaymentScreenshot(regId, file) {
-  try {
-    if (!window.storage) throw new Error('Firebase Storage not initialized');
+  // ── Step 1: Compress image via Canvas ──
+  const blob = await new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => { img.src = e.target.result; };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
 
-    // ── Step 1: Compress image via Canvas for Storage ──
-    const blob = await new Promise((resolve, reject) => {
+    img.onload = () => {
+      const MAX_W = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = w; 
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      
+      canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.82);
+    };
+    img.onerror = reject;
+  });
+
+  let downloadURL = null;
+
+  // ── Step 2: Try uploading to Firebase Storage ──
+  if (window.storage) {
+    try {
+      const storageRef = window.storage.ref(`payment_screenshots/${regId}_${Date.now()}.jpg`);
+      const uploadTask = await storageRef.put(blob);
+      downloadURL = await uploadTask.ref.getDownloadURL();
+      console.log('[UPLOAD] Storage upload successful:', downloadURL);
+    } catch (storageErr) {
+      console.warn('[UPLOAD] Storage upload failed, will use Firestore-only fallback:', storageErr.code, storageErr.message);
+      // Fall through to Firestore-only path below
+    }
+  }
+
+  // ── Step 3: If Storage failed, create a small preview thumbnail as Base64 fallback ──
+  let base64Thumb = null;
+  if (!downloadURL) {
+    base64Thumb = await new Promise((resolve) => {
       const img = new Image();
       const reader = new FileReader();
       reader.onload = (e) => { img.src = e.target.result; };
-      reader.onerror = reject;
       reader.readAsDataURL(file);
-
       img.onload = () => {
-        // Use a better quality (1200px) since we are using Storage now
-        const MAX_W = 1200;
+        const THUMB_W = 400;
         let w = img.width, h = img.height;
-        if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
-        
+        if (w > THUMB_W) { h = Math.round(h * THUMB_W / w); w = THUMB_W; }
         const canvas = document.createElement('canvas');
-        canvas.width = w; 
-        canvas.height = h;
+        canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d');
-        
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
         ctx.drawImage(img, 0, 0, w, h);
-        
-        canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.85);
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
       };
-      img.onerror = reject;
+      img.onerror = () => resolve(null);
     });
-
-    // ── Step 2: Upload to Firebase Storage ──
-    const storageRef = window.storage.ref(`payment_screenshots/${regId}_${Date.now()}.jpg`);
-    const uploadTask = await storageRef.put(blob);
-    const downloadURL = await uploadTask.ref.getDownloadURL();
-
-    // ── Step 3: Save metadata to Firestore ──
-    await window.db.collection('screenshots').doc(regId).set({
-      regId,
-      storageURL: downloadURL,
-      uploadedAt: new Date().toISOString(),
-      fileName: file.name
-    });
-
-    // ── Step 4: Update registration status ──
-    await window.db.collection('registrations').doc(regId).update({
-      paymentStatus: 'Verification Required',
-      hasScreenshot: true
-    });
-
-    return downloadURL;
-  } catch (err) {
-    console.error('[UPLOAD] uploadPaymentScreenshot error:', err);
-    throw err;
   }
+
+  // ── Step 4: Save screenshot record to Firestore ──
+  const screenshotDoc = {
+    regId,
+    uploadedAt: new Date().toISOString(),
+    fileName: file.name
+  };
+  if (downloadURL) {
+    screenshotDoc.storageURL = downloadURL;
+  } else if (base64Thumb) {
+    screenshotDoc.imageData = base64Thumb; // Low-res fallback stored in Firestore
+    screenshotDoc.fallback = true;
+  }
+
+  await window.db.collection('screenshots').doc(regId).set(screenshotDoc);
+
+  // ── Step 5: Update registration status ──
+  await window.db.collection('registrations').doc(regId).update({
+    paymentStatus: 'Verification Required',
+    hasScreenshot: true
+  });
+
+  _registrationsCache = null; // Clear cache so dashboard sees updated status
+
+  return downloadURL || base64Thumb || 'uploaded';
 }
 
 /**

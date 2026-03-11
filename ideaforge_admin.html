@@ -183,7 +183,9 @@
         async function fetchData() {
             console.log("[DB] Starting Idea Forge data fetch...");
             try {
-                const snap = await db.collection('registrations').get();
+                const fetchOp = db.collection('registrations').get();
+                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 3000));
+                const snap = await Promise.race([fetchOp, timeout]);
                 console.log(`[DB] Fetched ${snap.size} total registrations.`);
                 allData = [];
 
@@ -191,8 +193,8 @@
                     const data = doc.data();
                     let isIdeaForge = false;
 
-                    const normalize = (s) => (s || '').toString().toLowerCase().replace(/-/g, ' ').trim();
-                    const target = 'idea forge';
+                    const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+                    const target = 'ideaforge';
 
                     // Check single event field
                     if (normalize(data.event) === target) isIdeaForge = true;
@@ -572,7 +574,13 @@
         });
 
         // Init
-        fetchData();
+        async function waitForDb(cb, n = 25) {
+            if (typeof db !== 'undefined' && db) cb();
+            else if (n > 0) setTimeout(() => waitForDb(cb, n - 1), 200);
+            else document.getElementById('loadingState').textContent = '❌ Database not available. Check connection.';
+        }
+
+        waitForDb(fetchData);
     </script>
 </body>
 

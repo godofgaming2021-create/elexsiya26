@@ -1218,7 +1218,9 @@
             async function fetchChessPlayers() {
                 el('sa-stats').textContent = '⏳ Connecting to database…';
                 try {
-                    const snap = await window.db.collection('registrations').get();
+                    const fetchOp = window.db.collection('registrations').get();
+                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 3000));
+                    const snap = await Promise.race([fetchOp, timeout]);
                     const seen = new Set();
 
                     function add(name, regId, college) {

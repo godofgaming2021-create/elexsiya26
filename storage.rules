@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Allow anyone to upload payment screenshots (unauthenticated users)
+    match /payment_screenshots/{fileName} {
+      allow read: if true;
+      allow write: if request.resource.size < 10 * 1024 * 1024   // max 10MB
+                   && request.resource.contentType.matches('image/.*');
+    }
+
+    // Block everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
