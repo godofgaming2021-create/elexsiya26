@@ -417,94 +417,87 @@ async function deleteExpenditure(id) {
  * @returns {Promise<string>} Download URL of the uploaded image.
  */
 async function uploadPaymentScreenshot(regId, file) {
-  // ── Step 1: Compress image via Canvas ──
-  const blob = await new Promise((resolve, reject) => {
+  // ── HELPER: timeout wrapper ──
+  function withTimeout(promise, ms, label) {
+    const t = new Promise((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_${label}`)), ms));
+    return Promise.race([promise, t]);
+  }
+
+  // ── Step 1: Create a small Base64 thumbnail (guaranteed fast, no network needed) ──
+  const base64Thumb = await new Promise((resolve) => {
     const img = new Image();
     const reader = new FileReader();
     reader.onload = (e) => { img.src = e.target.result; };
-    reader.onerror = reject;
     reader.readAsDataURL(file);
-
     img.onload = () => {
-      const MAX_W = 1200;
+      const THUMB_W = 500;
       let w = img.width, h = img.height;
-      if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
-      
+      if (w > THUMB_W) { h = Math.round(h * THUMB_W / w); w = THUMB_W; }
       const canvas = document.createElement('canvas');
-      canvas.width = w; 
-      canvas.height = h;
+      canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
-      
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
-      
-      canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.82);
+      resolve(canvas.toDataURL('image/jpeg', 0.65));
     };
-    img.onerror = reject;
+    img.onerror = () => resolve(null);
   });
 
   let downloadURL = null;
 
-  // ── Step 2: Try uploading to Firebase Storage ──
+  // ── Step 2: Try Firebase Storage with a strict 8-second timeout ──
   if (window.storage) {
     try {
+      const blob = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = base64Thumb;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width; canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob((b) => b ? resolve(b) : reject(new Error('blob_fail')), 'image/jpeg', 0.85);
+        };
+        img.onerror = reject;
+      });
       const storageRef = window.storage.ref(`payment_screenshots/${regId}_${Date.now()}.jpg`);
-      const uploadTask = await storageRef.put(blob);
-      downloadURL = await uploadTask.ref.getDownloadURL();
+      const snap = await withTimeout(storageRef.put(blob), 8000, 'STORAGE_PUT');
+      downloadURL = await withTimeout(snap.ref.getDownloadURL(), 5000, 'GET_URL');
       console.log('[UPLOAD] Storage upload successful:', downloadURL);
     } catch (storageErr) {
-      console.warn('[UPLOAD] Storage upload failed, will use Firestore-only fallback:', storageErr.code, storageErr.message);
-      // Fall through to Firestore-only path below
+      console.warn('[UPLOAD] Storage failed or timed out, using Firestore fallback:', storageErr.message);
+      downloadURL = null;
     }
   }
 
-  // ── Step 3: If Storage failed, create a small preview thumbnail as Base64 fallback ──
-  let base64Thumb = null;
-  if (!downloadURL) {
-    base64Thumb = await new Promise((resolve) => {
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = (e) => { img.src = e.target.result; };
-      reader.readAsDataURL(file);
-      img.onload = () => {
-        const THUMB_W = 400;
-        let w = img.width, h = img.height;
-        if (w > THUMB_W) { h = Math.round(h * THUMB_W / w); w = THUMB_W; }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL('image/jpeg', 0.6));
-      };
-      img.onerror = () => resolve(null);
-    });
-  }
-
-  // ── Step 4: Save screenshot record to Firestore ──
+  // ── Step 3: Save screenshot record to Firestore (with timeout) ──
   const screenshotDoc = {
     regId,
     uploadedAt: new Date().toISOString(),
-    fileName: file.name
+    fileName: file.name,
+    fallback: !downloadURL
   };
   if (downloadURL) {
     screenshotDoc.storageURL = downloadURL;
-  } else if (base64Thumb) {
-    screenshotDoc.imageData = base64Thumb; // Low-res fallback stored in Firestore
-    screenshotDoc.fallback = true;
+  } else {
+    screenshotDoc.imageData = base64Thumb; // Base64 thumbnail stored in Firestore
   }
 
-  await window.db.collection('screenshots').doc(regId).set(screenshotDoc);
+  await withTimeout(
+    window.db.collection('screenshots').doc(regId).set(screenshotDoc),
+    10000, 'FIRESTORE_SCREENSHOT'
+  );
 
-  // ── Step 5: Update registration status ──
-  await window.db.collection('registrations').doc(regId).update({
-    paymentStatus: 'Verification Required',
-    hasScreenshot: true
-  });
+  // ── Step 4: Update registration status (with timeout) ──
+  await withTimeout(
+    window.db.collection('registrations').doc(regId).update({
+      paymentStatus: 'Verification Required',
+      hasScreenshot: true
+    }),
+    10000, 'FIRESTORE_STATUS_UPDATE'
+  );
 
-  _registrationsCache = null; // Clear cache so dashboard sees updated status
-
+  _registrationsCache = null;
   return downloadURL || base64Thumb || 'uploaded';
 }
 
@@ -514,26 +507,41 @@ async function uploadPaymentScreenshot(regId, file) {
  */
 async function deleteScreenshot(regId) {
   try {
-    // 1. Delete the file from Firebase Storage (ignore if it doesn't exist)
-    try {
-      await window.storage.ref(`payment_screenshots/${regId}.jpg`).delete();
-    } catch (storageErr) {
-      console.warn('[DB] Storage file may not exist (old base64 entry):', storageErr.code);
+    // 1. Read the screenshot document first to get the actual storage URL
+    const screenshotDoc = await window.db.collection('screenshots').doc(regId).get();
+
+    // 2. Delete from Firebase Storage only if a storage URL exists
+    if (screenshotDoc.exists && screenshotDoc.data().storageURL && window.storage) {
+      try {
+        const storageURL = screenshotDoc.data().storageURL;
+        // Extract the file reference from the download URL
+        const fileRef = window.storage.refFromURL(storageURL);
+        await fileRef.delete();
+        console.log('[DB] Deleted screenshot from Storage:', storageURL);
+      } catch (storageErr) {
+        // Storage delete failing is non-fatal — the file may already be gone
+        console.warn('[DB] Storage delete skipped (may not exist or no access):', storageErr.code);
+      }
     }
 
-    // 2. Delete the screenshot document from Firestore
+    // 3. Delete the screenshot document from Firestore
     await window.db.collection('screenshots').doc(regId).delete();
 
-    // 3. Try to update the registration, but only if it exists
-    const regRef = window.db.collection('registrations').doc(regId);
-    const regDoc = await regRef.get();
-
-    if (regDoc.exists) {
-      await regRef.update({
-        hasScreenshot: false,
-        paymentStatus: 'Pending' // Reset to pending if screenshot is deleted
-      });
+    // 4. Update the registration status to Pending (only if it exists)
+    try {
+      const regRef = window.db.collection('registrations').doc(regId);
+      const regDoc = await regRef.get();
+      if (regDoc.exists) {
+        await regRef.update({
+          hasScreenshot: false,
+          paymentStatus: 'Pending'
+        });
+      }
+    } catch (regErr) {
+      console.warn('[DB] Could not update registration status after screenshot delete:', regErr.message);
     }
+
+    _registrationsCache = null; // Refresh cache
   } catch (err) {
     console.error('[DB] deleteScreenshot error:', err);
     throw err;

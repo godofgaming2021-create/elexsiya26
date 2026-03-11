@@ -1334,90 +1334,105 @@
         else hlNode.innerHTML = `<div style="text-align:center;padding:20px;color:var(--emirates-red);">Database connection timed out.</div>`;
       }
 
-      waitForDb(async () => {
-        try {
-          const fetchOp = window.db.collection('registrations').get();
-          const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 4000));
-          const snap = await Promise.race([fetchOp, timeout]);
-          let participants = [];
+      // Render the leaderboard from a Firestore snapshot
+      function renderIdeaForgeLeaderboard(snap) {
+        let participants = [];
+        const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+        const targetEvent = 'ideaforge';
 
-          const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim();
-          const targetEvent = 'ideaforge';
-
-          snap.forEach(doc => {
-            const data = doc.data();
-            let matched = false;
-            if (normalize(data.event) === targetEvent) matched = true;
-            if (!matched && Array.isArray(data.events)) {
-              if (data.events.some(ev => normalize(ev.event || ev) === targetEvent)) matched = true;
-            }
-            const isEligible = data.paymentStatus === 'Paid' || data.paymentStatus === 'Verification Required';
-            if (matched && isEligible) {
-              participants.push({
-                id: doc.id,
-                name: data.name || data.regId || 'Anonymous',
-                regId: data.regId,
-                teamMembers: data.teamMembers || [],
-                points: (data.ideaForgeMeta && data.ideaForgeMeta.points) ? parseInt(data.ideaForgeMeta.points) : 0,
-                order: (data.ideaForgeMeta && data.ideaForgeMeta.order) ? parseInt(data.ideaForgeMeta.order) : 99999
-              });
-            }
-          });
-
-          if (participants.length === 0) {
-            hlNode.innerHTML = `<div style="text-align:center; padding: 30px; font-weight:600; color:var(--text-muted);">No participants have been confirmed for Ideaforge yet.</div>`;
-            return;
+        snap.forEach(doc => {
+          const data = doc.data();
+          let matched = false;
+          if (normalize(data.event) === targetEvent) matched = true;
+          if (!matched && Array.isArray(data.events)) {
+            if (data.events.some(ev => normalize(ev.event || ev) === targetEvent)) matched = true;
           }
+          // Show all IdeaForge registrants (no payment filter — let admin control via scoring)
+          if (matched) {
+            participants.push({
+              id: doc.id,
+              name: data.name || data.regId || 'Anonymous',
+              regId: data.regId,
+              teamMembers: data.teamMembers || [],
+              points: (data.ideaForgeMeta && data.ideaForgeMeta.points) ? parseInt(data.ideaForgeMeta.points) : 0,
+              order: (data.ideaForgeMeta && data.ideaForgeMeta.order) ? parseInt(data.ideaForgeMeta.order) : 99999,
+              locked: data.ideaForgeMeta && data.ideaForgeMeta.locked
+            });
+          }
+        });
 
-          participants.sort((a, b) => {
-            if (a.order !== b.order) return a.order - b.order;
-            return b.points - a.points;
-          });
+        if (participants.length === 0) {
+          hlNode.innerHTML = `<div style="text-align:center; padding: 30px; font-weight:600; color:var(--text-muted);">No participants have been confirmed for Ideaforge yet.</div>`;
+          return;
+        }
 
-          let html = `
-            <div style="margin-top:10px;">
-              <div style="font-size:0.85rem; font-weight:700; color:var(--emirates-red); margin-bottom:12px; text-transform:uppercase; letter-spacing:0.05em;">Ideaforge Live Leaderboard</div>
-              <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
-                  <thead>
-                    <tr style="border-bottom:2px solid #eee; text-align:left;">
-                      <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem;">RANK</th>
-                      <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem;">TEAM / PARTICIPANTS</th>
-                      <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem; text-align:right;">POINTS</th>
-                    </tr>
-                  </thead>
-                  <tbody>`;
+        participants.sort((a, b) => {
+          // Locked/ordered participants first; then sort by points descending
+          if (a.order !== b.order) return a.order - b.order;
+          return b.points - a.points;
+        });
 
-          participants.forEach((p, i) => {
-            const isTop3 = i < 3;
-            const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : ''));
-            const rowBg = isTop3 ? 'rgba(200, 169, 81, 0.05)' : 'transparent';
-            const teamStr = (p.teamMembers && p.teamMembers.length > 0) 
-              ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>Team:</strong> ${[p.name, ...p.teamMembers.map(m => m.name)].join(', ')}</div>`
-              : `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>Individual:</strong> ${p.name}</div>`;
+        const now = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        let html = `
+          <div style="margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div style="font-size:0.85rem; font-weight:700; color:var(--emirates-red); text-transform:uppercase; letter-spacing:0.05em;">Ideaforge Live Leaderboard</div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">🔴 LIVE · Updated ${now}</div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                <thead>
+                  <tr style="border-bottom:2px solid #eee; text-align:left;">
+                    <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem;">RANK</th>
+                    <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem;">TEAM / PARTICIPANTS</th>
+                    <th style="padding:10px 5px; color:var(--text-muted); font-size:0.75rem; text-align:right;">POINTS</th>
+                  </tr>
+                </thead>
+                <tbody>`;
 
-            html += `
-                  <tr style="border-bottom:1px solid #f5f5f5; background:${rowBg};">
-                    <td style="padding:12px 5px; font-weight:800; color:${isTop3 ? 'var(--gold-dark)' : '#666'};">${medal || (i + 1)}</td>
-                    <td style="padding:12px 5px;">
-                      <div style="font-weight:700; color:var(--text-dark);">${p.name} <span style="font-weight:400; font-size:0.8rem; color:var(--text-muted);">(${p.regId})</span></div>
-                      ${teamStr}
-                    </td>
-                    <td style="padding:12px 5px; text-align:right; font-family:monospace; font-weight:700; font-size:1.1rem; color:var(--emirates-red);">${p.points}</td>
-                  </tr>`;
-          });
+        participants.forEach((p, i) => {
+          const isTop3 = i < 3;
+          const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : ''));
+          const rowBg = isTop3 ? 'rgba(200, 169, 81, 0.05)' : 'transparent';
+          const teamStr = (p.teamMembers && p.teamMembers.length > 0)
+            ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>Team:</strong> ${[p.name, ...p.teamMembers.map(m => m.name)].join(', ')}</div>`
+            : `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>Individual:</strong> ${p.name}</div>`;
+          const pointsColor = p.points > 0 ? 'var(--emirates-red)' : 'var(--text-muted)';
 
           html += `
-                  </tbody>
-                </table>
-              </div>
-              <p style="font-size:0.75rem; color:var(--text-muted); margin-top:15px; font-style:italic; text-align:center;">📊 Scores are updated in real-time by event moderators.</p>
-            </div>`;
-          hlNode.innerHTML = html;
+                <tr style="border-bottom:1px solid #f5f5f5; background:${rowBg};">
+                  <td style="padding:12px 5px; font-weight:800; color:${isTop3 ? 'var(--gold-dark)' : '#666'};">${medal || (i + 1)}</td>
+                  <td style="padding:12px 5px;">
+                    <div style="font-weight:700; color:var(--text-dark);">${p.name} <span style="font-weight:400; font-size:0.8rem; color:var(--text-muted);">(${p.regId})</span></div>
+                    ${teamStr}
+                  </td>
+                  <td style="padding:12px 5px; text-align:right; font-family:monospace; font-weight:700; font-size:1.1rem; color:${pointsColor};">${p.points}</td>
+                </tr>`;
+        });
 
-        } catch (e) {
-          console.error("fetchIdeaForgeLive error:", e);
-          hlNode.innerHTML = `<div style="text-align:center; padding: 30px; font-weight:600; color:var(--emirates-red);">Failed to load live scores. (Check connection)</div>`;
+        html += `
+                </tbody>
+              </table>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:15px; font-style:italic; text-align:center;">📊 Scores update automatically in real-time.</p>
+          </div>`;
+        hlNode.innerHTML = html;
+      }
+
+      // Use real-time onSnapshot instead of get() so leaderboard updates live
+      waitForDb(() => {
+        try {
+          const unsub = window.db.collection('registrations').onSnapshot(snap => {
+            renderIdeaForgeLeaderboard(snap);
+          }, err => {
+            console.error("fetchIdeaForgeLive snapshot error:", err);
+            hlNode.innerHTML = `<div style="text-align:center; padding: 30px; font-weight:600; color:var(--emirates-red);">Failed to load live scores. (Check connection)</div>`;
+          });
+          // Store unsub in case we ever need to stop listening
+          hlNode._ideaForgeUnsub = unsub;
+        } catch(e) {
+          console.error("fetchIdeaForgeLive setup error:", e);
+          hlNode.innerHTML = `<div style="text-align:center; padding: 30px; font-weight:600; color:var(--emirates-red);">Failed to initialize live scores.</div>`;
         }
       });
     }

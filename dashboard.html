@@ -2607,23 +2607,36 @@
         let isFetchingPaginated = false;
 
         function getAllPersons(r) {
-            // Use email-based deduplication to avoid counting the same person
-            // multiple times (they can appear in r.name, r.members[], AND r.teamMembersByEvent).
-            const seenEmails = new Set();
-            const unique = [];
+            // Use a Map to consolidate properties for the same person
+            // This prevents root-level "Leader" entries (which may lack food/hostel in new flow)
+            // from overriding the detailed entries inside teamMembersByEvent.
+            const personMap = new Map();
 
             function addPerson(p) {
                 const email = (p.email || '').trim().toLowerCase();
-                // If no email, fall back to name to avoid losing anonymous entries
-                const key = email || ('__nomail__' + (p.name || '').toLowerCase());
-                if (!seenEmails.has(key)) {
-                    seenEmails.add(key);
-                    unique.push(p);
+                const phone = (p.phone || '').trim();
+                const name = (p.name || '').trim().toLowerCase();
+                
+                // Create a robust unique key
+                let key = '';
+                if (email) key = 'e_' + email;
+                else if (name && phone) key = 'np_' + name + '_' + phone;
+                else key = 'rnd_' + Math.random(); // Prevent blank entries from colliding
+
+                if (!personMap.has(key)) {
+                    personMap.set(key, { ...p });
+                } else {
+                    // Merge fields that were empty in the earlier evaluation
+                    const existing = personMap.get(key);
+                    if (!existing.food && p.food) existing.food = p.food;
+                    if (!existing.hostel && p.hostel) existing.hostel = p.hostel;
+                    if (!existing.name && p.name) existing.name = p.name;
+                    if (!existing.phone && p.phone) existing.phone = p.phone;
                 }
             }
 
             // 1. Leader (root-level fields)
-            addPerson({ name: r.name, email: r.email, food: r.food, hostel: r.hostel });
+            addPerson({ name: r.name, email: r.email, phone: r.phone, food: r.food, hostel: r.hostel });
 
             // 2. Flat members array (legacy / multi-event)
             if (r.members && r.members.length > 0) r.members.forEach(m => addPerson(m));
@@ -2636,7 +2649,7 @@
                 });
             }
 
-            return unique;
+            return Array.from(personMap.values());
         }
 
         async function loadData() {
