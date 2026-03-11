@@ -486,8 +486,13 @@
                 if(item.paymentStatus === 'Paid') paymentBadge = `<span class="status-badge status-paid">Paid</span>`;
                 
                 let teamStr = '';
+                let teamName = '';
+                if (item.teamMembersByEvent && item.teamMembersByEvent['Idea Forge']) {
+                    teamName = item.teamMembersByEvent['Idea Forge'].teamName || '';
+                }
+
                 if(item.teamMembers && Array.isArray(item.teamMembers)) {
-                    teamStr = `<span class="team-inline"><strong>Team:</strong> ${item.teamMembers.map(m => m.name).join(', ')}</span>`;
+                    teamStr = `<span class="team-inline"><strong>${teamName ? teamName + ' - ' : ''}Members:</strong> ${item.teamMembers.map(m => m.name).join(', ')}</span>`;
                 }
 
                 const visualRank = item.ideaForgeMeta.order === 99999 ? index + 1 : item.ideaForgeMeta.order;
@@ -523,7 +528,11 @@
                 if(d.teamMembers) {
                     memS = d.teamMembers.map(m => Object.values(m).join(' ')).join(' ').toLowerCase();
                 }
-                return s.includes(q) || memS.includes(q);
+                let teamNameS = '';
+                if (d.teamMembersByEvent && d.teamMembersByEvent['Idea Forge']) {
+                    teamNameS = (d.teamMembersByEvent['Idea Forge'].teamName || '').toLowerCase();
+                }
+                return s.includes(q) || memS.includes(q) || teamNameS.includes(q);
             });
             renderTable(filtered);
         });

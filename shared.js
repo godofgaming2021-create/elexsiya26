@@ -471,46 +471,38 @@ async function uploadPaymentScreenshot(reg, file) {
     }
   }
 
-  // ── Step 3: Save screenshot record to Firestore (with timeout) ──
+  // ── Step 3 & 4: Save record and update status in PARALLEL ──
   const screenshotDoc = {
     regId,
     uploadedAt: new Date().toISOString(),
     fileName: file.name,
     fallback: !downloadURL
   };
-  if (downloadURL) {
-    screenshotDoc.storageURL = downloadURL;
-  } else {
-    screenshotDoc.imageData = base64Thumb; // Base64 thumbnail stored in Firestore
-  }
+  if (downloadURL) screenshotDoc.storageURL = downloadURL;
+  else screenshotDoc.imageData = base64Thumb;
 
-  await withTimeout(
-    window.db.collection('screenshots').doc(regId).set(screenshotDoc),
-    10000, 'FIRESTORE_SCREENSHOT'
-  );
-
-  // ── Step 4: Update registration status (with timeout) ──
   const updateData = {
     paymentStatus: 'Verification Required',
     hasScreenshot: true
   };
 
-  // If the full registration object was passed in, merge it to prevent "No document to update"
-  // on devices where the initial fire-and-forget .set() in addRegistration() was aborted
+  const tasks = [
+    withTimeout(window.db.collection('screenshots').doc(regId).set(screenshotDoc), 8000, 'DOC_SAVE')
+  ];
+
   if (typeof reg === 'object' && reg !== null) {
-      await withTimeout(
-        window.db.collection('registrations').doc(regId).set({
-          ...reg,
-          ...updateData
-        }, { merge: true }),
-        10000, 'FIRESTORE_STATUS_UPDATE'
-      );
+      tasks.push(withTimeout(
+        window.db.collection('registrations').doc(regId).set({ ...reg, ...updateData }, { merge: true }),
+        8000, 'STATUS_UPDATE'
+      ));
   } else {
-      await withTimeout(
+      tasks.push(withTimeout(
         window.db.collection('registrations').doc(regId).update(updateData),
-        10000, 'FIRESTORE_STATUS_UPDATE'
-      );
+        8000, 'STATUS_UPDATE'
+      ));
   }
+
+  await Promise.all(tasks);
 
   _registrationsCache = null;
   return downloadURL || base64Thumb || 'uploaded';

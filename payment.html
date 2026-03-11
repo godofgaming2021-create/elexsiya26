@@ -434,7 +434,7 @@
           <div id="upiPayContainer" style="text-align:center; margin: 20px 0;">
             <!-- QR Code for scanning or clicking -->
             <a href="upi://pay?pa=8428436372@okbizaxis&pn=Elexsiya 26&am=${reg.amount}&cu=INR&tn=${reg.regId}" style="text-decoration: none; display: inline-block;">
-              <img src="gpay_qr.jpeg" alt="GPay QR Code" class="upi-qr-img" style="display:block; margin: 0 auto; border-radius: 12px; border: 2px solid var(--border-light); padding: 8px; background: #fff;">
+              <img src="qr.jpeg" alt="GPay QR Code" class="upi-qr-img" style="display:block; margin: 0 auto; border-radius: 12px; border: 2px solid var(--border-light); padding: 8px; background: #fff;">
             </a>
             
             <p style="font-size: 0.78rem; color: var(--text-dark); margin-top: 14px; font-weight: 600;">
@@ -555,10 +555,10 @@
           }
 
           this.disabled = true;
-          this.innerHTML = '⏳ Uploading Proof...';
+          const setStatus = (msg) => { this.innerHTML = `⏳ ${msg}...`; };
+          setStatus('Processing Image');
 
           try {
-            // Block submission if opened via file:// — Firebase won't work
             if (window.location.protocol === 'file:') {
                 alert("⚠️ This page is opened directly from your folder (file:// protocol).\n\nFirebase Storage cannot connect in this mode. Please use a live server (e.g. VS Code Live Server) to upload.");
                 this.disabled = false;
@@ -566,23 +566,30 @@
                 return;
             }
 
-            // Safety timeout to prevent permanent UI freeze on severely dropped connections
-            const uploadPromise = uploadPaymentScreenshot(reg, file);
-            const timeoutPromise = new Promise((_, reject) => 
-               setTimeout(() => reject(new Error('UPLOAD_TIMEOUT')), 35000)
-            );
+            // Step 1: Processing already started in setStatus above
+            // Step 2: Uploading
+            const uploadPromise = (async () => {
+                const res = await uploadPaymentScreenshot(reg, file);
+                setStatus('Finalizing');
+                return res;
+            })();
+
+            const timeoutPromise = new Error('TIMEOUT');
             
-            await Promise.race([uploadPromise, timeoutPromise]);
+            await Promise.race([
+                uploadPromise, 
+                new Promise((_, reject) => setTimeout(() => reject(timeoutPromise), 35000))
+            ]);
             
             sessionStorage.setItem('allowSuccessView', reg.regId);
             window.location.href = 'success.html';
           } catch (err) {
             console.error("Upload failed:", err);
-            let errMsg = "❌ Upload failed. Please check your connection and try again.\n\nDetails: " + err.message;
-            if (err.message === 'UPLOAD_TIMEOUT') {
+            let errMsg = "❌ Upload failed. Please check your connection and try again.";
+            if (err === timeoutPromise) {
                errMsg = "⚠️ Upload is taking too long. Please check your internet connection and try again.";
             } else if (err.code === 'storage/unauthorized') {
-               errMsg = "⚠️ Permission Denied: Firebase Storage rules are blocking the upload. Please check Firebase rules.";
+               errMsg = "⚠️ Permission Denied: Firebase Storage rules are blocking the upload.";
             }
             alert(errMsg);
             this.disabled = false;

@@ -1412,8 +1412,10 @@
           const isTop3 = i < 3;
           const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : ''));
           const rowBg = isTop3 ? 'rgba(200, 169, 81, 0.05)' : 'transparent';
+          const ideaForgeInfo = p.teamMembersByEvent ? p.teamMembersByEvent['Idea Forge'] : null;
+          const teamName = ideaForgeInfo ? ideaForgeInfo.teamName : '';
           const teamStr = (p.teamMembers && p.teamMembers.length > 0)
-            ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>Team:</strong> ${[p.name, ...p.teamMembers.map(m => m.name)].join(', ')}</div>`
+            ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>${teamName ? teamName + ' - ' : ''}Members:</strong> ${([p.name, ...p.teamMembers.map(m => m.name)]).join(', ')}</div>`
             : `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;"><strong>Individual:</strong> ${p.name}</div>`;
           const pointsColor = p.points > 0 ? 'var(--emirates-red)' : 'var(--text-muted)';
 
