@@ -10,6 +10,24 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800&display=swap"
         rel="stylesheet">
+        
+    <!-- Aggressive Cache Clearing Script -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          let swDeleted = false;
+          for(let registration of registrations) {
+            registration.unregister();
+            swDeleted = true;
+          }
+          if (swDeleted && !window.location.search.includes('nocache=1')) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('nocache', '1');
+            window.location.replace(url.toString());
+          }
+        });
+      }
+    </script>
     <style>
         :root {
             --emirates-red: #C60C30;
