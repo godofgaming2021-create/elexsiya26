@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.netlify.com;">
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.netlify.com https://api.emailjs.com;">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -3082,7 +3082,13 @@
             try {
                 await updatePaymentStatus(regId, newStatus);
                 const reg = allRegistrations.find(r => r.regId === regId);
-                if (reg) reg.paymentStatus = newStatus;
+                if (reg) {
+                    reg.paymentStatus = newStatus;
+                    // Trigger email if changed to Paid
+                    if (newStatus === 'Paid') {
+                        sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, reg);
+                    }
+                }
                 updateStats(); filterData();
             } catch (err) { alert('Failed: ' + err.message); }
             finally { btn.disabled = false; }
@@ -3263,7 +3269,11 @@
             try {
                 await updatePaymentStatus(regId, 'Paid');
                 const reg = allRegistrations.find(r => r.regId === regId);
-                if (reg) reg.paymentStatus = 'Paid';
+                if (reg) {
+                    reg.paymentStatus = 'Paid';
+                    // Trigger automated email
+                    sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, reg);
+                }
                 btn.classList.add('verified'); btn.textContent = '&#10003; Verified & Paid';
                 updateStats();
             } catch (err) { alert('Failed: ' + err.message); btn.disabled = false; btn.textContent = '&#10003; Mark Paid'; }
@@ -3805,6 +3815,10 @@
                 };
 
                 await addRegistration(data);
+                
+                // Trigger automated email
+                sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, data);
+
                 alert(`SUCCESS! ELX-ID: ${data.regId}`);
 
                 // Show Pass
@@ -3900,6 +3914,10 @@
             btn.disabled = true; btn.textContent = '⏳ Processing...';
             try {
                 await addRegistration(data);
+
+                // Trigger automated email
+                sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, data);
+
                 alert(`Success! ELX-ID: ${data.regId}`);
                 // Switch to tools to show pass
                 document.getElementById('passSearchId').value = data.regId;

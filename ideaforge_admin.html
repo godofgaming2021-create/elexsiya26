@@ -140,6 +140,8 @@
                             <th class="rank-col" style="width: 80px;">Rank</th>
                             <th class="points-col" style="width: 100px;">Points</th>
                             <th>Reg ID</th>
+                            <th>Team Name</th>
+                            <th>Domain</th>
                             <th>Team Leader</th>
                             <th>Email</th>
                             <th>Phone</th>
@@ -487,12 +489,29 @@
                 
                 let teamStr = '';
                 let teamName = '';
+                let domain = '';
+                let membersArr = [];
+
                 if (item.teamMembersByEvent && item.teamMembersByEvent['Idea Forge']) {
-                    teamName = item.teamMembersByEvent['Idea Forge'].teamName || '';
+                    const ifData = item.teamMembersByEvent['Idea Forge'];
+                    teamName = ifData.teamName || '';
+                    domain = ifData.domain || '';
+                    if (ifData.members && Array.isArray(ifData.members)) {
+                        membersArr = ifData.members.map(m => m.name);
+                    }
+                }
+                
+                // Fallback to old teamMembers array if event-specific one is empty
+                if (membersArr.length === 0 && item.teamMembers && Array.isArray(item.teamMembers)) {
+                    membersArr = item.teamMembers.map(m => m.name);
                 }
 
-                if(item.teamMembers && Array.isArray(item.teamMembers)) {
-                    teamStr = `<span class="team-inline"><strong>${teamName ? teamName + ' - ' : ''}Members:</strong> ${item.teamMembers.map(m => m.name).join(', ')}</span>`;
+                // If we have any members, or a team name, display it
+                if (teamName || membersArr.length > 0) {
+                    const displayMembers = membersArr.length > 0 ? membersArr.join(', ') : 'No other members';
+                    teamStr = `<span class="team-inline"><strong>${teamName ? 'Team: ' + teamName : 'Team Details'}:</strong> ${displayMembers}</span>`;
+                } else {
+                    teamStr = `<span class="team-inline"><strong>Individual Participation</strong></span>`;
                 }
 
                 const visualRank = item.ideaForgeMeta.order === 99999 ? index + 1 : item.ideaForgeMeta.order;
@@ -506,6 +525,12 @@
                         <input type="number" class="points-input" data-id="${item.id}" value="${item.ideaForgeMeta.points}" placeholder="0"/>
                     </td>
                     <td><strong>${item.regId || 'N/A'}</strong></td>
+                    <td>
+                        <div style="font-weight: 700; color: var(--gold-dark);">${teamName || 'Individual'}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 600; font-size: 0.9rem;">${domain || 'N/A'}</div>
+                    </td>
                     <td>
                         <div style="font-weight: 600;">${item.name || 'N/A'}</div>
                         ${teamStr}
@@ -529,10 +554,12 @@
                     memS = d.teamMembers.map(m => Object.values(m).join(' ')).join(' ').toLowerCase();
                 }
                 let teamNameS = '';
+                let domainS = '';
                 if (d.teamMembersByEvent && d.teamMembersByEvent['Idea Forge']) {
                     teamNameS = (d.teamMembersByEvent['Idea Forge'].teamName || '').toLowerCase();
+                    domainS = (d.teamMembersByEvent['Idea Forge'].domain || '').toLowerCase();
                 }
-                return s.includes(q) || memS.includes(q) || teamNameS.includes(q);
+                return s.includes(q) || memS.includes(q) || teamNameS.includes(q) || domainS.includes(q);
             });
             renderTable(filtered);
         });
@@ -544,13 +571,18 @@
             let csvContent = "data:text/csv;charset=utf-8,";
             
             // Header
-            csvContent += "Rank,Points,Reg ID,Team Leader,Email,Phone,College,Department,Year,Event,Payment Status,Reg Date\n";
+            csvContent += "Rank,Points,Reg ID,Team Name,Domain,Team Leader,Email,Phone,College,Department,Year,Event,Payment Status,Reg Date\n";
 
             allData.forEach(row => {
                 const escapeCsv = (str) => `"${(str || '').toString().replace(/"/g, '""')}"`;
                 
-                const m2 = row.teamMembers && row.teamMembers[0] ? row.teamMembers[0] : {};
-                const m3 = row.teamMembers && row.teamMembers[1] ? row.teamMembers[1] : {};
+                // Extract teamName & domain for CSV
+                let teamName = '';
+                let domain = '';
+                if (row.teamMembersByEvent && row.teamMembersByEvent['Idea Forge']) {
+                    teamName = row.teamMembersByEvent['Idea Forge'].teamName || '';
+                    domain = row.teamMembersByEvent['Idea Forge'].domain || '';
+                }
 
                 const dateObj = row.registeredAt ? new Date(row.registeredAt) : null;
                 const dStr = dateObj ? dateObj.toLocaleString() : '';
@@ -559,6 +591,8 @@
                     row.ideaForgeMeta.order === 99999 ? 'Unset' : row.ideaForgeMeta.order,
                     row.ideaForgeMeta.points,
                     escapeCsv(row.regId),
+                    escapeCsv(teamName),
+                    escapeCsv(domain),
                     escapeCsv(row.name),
                     escapeCsv(row.email),
                     escapeCsv(row.phone),

@@ -17,6 +17,26 @@ const SUPER_PASS_HASH = '9f2427212948508570676d14d1249503fa8d01f90ed80e13dcf6b22
 const TREASURER_USER_HASH = '0c5d4d6f1aa2314053376936227d7185fcce6ead760a4c800dc2447e93997fc7'; // sha256('elexsiya26')
 const TREASURER_PASS_HASH = '48c703a9470312c0070cd91fbe9c3227ebfa97103ca89ea8ee6f43a447ed3a8a'; // sha256('Treasury$ync#26')
 
+// EmailJS Configuration
+const EMAILJS_PUBLIC_KEY = 'pgGsFDU3f8cldU5Rt';
+const EMAILJS_SERVICE_ID = 'service_a8408v9';
+const EMAILJS_TEMPLATE_REGISTRATION = 'template_od6lwxm';
+const EMAILJS_TEMPLATE_VERIFICATION = 'template_28y3izs';
+
+// Initialize EmailJS
+(function() {
+  if (typeof window !== 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+    script.onload = function() {
+      if (typeof emailjs !== 'undefined') {
+        emailjs.init(EMAILJS_PUBLIC_KEY);
+      }
+    };
+    document.head.appendChild(script);
+  }
+})();
+
 // On-Spot Admin Hash
 const ONSPOT_USER_HASH = '0c5d4d6f1aa2314053376936227d7185fcce6ead760a4c800dc2447e93997fc7'; // sha256('elexsiya26')
 const ONSPOT_PASS_HASH = '1c78e06b3165aad56a5d86c2a2fde070002dc673c7d7841724eb7bd6f6aeedde'; // sha256('ece@26')
@@ -236,6 +256,37 @@ async function addRegistration(reg) {
     throw err;
   }
   return reg;
+}
+
+/**
+ * Send an automated email using EmailJS.
+ * @param {string} templateId - The EmailJS template ID.
+ * @param {Object} regData - The registration data to populate the template.
+ */
+async function sendAutomatedEmail(templateId, regData) {
+  if (typeof emailjs === 'undefined') {
+    console.warn('[EmailJS] SDK not loaded yet. Retrying in 1s...');
+    setTimeout(() => sendAutomatedEmail(templateId, regData), 1000);
+    return;
+  }
+
+  try {
+    const templateParams = {
+      to_name: regData.name,
+      to_email: regData.email,
+      reg_id: regData.regId,
+      college: regData.college,
+      amount: regData.amount,
+      event_details: regData.event || (regData.events ? regData.events.map(e => e.event).join(', ') : 'Symposium'),
+      payment_status: regData.paymentStatus || 'Pending',
+      whatsapp_link: regData.event ? (EVENT_WHATSAPP_LINKS[regData.event] || '') : ''
+    };
+
+    const response = await emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams);
+    console.log('[EmailJS] Success:', response.status, response.text);
+  } catch (err) {
+    console.error('[EmailJS] Error:', err);
+  }
 }
 
 /**

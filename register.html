@@ -8,7 +8,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com;">
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.emailjs.com;">
     <title>Register – Elexsiya 26</title>
     <meta name="description" content="Register for Elexsiya 26 – National Level Technical Symposium." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -811,6 +811,18 @@
                     for (let i = 1; i <= ev.teamSize; i++) {
                         memberForms += eventMemberFormHTML(sectionPrefix, i, i === 1, isChess);
                     }
+                    const isIdeaForge = ev.event.toLowerCase() === 'idea forge' || ev.event.toLowerCase() === 'ideaforge';
+                    
+                    const domainField = isIdeaForge ? `
+                        <div class="form-group" id="domainGroup_${sectionPrefix}" style="margin-bottom:20px;">
+                            <label for="domain_${sectionPrefix}" style="color:var(--emirates-red); font-weight:700;">&#127760; Project Domain for ${ev.event} *</label>
+                            <select id="domain_${sectionPrefix}" style="width:100%; padding:12px; border:1.5px solid var(--border-light); border-radius:var(--radius); font-family:var(--font-body); font-weight:600; color:var(--text-dark); background:white;">
+                                <option value="Emerging technology" selected>Emerging technology</option>
+                                <option value="Embedded and iot">Embedded and iot</option>
+                                <option value="AI and ML">AI and ML</option>
+                                <option value="EV technology">EV technology</option>
+                            </select>
+                        </div>` : '';
 
                     const isTeamEventNotChess = isTeam && ev.event.toLowerCase() !== 'chess';
                     const teamNameField = isTeamEventNotChess ? `
@@ -827,6 +839,7 @@
                                 &#127919; ${ev.event.toUpperCase()}
                                 <span style="font-size:.78rem; font-weight:400; color:var(--text-muted); margin-left:10px;">(${typeLabel})</span>
                             </div>
+                            ${domainField}
                             ${teamNameField}
                             ${memberForms}
                         </div>
@@ -1049,6 +1062,12 @@
                     const sectionPrefix = `evSection_${idx}`;
                     const sectionData = { event: ev.event, teamSize: ev.teamSize, members: [] };
 
+                    const isIdeaForge = ev.event.toLowerCase() === 'idea forge' || ev.event.toLowerCase() === 'ideaforge';
+                    if (isIdeaForge) {
+                        const domEl = document.getElementById(`domain_${sectionPrefix}`);
+                        sectionData.domain = domEl ? domEl.value : 'Emerging technology';
+                    }
+
                     const isTeamEventNotChess = ev.teamSize > 1 && ev.event.toLowerCase() !== 'chess';
                     if (isTeamEventNotChess) {
                         const tnEl = document.getElementById(`teamName_${sectionPrefix}`);
@@ -1098,7 +1117,11 @@
                     const firstMember = allSectionData[0].members[0];
                     const teamMembersByEvent = {};
                     allSectionData.forEach(sd => {
-                        teamMembersByEvent[sd.event] = { teamName: sd.teamName || '', members: sd.members };
+                        teamMembersByEvent[sd.event] = { 
+                            teamName: sd.teamName || '', 
+                            members: sd.members,
+                            domain: sd.domain || ''
+                        };
                     });
 
                     const regPayload = {
@@ -1128,6 +1151,10 @@
                     clearTimeout(submissionTimeout);
                     sessionStorage.setItem('currentRegId', regId);
                     sessionStorage.setItem('currentRegData', JSON.stringify(regPayload)); // For immediate UI access
+                    
+                    // Trigger automated email (Await to ensure it's sent before redirect)
+                    await sendAutomatedEmail(EMAILJS_TEMPLATE_REGISTRATION, regPayload);
+
                     window.location.href = 'payment.html';
                 } catch (error) {
                     clearTimeout(submissionTimeout);
