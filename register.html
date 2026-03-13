@@ -1152,8 +1152,12 @@
                     sessionStorage.setItem('currentRegId', regId);
                     sessionStorage.setItem('currentRegData', JSON.stringify(regPayload)); // For immediate UI access
                     
-                    // Trigger automated email (Await to ensure it's sent before redirect)
-                    await sendAutomatedEmail(EMAILJS_TEMPLATE_REGISTRATION, regPayload);
+                    // Trigger automated email (Failsafe: don't block registration if email fails)
+                    try {
+                        await sendAutomatedEmail(EMAILJS_TEMPLATE_REGISTRATION, regPayload);
+                    } catch (emailError) {
+                        console.error("[EmailJS] Registration email failed to send, but registration was saved:", emailError);
+                    }
 
                     window.location.href = 'payment.html';
                 } catch (error) {

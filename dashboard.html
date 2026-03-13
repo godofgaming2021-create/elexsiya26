@@ -3086,7 +3086,11 @@
                     reg.paymentStatus = newStatus;
                     // Trigger email if changed to Paid
                     if (newStatus === 'Paid') {
-                        await sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, reg);
+                        try {
+                            await sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, reg);
+                        } catch (emailError) {
+                            console.error("[EmailJS] Verification email failed to send, but status was updated:", emailError);
+                        }
                     }
                 }
                 updateStats(); filterData();
