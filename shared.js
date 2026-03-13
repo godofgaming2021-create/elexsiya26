@@ -230,7 +230,12 @@ async function addRegistration(reg) {
   }
 
   // Attach integrity checksum
-  reg._checksum = await _calcChecksum(reg);
+  try {
+    reg._checksum = await _calcChecksum(reg);
+  } catch (checksumErr) {
+    console.warn('[DB] Checksum calculation failed, using fallback:', checksumErr);
+    reg._checksum = "FALLBACK_" + Date.now();
+  }
 
   try {
     // 🚀 OPTIMISTIC WRITE: Fire and forget.
@@ -647,10 +652,21 @@ async function deleteScreenshot(regId) {
 function generateRegId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let id = 'ELX-';
-  const randomArray = new Uint32Array(8);
-  crypto.getRandomValues(randomArray);
-  for (let i = 0; i < 8; i++) {
-    id += chars[randomArray[i] % chars.length];
+  try {
+    const randomArray = new Uint32Array(8);
+    if (window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(randomArray);
+        for (let i = 0; i < 8; i++) {
+            id += chars[randomArray[i] % chars.length];
+        }
+    } else {
+        throw new Error('crypto_not_available');
+    }
+  } catch (e) {
+    // Fallback to Math.random if crypto is not available (e.g. non-secure context)
+    for (let i = 0; i < 8; i++) {
+      id += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
   }
   return id;
 }

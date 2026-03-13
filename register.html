@@ -536,9 +536,9 @@
         onerror="alert('Failed to load Firebase Auth SDK.')"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"
         onerror="alert('Failed to load Firebase Storage SDK.')"></script>
-    <script src="firebase-config.js"
+    <script src="firebase-config.js?v=1.1"
         onerror="alert('Failed to load firebase-config.js. Ensure the file exists in the same folder.')"></script>
-    <script src="shared.js" onerror="alert('Failed to load shared.js.')"></script>
+    <script src="shared.js?v=1.1" onerror="alert('Failed to load shared.js.')"></script>
     <script>
 
         /* ---------- Debounce Helper ---------- */
@@ -1173,7 +1173,7 @@
                     } else if (error.message && error.message.includes('Time conflict')) {
                         errMsg = "⚠️ Two of your selected events clash in schedule. Please go back and choose non-conflicting events.";
                     }
-                    alert(errMsg);
+                    alert(errMsg + "\n\nDetails: " + (error.message || error) + "\n\n(Code Version: 1.1)\nIf this persists, please try clearing your browser cache.");
                     submitBtn.disabled = false;
                     submitBtn.textContent = '🚀 Proceed to Payment';
                 }
