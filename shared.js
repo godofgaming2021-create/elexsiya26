@@ -5,7 +5,15 @@
 
 // ðŸ”’ Credentials stored as SHA-256 hashes â€” never in plain text
 // To regenerate: run sha256('your_email') and sha256('your_password') in browser console
+// ── Service Worker: clears browser cache on every load ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => { reg.update(); console.log('[SW] Registered:', reg.scope); })
+    .catch(err => console.warn('[SW] Registration failed:', err));
+}
+
 const ADMIN_USER_HASH = 'd8f6739fa824a4ddcdc1b0f95b212410817f596ea5554d12c55f72d12ce5a799'; // SHA-256 of 'ece26'
+
 const ADMIN_PASS_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // SHA-256 of 'password'
 const REG_FEE = 499;
 

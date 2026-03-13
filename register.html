@@ -8,31 +8,15 @@
         content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.emailjs.com;">
     <title>Register – Elexsiya 26</title>
     <meta name="description" content="Register for Elexsiya 26 – National Level Technical Symposium." />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css?v=3" />
-    
-    <!-- Aggressive Cache Clearing Script -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          let swDeleted = false;
-          for(let registration of registrations) {
-            registration.unregister();
-            swDeleted = true;
-          }
-          if (swDeleted && !window.location.search.includes('nocache=1')) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('nocache', '1');
-            window.location.replace(url.toString());
-          }
-        });
-      }
-    </script>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" /></noscript>
+    <link rel="stylesheet" href="styles.css?v=4" />
     <style>
         /* ── Page layout ── */
         .page-wrap {
