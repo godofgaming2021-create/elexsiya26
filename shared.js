@@ -307,8 +307,11 @@ async function sendAutomatedEmail(templateId, regData) {
     }
 
     const templateParams = {
-      to_name: regData.name,
-      to_email: regData.email,
+      // Match EmailJS template variables exactly
+      name: regData.name,        // used in subject {{name}}
+      to_name: regData.name,     // fallback
+      email: regData.email,      // used in "To Email" field {{email}}
+      to_email: regData.email,   // fallback
       reg_id: regData.regId,
       college: regData.college,
       amount: regData.amount,
