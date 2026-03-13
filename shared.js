@@ -833,6 +833,9 @@ function initNavbar() {
 
 /* ---------- Particle canvas ---------- */
 function initParticles() {
+  // Skip on mobile/touch devices — saves significant CPU/GPU on phones
+  if (window.matchMedia('(hover: none)').matches) return;
+
   const canvas = document.getElementById('particles-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');

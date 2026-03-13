@@ -4,40 +4,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>Elexsiya 26 – National Level Technical Symposium</title>
   <meta name="description"
     content="Elexsiya 26 – National Level Technical Symposium at Anna University Regional Campus Madurai. Innovate. Inspire. Ignite." />
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.emailjs.com;">
+  <!-- DNS / Connection pre-warming -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://firestore.googleapis.com" />
+  <!-- Optimised Google Fonts: only weights we actually use -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Montserrat:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="styles.css?v=3" />
   <link rel="stylesheet" href="landing.css?v=3" />
-  
-  <!-- Aggressive Cache Clearing Script -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        let swDeleted = false;
-        for(let registration of registrations) {
-          registration.unregister();
-          swDeleted = true;
-        }
-        if (swDeleted && !window.location.search.includes('nocache=1')) {
-          const url = new URL(window.location.href);
-          url.searchParams.set('nocache', '1');
-          window.location.replace(url.toString());
-        }
-      });
-    }
-  </script>
-</head>
 
 <body>
 
@@ -603,10 +585,6 @@
     </div>
   </section>
 
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
   <script>
     /* ── FAQ Accordion Logic ──────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
@@ -1713,11 +1691,11 @@
     });
   </script>
 
-  <!-- Firebase for Command Center integrations -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script>
+  <!-- Firebase SDK — defer so it doesn't block page rendering -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script defer src="firebase-config.js"></script>
+  <script defer>
     // ── Dynamic Site Config (CMS) ──
     (function loadPublicConfig() {
       // Wait for Firebase readiness

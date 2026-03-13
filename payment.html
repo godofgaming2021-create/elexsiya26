@@ -4,14 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <title>Payment – Elexsiya 26</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
@@ -312,11 +310,10 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="shared.js"></script>
+  <script src="firebase-config.js?v=1.1"></script>
+  <script src="shared.js?v=1.1"></script>
   <script>
     (async function () {
       const card = document.getElementById('paymentCard');
@@ -433,9 +430,7 @@
           
           <div id="upiPayContainer" style="text-align:center; margin: 20px 0;">
             <!-- QR Code for scanning or clicking -->
-            <a href="upi://pay?pa=gunasekaran.g7111@okaxis&pn=Elexsiya 26&am=${reg.amount}&cu=INR&tn=${reg.regId}" style="text-decoration: none; display: inline-block;">
-              <img src="qr.jpeg" alt="GPay QR Code" class="upi-qr-img" style="display:block; margin: 0 auto; border-radius: 12px; border: 2px solid var(--border-light); padding: 8px; background: #fff;">
-            </a>
+            <img src="qr.jpeg" alt="GPay QR Code" class="upi-qr-img" style="display:block; margin: 0 auto; border-radius: 12px; border: 2px solid var(--border-light); padding: 8px; background: #fff;">
             
             <p style="font-size: 0.78rem; color: var(--text-dark); margin-top: 14px; font-weight: 600;">
               📷 Scan QR with any UPI App to pay &#8377;${reg.amount}
