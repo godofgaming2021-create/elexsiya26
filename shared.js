@@ -264,13 +264,43 @@ async function addRegistration(reg) {
  * @param {Object} regData - The registration data to populate the template.
  */
 async function sendAutomatedEmail(templateId, regData) {
+  // Wait for EmailJS SDK to load if not already available
   if (typeof emailjs === 'undefined') {
-    console.warn('[EmailJS] SDK not loaded yet. Retrying in 1s...');
-    setTimeout(() => sendAutomatedEmail(templateId, regData), 1000);
+    console.warn('[EmailJS] SDK not loaded yet. Waiting...');
+    await new Promise(resolve => {
+      let attempts = 0;
+      const checkInterval = setInterval(() => {
+        attempts++;
+        if (typeof emailjs !== 'undefined') {
+          clearInterval(checkInterval);
+          resolve();
+        } else if (attempts > 20) { // Max 10s (20 * 500ms)
+          clearInterval(checkInterval);
+          console.error('[EmailJS] SDK load timeout.');
+          resolve(); // Resolve anyway to proceed to catch block
+        }
+      }, 500);
+    });
+  }
+
+  if (typeof emailjs === 'undefined') {
+    console.error('[EmailJS] sdk_not_found');
     return;
   }
 
   try {
+    // Generate WhatsApp links for all registered events
+    let whatsappLinks = [];
+    if (regData.events && Array.isArray(regData.events)) {
+      regData.events.forEach(e => {
+        const link = EVENT_WHATSAPP_LINKS[e.event];
+        if (link) whatsappLinks.push(`${e.event}: ${link}`);
+      });
+    } else if (regData.event) {
+      const link = EVENT_WHATSAPP_LINKS[regData.event];
+      if (link) whatsappLinks.push(link);
+    }
+
     const templateParams = {
       to_name: regData.name,
       to_email: regData.email,
@@ -279,13 +309,16 @@ async function sendAutomatedEmail(templateId, regData) {
       amount: regData.amount,
       event_details: regData.event || (regData.events ? regData.events.map(e => e.event).join(', ') : 'Symposium'),
       payment_status: regData.paymentStatus || 'Pending',
-      whatsapp_link: regData.event ? (EVENT_WHATSAPP_LINKS[regData.event] || '') : ''
+      whatsapp_link: whatsappLinks.join('\n')
     };
 
+    console.log('[EmailJS] Sending email for:', regData.regId);
     const response = await emailjs.send(EMAILJS_SERVICE_ID, templateId, templateParams);
     console.log('[EmailJS] Success:', response.status, response.text);
+    return response;
   } catch (err) {
-    console.error('[EmailJS] Error:', err);
+    console.error('[EmailJS] Send Error:', err);
+    throw err;
   }
 }
 

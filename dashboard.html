@@ -3086,7 +3086,7 @@
                     reg.paymentStatus = newStatus;
                     // Trigger email if changed to Paid
                     if (newStatus === 'Paid') {
-                        sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, reg);
+                        await sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, reg);
                     }
                 }
                 updateStats(); filterData();
