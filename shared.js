@@ -345,7 +345,21 @@ async function sendAutomatedEmail(templateId, regData) {
  */
 async function updatePaymentStatus(regId, status) {
   try {
-    await window.db.collection('registrations').doc(regId).update({ paymentStatus: status });
+    const adminToken = sessionStorage.getItem('adminToken');
+    if (!adminToken) {
+      throw new Error("Action denied: No secure admin token found. Please log in again.");
+    }
+
+    const response = await fetch('https://us-central1-elexsiya-26-2b815.cloudfunctions.net/adminTogglePayment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ regId, status, adminToken })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Server returned ${response.status}: ${errorData.error || 'Unknown error'}`);
+    }
   } catch (err) {
     console.error('[DB] updatePaymentStatus error:', err);
     throw err;
@@ -358,7 +372,21 @@ async function updatePaymentStatus(regId, status) {
  */
 async function deleteRegistration(regId) {
   try {
-    await window.db.collection('registrations').doc(regId).delete();
+    const adminToken = sessionStorage.getItem('adminToken');
+    if (!adminToken) {
+      throw new Error("Action denied: No secure admin token found. Please log in again.");
+    }
+
+    const response = await fetch('https://us-central1-elexsiya-26-2b815.cloudfunctions.net/adminDeleteRegistration', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ regId, adminToken })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Server returned ${response.status}: ${errorData.error || 'Unknown error'}`);
+    }
   } catch (err) {
     console.error('[DB] deleteRegistration error:', err);
     throw err;

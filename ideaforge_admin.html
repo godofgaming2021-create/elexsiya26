@@ -133,6 +133,23 @@
                 </div>
             </div>
 
+            <!-- Live Notify Card -->
+            <div class="table-section" style="padding: 24px; background: white; border-radius: 12px; border: 1px solid var(--border-light); margin-bottom: 24px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);">
+                <h3 style="margin-bottom: 20px;">📢 Live Notify (WhatsApp)</h3>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Send WhatsApp alerts to Idea Forge participants. (Requires Pop-ups enabled for Send to All)</p>
+                
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="liveNotifyVenue" placeholder="Enter Venue (e.g., Main Hall)"
+                        style="flex: 1; padding: 10px; border: 1px solid var(--border-light); border-radius: 6px; font-family: var(--font-body);">
+                    <button class="btn-action btn-confirm" onclick="prepLiveNotify()"
+                        style="padding: 10px 15px;">Fetch Contacts</button>
+                </div>
+                <div id="liveNotifyArea" style="margin-top: 15px; display: none;">
+                    <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 6px; padding: 10px; margin-bottom: 10px;" id="liveNotifyList"></div>
+                    <button class="btn-action" onclick="sendToAllLiveNotify()" style="width: 100%; background: var(--emirates-red); color: white; display:block; text-align:center;">🚀 Send to All</button>
+                </div>
+            </div>
+
             <div class="table-section table-container" id="dataTableSection">
                 <table id="dataTable" style="display:none;">
                     <thead>
@@ -568,10 +585,7 @@
         document.getElementById('downloadCsvBtn').addEventListener('click', () => {
             if (allData.length === 0) return alert('No data to download.');
             
-            let csvContent = "data:text/csv;charset=utf-8,";
-            
-            // Header
-            csvContent += "Rank,Points,Reg ID,Team Name,Domain,Team Leader,Email,Phone,College,Department,Year,Event,Payment Status,Reg Date\n";
+            let csvContent = "Rank,Points,Reg ID,Team Name,Domain,Team Leader,Email,Phone,College,Department,Year,Event,Payment Status,Reg Date\n";
 
             allData.forEach(row => {
                 const escapeCsv = (str) => `"${(str || '').toString().replace(/"/g, '""')}"`;
@@ -607,14 +621,103 @@
                 csvContent += line + "\n";
             });
 
-            const encodedUri = encodeURI(csvContent);
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `ideaforge_registrations_${new Date().toISOString().split('T')[0]}.csv`);
+            link.href = url;
+            link.download = `ideaforge_registrations_${new Date().toISOString().split('T')[0]}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         });
+
+        // ══ LIVE NOTIFY ENGINE ══
+        let liveNotifyLinks = [];
+        
+        function prepLiveNotify() {
+            const venue = document.getElementById('liveNotifyVenue').value.trim();
+            const listArea = document.getElementById('liveNotifyArea');
+            const listDiv = document.getElementById('liveNotifyList');
+            
+            if (!venue) return alert('Enter the venue.');
+            
+            // Extract phones from the already loaded Idea Forge data
+            const phones = new Set();
+            allData.forEach(r => {
+                if (r.phone) {
+                    const p = r.phone.replace(/\D/g, '');
+                    if (p.length >= 10) phones.add(p.slice(-10));
+                }
+                if (r.teamMembersByEvent && r.teamMembersByEvent['Idea Forge'] && r.teamMembersByEvent['Idea Forge'].members) {
+                    r.teamMembersByEvent['Idea Forge'].members.forEach(m => {
+                        if (m.phone) {
+                            const p = m.phone.replace(/\D/g, '');
+                            if (p.length >= 10) phones.add(p.slice(-10));
+                        }
+                    });
+                }
+                // Check lowercase 'idea forge' too just in case
+                if (r.teamMembersByEvent && r.teamMembersByEvent['idea forge'] && r.teamMembersByEvent['idea forge'].members) {
+                    r.teamMembersByEvent['idea forge'].members.forEach(m => {
+                        if (m.phone) {
+                            const p = m.phone.replace(/\D/g, '');
+                            if (p.length >= 10) phones.add(p.slice(-10));
+                        }
+                    });
+                }
+            });
+            
+            if (phones.size === 0) {
+                return alert('No phone numbers found for Idea Forge.');
+            }
+            
+            const msg = `Hi! This is a live update from Elexsiya 26. The event *Idea Forge* is starting soon!\n\n📍 *Venue:* ${venue}\n\nPlease reach the venue immediately.`;
+            
+            let html = `<strong>Found ${phones.size} participants.</strong><br><br>`;
+            liveNotifyLinks = [];
+            
+            Array.from(phones).forEach(p => {
+                const link = `https://wa.me/91${p}?text=${encodeURIComponent(msg)}`;
+                liveNotifyLinks.push(link);
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #eee;">
+                    <span style="font-family: monospace; font-size: 0.95rem;">📱 ${p}</span>
+                    <a href="${link}" target="_blank" style="padding:6px 14px; background:rgba(22,163,74,0.1); border: 1px solid rgba(22,163,74,0.3); color:#16a34a; text-decoration:none; border-radius:4px; font-size:0.8rem; font-weight:bold; transition: 0.2s;">Send</a>
+                </div>`;
+            });
+            
+            listDiv.innerHTML = html;
+            listArea.style.display = 'block';
+        }
+        
+        function sendToAllLiveNotify() {
+            if (liveNotifyLinks.length === 0) return;
+            if (!confirm(`This will attempt to open ${liveNotifyLinks.length} WhatsApp tabs in sequence.\n\n⚠️ CRITICAL: Your browser's Popup Blocker MUST be disabled for this site, or it will stop after the first tab.\n\nReady to proceed?`)) return;
+            
+            const btn = document.querySelector('#liveNotifyArea button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Sending... Please wait';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+
+            let i = 0;
+            const batchInterval = setInterval(() => {
+                if (i >= liveNotifyLinks.length) {
+                    clearInterval(batchInterval);
+                    btn.innerHTML = '✅ Done!';
+                    btn.style.background = '#16a34a';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.background = 'var(--emirates-red)';
+                    }, 3000);
+                    return;
+                }
+                window.open(liveNotifyLinks[i], '_blank');
+                i++;
+            }, 800);
+        }
 
         // Init
         async function waitForDb(cb, n = 25) {

@@ -548,11 +548,46 @@
             }
         }
 
-        // Helper to resume an existing unpaid registration
+        // Helper to resume an existing unpaid payment
         function resumeUnpaidPayment(regId) {
             if (!regId) return;
             sessionStorage.setItem('currentRegId', regId);
             window.location.href = 'payment.html';
+        }
+
+        /* ---------- Clone Member Helper ---------- */
+        function cloneMemberData(sourcePrefix, targetPrefix) {
+            const fields = ['name', 'email', 'phone'];
+            fields.forEach(f => {
+                const src = document.getElementById(`${sourcePrefix}_${f}`);
+                const tgt = document.getElementById(`${targetPrefix}_${f}`);
+                if (src && tgt) {
+                    tgt.value = src.value;
+                    tgt.dispatchEvent(new Event('input')); // trigger validation/fee update
+                }
+            });
+
+            // Food
+            const srcFood = document.querySelector(`input[name="food_${sourcePrefix}"]:checked`);
+            if (srcFood) {
+                const tgtFood = document.getElementById(`food${srcFood.value === 'Veg' ? 'Veg' : 'NonVeg'}_${targetPrefix}`);
+                if (tgtFood) {
+                    tgtFood.checked = true;
+                    tgtFood.dispatchEvent(new Event('change'));
+                }
+            }
+
+            // Hostel
+            const srcHostel = document.getElementById(`hostelInput_${sourcePrefix}`);
+            const tgtHostel = document.getElementById(`hostelInput_${targetPrefix}`);
+            const tgtToggle = document.getElementById(`hostelToggle_${targetPrefix}`);
+            if (srcHostel && tgtHostel && tgtToggle) {
+                if (srcHostel.value === 'Yes' && tgtHostel.value !== 'Yes') {
+                    tgtToggle.click();
+                } else if (srcHostel.value === 'No' && tgtHostel.value !== 'No') {
+                    tgtToggle.click();
+                }
+            }
         }
 
 
@@ -696,6 +731,65 @@
                 };
             }
 
+            const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const phoneRx = /^\d{10}$/;
+
+            function checkFormFilled() {
+                let filled = true;
+                const collegeEl = document.getElementById('college');
+                const locEl = document.getElementById('startingLocation');
+                if (collegeEl && !collegeEl.value.trim()) filled = false;
+                if (locEl && !locEl.value.trim()) filled = false;
+                
+                eventsArr.forEach((ev, idx) => {
+                    const sectionPrefix = `evSection_${idx}`;
+                    const isTeamEventNotChess = ev.teamSize > 1 && ev.event.toLowerCase() !== 'chess';
+                    if (isTeamEventNotChess) {
+                        const tn = document.getElementById(`teamName_${sectionPrefix}`);
+                        if (tn && !tn.value.trim()) filled = false;
+                    }
+                    for (let i = 1; i <= ev.teamSize; i++) {
+                        const mPrefix = `${sectionPrefix}_m${i}`;
+                        const nEl = document.getElementById(`${mPrefix}_name`);
+                        if (nEl && !nEl.value.trim()) filled = false;
+                        
+                        const eEl = document.getElementById(`${mPrefix}_email`);
+                        if (eEl) {
+                            const evVal = eEl.value.trim();
+                            if (!evVal || !emailRx.test(evVal)) filled = false;
+                        }
+                        
+                        const pEl = document.getElementById(`${mPrefix}_phone`);
+                        if (pEl) {
+                            const pvVal = pEl.value.trim();
+                            if (!pvVal || !phoneRx.test(pvVal)) filled = false;
+                        }
+                        
+                        if (!document.querySelector(`input[name="food_${mPrefix}"]:checked`)) filled = false;
+                    }
+                });
+                
+                const feeWrap = document.getElementById('feeWrap');
+                const msgBlock = document.getElementById('fillFormMsg');
+                const btn = document.getElementById('submitBtn');
+                
+                if (feeWrap && msgBlock && btn) {
+                    if (filled) {
+                        feeWrap.style.display = 'block';
+                        msgBlock.style.display = 'none';
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.cursor = 'pointer';
+                    } else {
+                        feeWrap.style.display = 'none';
+                        msgBlock.style.display = 'block';
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                    }
+                }
+            }
+
             function updateFeeDisplay() {
                 const info = getFeeInfo();
                 const noteEl = document.getElementById('liveFeeNote');
@@ -708,6 +802,7 @@
                     html += `<span style="font-size:.78rem;color:var(--text-muted);display:block;margin-top:4px;">Emails across events are counted as one person</span>`;
                     noteEl.innerHTML = html;
                 }
+                checkFormFilled();
             }
 
             const container = document.getElementById('formContainer');
@@ -748,11 +843,18 @@
                     titleText = isFirstMember ? (memberIdx === 1 ? 'Participant / Leader Details' : `Member ${memberIdx}`) : `Member ${memberIdx}`;
                 }
 
-                const verifyBtn = '';
+                // Auto-fill button for subsequent events
+                let autofillBtn = '';
+                if (sectionPrefix !== 'evSection_0') {
+                    // Only show if Event 1 has this member index
+                    const firstEv = eventsArr[0];
+                    if (firstEv && memberIdx <= firstEv.teamSize) {
+                        autofillBtn = `<button type="button" onclick="cloneMemberData('evSection_0_m${memberIdx}', '${prefix}')" style="margin-left:auto; font-size:0.75rem; padding:4px 10px; background:rgba(22,163,74,0.1); color:#16a34a; border:1px solid rgba(22,163,74,0.3); border-radius:50px; cursor:pointer; font-weight:700; white-space:nowrap; transition:0.2s;">&#11118; Auto-fill from Event 1</button>`;
+                    }
+                }
 
                 return `<div class="member-section">
-                    <div class="member-title">${titleText}</div>
-                    ${verifyBtn}
+                    <div class="member-title">${titleText} ${autofillBtn}</div>
                     <div class="member-grid">
                         <div class="form-group" id="${prefix}_nameGroup"><label for="${prefix}_name">Full Name *</label><input type="text" id="${prefix}_name" placeholder="Full name" maxlength="100"/><div class="error-msg" id="${prefix}_nameError">Please enter name</div></div>
                         <div class="form-group" id="${prefix}_emailGroup"><label for="${prefix}_email">Email *</label><div class="input-paste-wrap"><input type="email" id="${prefix}_email" class="email-input" placeholder="email@example.com" maxlength="150"/><button type="button" class="btn-paste" onclick="pasteToField('${prefix}_email',this)">&#128203; Paste</button></div><div class="error-msg" id="${prefix}_emailError">Please enter valid email</div></div>
@@ -834,8 +936,15 @@
                     <form id="registerForm" novalidate>
                         ${sharedGroupHTML}
                         ${sectionsHTML}
-                        <button type="submit" class="btn btn-red btn-submit" id="submitBtn">&#128640; Proceed to Payment</button>
-                        <p class="fee-note">Registration Fee: <span id="liveFeeNote">calculating...</span></p>
+                        
+                        <div id="fillFormMsg" style="text-align:center; margin-top:20px; margin-bottom:20px; padding:15px; border-radius:8px; background:rgba(198,12,48,0.05); color:var(--emirates-red); font-weight:600; font-size:0.95rem; border:1px dashed rgba(198,12,48,0.2);">
+                            ⚠️ Please fill all required fields to see the final amount and proceed.
+                        </div>
+                        <div id="feeWrap" style="display:none; text-align:center; margin-top:20px; margin-bottom:15px;">
+                            <p class="fee-note" style="margin-top:0; font-size:1.1rem !important;">Registration Fee: <span id="liveFeeNote">calculating...</span></p>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-red btn-submit" id="submitBtn" disabled style="opacity:0.5; cursor:not-allowed;">&#128640; Proceed to Payment</button>
                     </form>
                     <div class="form-footer"><a href="events.html">&#8592; Change Event</a></div>`;
 
@@ -882,7 +991,10 @@
                 });
 
                 updateFeeDisplay();
-                document.getElementById('registerForm').addEventListener('submit', submitForm);
+                const formEl = document.getElementById('registerForm');
+                formEl.addEventListener('submit', submitForm);
+                formEl.addEventListener('input', checkFormFilled);
+                formEl.addEventListener('change', checkFormFilled);
             }
 
             // Real-time intra-form and DB duplicate check
@@ -985,8 +1097,6 @@
                 if (!c) { g.classList.add('has-error'); return null; }
                 g.classList.remove('has-error'); return c.value;
             }
-            const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const phoneRx = /^\d{10}$/;
 
             /* ── Submit ── */
             async function submitForm(e) {

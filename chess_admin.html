@@ -998,7 +998,21 @@
         <button class="btn-logout" onclick="logout()">🔓 Logout</button>
     </div>
 
-    </div><!-- /slots-wrapper -->
+    <!-- ══════════════ LIVE NOTIFY ══════════════ -->
+    <div style="max-width: 1200px; margin: 0 auto 24px; background: white; border-radius: var(--radius-lg); padding: 22px 28px; box-shadow: 0 4px 20px rgba(0, 0, 0, .05);">
+        <h3 style="margin-top: 0; margin-bottom: 15px; font-family: var(--font-heading); color: var(--text-dark); font-size: 1.1rem;">📢 Live Notify (WhatsApp)</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px; font-weight: 600;">Send WhatsApp alerts to Chess participants. (Requires Pop-ups enabled for Send to All)</p>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="liveNotifyVenue" placeholder="Enter Venue (e.g., Main Hall)"
+                style="flex: 1; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-family: var(--font-body); font-size: 0.85rem; outline: none;">
+            <button class="btn btn-green" onclick="prepLiveNotify()">Fetch Contacts</button>
+        </div>
+        <div id="liveNotifyArea" style="margin-top: 15px; display: none;">
+            <div style="max-height: 200px; overflow-y: auto; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 10px; font-size: 0.85rem;" id="liveNotifyList"></div>
+            <button class="btn btn-red" onclick="sendToAllLiveNotify()" style="width: 100%;">🚀 Send to All</button>
+        </div>
+    </div>
 
     <!-- ══════════════ GRAND FINAL ══════════════ -->
     <div class="grand-final-section" id="grand-final">
@@ -1223,11 +1237,11 @@
                     const snap = await Promise.race([fetchOp, timeout]);
                     const seen = new Set();
 
-                    function add(name, regId, college) {
+                    function add(name, regId, college, phone) {
                         const key = (name || '').toLowerCase().trim();
                         if (key && !seen.has(key)) {
                             seen.add(key);
-                            S.a.allPlayers.push({ name: name || 'Unknown', regId: regId || '—', college: college || '—' });
+                            S.a.allPlayers.push({ name: name || 'Unknown', regId: regId || '—', college: college || '—', phone: phone || '' });
                         }
                     }
 
@@ -1241,13 +1255,13 @@
                             });
                         }
                         if (!isChess) return;
-                        add(r.name, r.regId, r.college);
-                        if (Array.isArray(r.members)) r.members.forEach(m => add(m.name, r.regId, m.college || r.college));
+                        add(r.name, r.regId, r.college, r.phone);
+                        if (Array.isArray(r.members)) r.members.forEach(m => add(m.name, r.regId, m.college || r.college, m.phone));
                         if (r.teamMembersByEvent) {
                             Object.entries(r.teamMembersByEvent).forEach(([ev, evData]) => {
                                 if (ev.toLowerCase().includes('chess')) {
                                     const mems = Array.isArray(evData) ? evData : evData.members || [];
-                                    mems.forEach(m => add(m.name, r.regId, m.college || r.college));
+                                    mems.forEach(m => add(m.name, r.regId, m.college || r.college, m.phone));
                                 }
                             });
                         }
@@ -1850,6 +1864,76 @@
                     };
                     reader.onerror = reject;
                 });
+            }
+
+            // ══ LIVE NOTIFY ENGINE ══
+            let liveNotifyLinks = [];
+            
+            function prepLiveNotify() {
+                const venue = document.getElementById('liveNotifyVenue').value.trim();
+                const listArea = document.getElementById('liveNotifyArea');
+                const listDiv = document.getElementById('liveNotifyList');
+                
+                if (!venue) return alert('Enter the venue.');
+                
+                // Extract phones from S.a.allPlayers
+                const phones = new Set();
+                S.a.allPlayers.forEach(p => {
+                    if (p.phone) {
+                        const clean = p.phone.replace(/\D/g, '');
+                        if (clean.length >= 10) phones.add(clean.slice(-10));
+                    }
+                });
+                
+                if (phones.size === 0) {
+                    return alert('No phone numbers found for Chess participants.');
+                }
+                
+                const msg = `Hi! This is a live update from Elexsiya 26. The event *Chess* is starting soon!\n\n📍 *Venue:* ${venue}\n\nPlease reach the venue immediately.`;
+                
+                let html = `<strong>Found ${phones.size} participants.</strong><br><br>`;
+                liveNotifyLinks = [];
+                
+                Array.from(phones).forEach(p => {
+                    const link = `https://wa.me/91${p}?text=${encodeURIComponent(msg)}`;
+                    liveNotifyLinks.push(link);
+                    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #eee;">
+                        <span style="font-family: monospace; font-size: 0.95rem;">📱 ${p}</span>
+                        <a href="${link}" target="_blank" style="padding:6px 14px; background:rgba(22,163,74,0.1); border: 1px solid rgba(22,163,74,0.3); color:#16a34a; text-decoration:none; border-radius:4px; font-size:0.8rem; font-weight:bold; transition: 0.2s;">Send</a>
+                    </div>`;
+                });
+                
+                listDiv.innerHTML = html;
+                listArea.style.display = 'block';
+            }
+            
+            function sendToAllLiveNotify() {
+                if (liveNotifyLinks.length === 0) return;
+                if (!confirm(`This will attempt to open ${liveNotifyLinks.length} WhatsApp tabs in sequence.\n\n⚠️ CRITICAL: Your browser's Popup Blocker MUST be disabled for this site, or it will stop after the first tab.\n\nReady to proceed?`)) return;
+                
+                const btn = document.querySelector('#liveNotifyArea button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ Sending... Please wait';
+                btn.disabled = true;
+                btn.style.opacity = '0.7';
+
+                let i = 0;
+                const batchInterval = setInterval(() => {
+                    if (i >= liveNotifyLinks.length) {
+                        clearInterval(batchInterval);
+                        btn.innerHTML = '✅ Done!';
+                        btn.style.background = '#16a34a';
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                            btn.style.opacity = '1';
+                            btn.style.background = 'var(--emirates-red)';
+                        }, 3000);
+                        return;
+                    }
+                    window.open(liveNotifyLinks[i], '_blank');
+                    i++;
+                }, 800);
             }
 
             // ── Init ──

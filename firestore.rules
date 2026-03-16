@@ -5,7 +5,26 @@ service cloud.firestore {
     // Allow read/write for standard collections during the event
     // In production, these should be locked to Cloud Functions or Auth.
     match /registrations/{document=**} {
-      allow read, write: if true;
+      // Anyone can read registrations (needed for existing duplicate checks and admin dash)
+      allow read: if true;
+      
+      // Allow creation ONLY if paymentStatus is Pending and amount is non-negative
+      allow create: if request.resource.data.get('paymentStatus', '') == 'Pending' 
+                    && request.resource.data.get('amount', 0) >= 0;
+      
+      // Allow updates ONLY IF:
+      // 1. The amount is not changed.
+      // 2. The paymentStatus is not changed OR if changed, it is not "Paid", "Verified", or "Refunded".
+      allow update: if request.resource.data.get('amount', 0) == resource.data.get('amount', 0)
+                    && (
+                      (request.resource.data.get('paymentStatus', '') == resource.data.get('paymentStatus', '')) 
+                      || (request.resource.data.get('paymentStatus', '') != 'Paid' 
+                          && request.resource.data.get('paymentStatus', '') != 'Verified' 
+                          && request.resource.data.get('paymentStatus', '') != 'Refunded')
+                    );
+                    
+      // Only Admin SDK (Cloud Functions) can delete registrations now. Clients cannot delete.
+      allow delete: if false; 
     }
     match /screenshots/{document=**} {
       allow read, write: if true;

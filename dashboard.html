@@ -459,6 +459,66 @@
             }
         }
 
+        /* ── Undo Toast ── */
+        .undo-toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(120px);
+            background: #1e293b;
+            color: #f1f5f9;
+            border-radius: 14px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            z-index: 999999;
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+            min-width: 300px;
+            max-width: 90vw;
+            font-family: var(--font-body);
+            font-size: 0.92rem;
+        }
+        .undo-toast.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+        .undo-toast-msg { flex: 1; }
+        .undo-toast-msg strong { color: #f87171; }
+        .undo-toast-btn {
+            padding: 7px 18px;
+            background: #C60C30;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: var(--font-body);
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .undo-toast-btn:hover { background: #a00a26; }
+        .undo-toast-timer {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+        .undo-toast-timer circle {
+            fill: none;
+            stroke: rgba(255,255,255,0.15);
+            stroke-width: 3;
+        }
+        .undo-toast-timer .progress {
+            stroke: #C60C30;
+            stroke-linecap: round;
+            stroke-dasharray: 75.4;
+            stroke-dashoffset: 0;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 1s linear;
+        }
+
         /* Storage Modal */
         .storage-modal-overlay {
             display: none;
@@ -1509,8 +1569,11 @@
                     <!-- Populated by JS -->
                 </div>
             </div>
-            <div id="paginationWrap" style="text-align:center; padding: 20px 0; background:white; border: 1px solid var(--border-light); border-top:none; border-radius: 0 0 var(--radius-lg) var(--radius-lg); margin-bottom: 24px;">
-                <button class="btn-csv" id="loadMoreBtn" onclick="loadMoreRegistrations()" style="background:#f0f9ff; color:#0369a1; border-color:#bae6fd; min-width: 200px;">&#8681; Load More Participants</button>
+            <div id="paginationWrap"
+                style="text-align:center; padding: 20px 0; background:white; border: 1px solid var(--border-light); border-top:none; border-radius: 0 0 var(--radius-lg) var(--radius-lg); margin-bottom: 24px;">
+                <button class="btn-csv" id="loadMoreBtn" onclick="loadMoreRegistrations()"
+                    style="background:#f0f9ff; color:#0369a1; border-color:#bae6fd; min-width: 200px;">&#8681; Load More
+                    Participants</button>
                 <div id="paginationStatus" style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;"></div>
             </div>
         </div>
@@ -1546,6 +1609,34 @@
                             <strong>⏳ Payment Reminder</strong>
                             <span>Remind pending users to upload screenshot.</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Live Notify Card -->
+                <div class="premium-card"
+                    style="padding: 24px; background: white; border-radius: 12px; border: 1px solid var(--border-light);">
+                    <h3 style="margin-bottom: 20px;">📢 Live Notify (WhatsApp)</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">Send WhatsApp alerts to participants. (Requires Pop-ups enabled for Send to All)</p>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <select id="liveNotifyEvent" style="flex: 1; padding: 10px; border: 1px solid var(--border-light); border-radius: 6px; font-family: var(--font-body);">
+                            <option value="">Select Event...</option>
+                            <option value="Idea Forge">Idea Forge</option>
+                            <option value="Circuit City">Circuit City</option>
+                            <option value="Line Follower">Line Follower</option>
+                            <option value="Mindspark">Mindspark</option>
+                            <option value="Robo Soccer">Robo Soccer</option>
+                            <option value="Chess">Chess</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="liveNotifyVenue" placeholder="Enter Venue (e.g., Main Hall)"
+                            style="flex: 1; padding: 10px; border: 1px solid var(--border-light); border-radius: 6px; font-family: var(--font-body);">
+                        <button class="btn-csv" onclick="prepLiveNotify()"
+                            style="background: #16a34a; color: white; border: none; padding: 10px 15px;">Fetch Contacts</button>
+                    </div>
+                    <div id="liveNotifyArea" style="margin-top: 15px; display: none;">
+                        <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 6px; padding: 10px; margin-bottom: 10px;" id="liveNotifyList"></div>
+                        <button class="btn-csv" onclick="sendToAllLiveNotify()" style="width: 100%; background: var(--emirates-red); color: white; border: none; font-weight: bold; padding: 12px;">🚀 Send to All</button>
                     </div>
                 </div>
 
@@ -2548,7 +2639,7 @@
                 if (siteRes.status === 404) throw new Error('Site Not Found. Please ensure you are using the "API ID" (UUID), not the site name.');
                 if (siteRes.status === 401) throw new Error('Unauthorized. Your Personal Access Token is invalid or expired.');
                 if (!siteRes.ok) throw new Error(`Netlify Error (${siteRes.status}): Failed to fetch site data.`);
-                
+
                 const site = await siteRes.json();
                 const accountSlug = site.account_slug;
 
@@ -2607,7 +2698,7 @@
 
         let allRegistrations = [], allSponsors = [], allExpenditures = [];
         let eventChartInst = null, timelineChartInst = null;
-        
+
         let lastVisibleDoc = null;
         let pageSize = 50;
         let isEOF = false;
@@ -2623,7 +2714,7 @@
                 const email = (p.email || '').trim().toLowerCase();
                 const phone = (p.phone || '').trim();
                 const name = (p.name || '').trim().toLowerCase();
-                
+
                 // Create a robust unique key
                 let key = '';
                 if (email) key = 'e_' + email;
@@ -2950,8 +3041,9 @@
                             const mems = Array.isArray(evData) ? evData : (evData.members || []);
                             const teamName = !Array.isArray(evData) && evData.teamName ? evData.teamName : null;
                             memberHTML += `<div style="margin-bottom:16px;"><div style="font-size:.8rem;font-weight:700;color:var(--emirates-red);text-transform:uppercase;margin-bottom:8px;">&#127919; ${evName}${teamName ? ` &middot; Team: ${teamName}` : ''}</div>`;
-                            // Only prepend the leader if they are NOT already the first member (avoids solo-chess duplicate)
-                            const leaderAlreadyInList = mems.length > 0 && mems[0].email && mems[0].email.toLowerCase() === (r.email || '').toLowerCase();
+                            // Only prepend the leader if they are NOT already present anywhere in the list
+                            const leaderEmail = (r.email || '').toLowerCase();
+                            const leaderAlreadyInList = mems.some(m => (m.email || '').toLowerCase() === leaderEmail);
                             const allMems = leaderAlreadyInList ? mems : [{ name: r.name, email: r.email, phone: r.phone, food: r.food, hostel: r.hostel, _isLeader: true }, ...mems];
                             allMems.forEach((m, mi) => {
                                 memberHTML += `<div style="background:${mi === 0 ? 'rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18)' : 'rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2)'};border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;margin-bottom:6px;">
@@ -2965,7 +3057,9 @@
                             memberHTML += '</div>';
                         });
                     } else {
-                        const flatMems = [{ name: r.name, email: r.email, phone: r.phone, food: r.food, hostel: r.hostel }, ...(r.members || [])];
+                        const leaderEmailFlat = (r.email || '').toLowerCase();
+                        const otherMems = (r.members || []).filter(m => (m.email || '').toLowerCase() !== leaderEmailFlat);
+                        const flatMems = [{ name: r.name, email: r.email, phone: r.phone, food: r.food, hostel: r.hostel }, ...otherMems];
                         flatMems.forEach((m, mi) => {
                             memberHTML += `<div style="background:${mi === 0 ? 'rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18)' : 'rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2)'};border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;margin-bottom:6px;">
                                 <div style="grid-column:1/-1;font-weight:700;color:${mi === 0 ? 'var(--emirates-red)' : 'var(--gold-dark)'};font-size:.88rem;">&#128100; Member ${mi + 1}: ${m.name || '-'}</div>
@@ -3040,6 +3134,16 @@
         document.getElementById('filterEvent')?.addEventListener('change', filterData);
 
         // ── CSV helpers ──
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         function buildCSVBlob(regs) {
             const headers = ['Reg ID', 'Source', 'Type', 'Name', 'Email', 'Phone', 'College', 'Event(s)', 'Food', 'Hostel', 'Date', 'Time', 'Amount', 'Fee', 'Status', 'Checked In', 'M1 Name', 'M1 Email', 'M1 Phone', 'M1 Food', 'M2 Name', 'M2 Email', 'M2 Phone', 'M2 Food', 'M3 Name', 'M3 Email', 'M3 Phone', 'M3 Food'];
             const rows = regs.map(r => {
@@ -3049,8 +3153,8 @@
                 const evStr = (r.events && r.events.length > 1) ? r.events.map(e => e.event || e).join(' + ') : (r.event || '');
                 return [r.regId, r.onSpot ? 'On-Spot' : 'Online', hasTeam ? `Team of ${r.teamSize || r.members.length + 1}` : 'Individual', escapeHTML(r.name), escapeHTML(r.email), escapeHTML(r.phone), escapeHTML(r.college), escapeHTML(evStr), escapeHTML(r.food || ''), escapeHTML(r.hostel || ''), dt ? dt.toLocaleDateString('en-IN') : '', dt ? dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '', r.amount, r.extraChessFee || 0, r.paymentStatus, r.checkedIn ? 'Yes' : 'No', escapeHTML(m1.name || ''), escapeHTML(m1.email || ''), escapeHTML(m1.phone || ''), escapeHTML(m1.food || ''), escapeHTML(m2.name || ''), escapeHTML(m2.email || ''), escapeHTML(m2.phone || ''), escapeHTML(m2.food || ''), escapeHTML(m3.name || ''), escapeHTML(m3.email || ''), escapeHTML(m3.phone || ''), escapeHTML(m3.food || '')];
             });
-            let csv = headers.join(',') + '\\n';
-            rows.forEach(row => { csv += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',') + '\\n'; });
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => { csv += row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',') + '\n'; });
             return new Blob([csv], { type: 'text/csv' });
         }
 
@@ -3072,12 +3176,14 @@
         document.getElementById('bulkDeleteBtn').addEventListener('click', async function () {
             const ids = getSelectedRegIds();
             if (!ids.length) { alert('Please select rows first.'); return; }
-            if (!confirm(`Delete ${ids.length} registration(s)? Cannot be undone.`)) return;
+            if (!confirm(`Delete ${ids.length} registration(s)?\n\nYou have 7 seconds to undo after deletion.`)) return;
+            const snapshot = allRegistrations.filter(r => ids.includes(r.regId));
             this.disabled = true; this.textContent = '⏳ Deleting...';
             try {
                 await Promise.all(ids.map(id => deleteRegistration(id)));
                 allRegistrations = allRegistrations.filter(r => !ids.includes(r.regId));
                 updateStats(); buildCharts(); populateEventFilter(); filterData();
+                showUndoToast(`Deleted <strong>${ids.length}</strong> registration${ids.length > 1 ? 's' : ''}`, snapshot);
             } catch (err) { alert('Error: ' + err.message); }
             finally { this.disabled = false; this.textContent = '🗑️ Delete Selected'; }
         });
@@ -3127,12 +3233,78 @@
             }
         }
 
+        // ── Undo Delete System ──
+        let _undoStack = null;   // { regs: [...], timer: id, countdown: id }
+
+        function showUndoToast(label, regs) {
+            // Cancel any in-flight undo
+            if (_undoStack) {
+                clearTimeout(_undoStack.timer);
+                clearInterval(_undoStack.countdown);
+                _undoStack = null;
+            }
+            const toast = document.getElementById('undoToast');
+            const msgEl = document.getElementById('undoToastMsg');
+            const progress = document.getElementById('undoTimerProgress');
+            const DURATION = 7; // seconds
+            const circumference = 75.4;
+            msgEl.innerHTML = label;
+            progress.style.strokeDashoffset = '0';
+            toast.classList.add('visible');
+
+            let remaining = DURATION;
+            const countdownId = setInterval(() => {
+                remaining--;
+                const offset = circumference * (1 - remaining / DURATION);
+                progress.style.strokeDashoffset = offset;
+            }, 1000);
+
+            const timerId = setTimeout(() => {
+                clearInterval(countdownId);
+                toast.classList.remove('visible');
+                _undoStack = null;
+            }, DURATION * 1000);
+
+            _undoStack = { regs, timer: timerId, countdown: countdownId };
+        }
+
+        async function performUndo() {
+            if (!_undoStack) return;
+            const { regs, timer, countdown } = _undoStack;
+            clearTimeout(timer);
+            clearInterval(countdown);
+            _undoStack = null;
+            const toast = document.getElementById('undoToast');
+            const btn = document.getElementById('undoToastBtn');
+            toast.classList.remove('visible');
+            btn.textContent = '⏳ Restoring...';
+            btn.disabled = true;
+            try {
+                // Re-write each deleted doc back to Firestore
+                await Promise.all(regs.map(reg => {
+                    const { id, ...data } = reg; // strip internal Firestore id field
+                    return window.db.collection('registrations').doc(reg.regId).set(data);
+                }));
+                // Re-insert into in-memory array
+                allRegistrations = [...regs, ...allRegistrations];
+                updateStats(); buildCharts(); populateEventFilter(); filterData();
+                alert(`✅ ${regs.length} registration${regs.length > 1 ? 's' : ''} restored successfully!`);
+            } catch (err) {
+                alert('❌ Restore failed: ' + err.message + '\n\nPlease contact support or re-import the data.');
+            } finally {
+                btn.textContent = '↩ Undo';
+                btn.disabled = false;
+            }
+        }
+
         async function deleteSingleReg(regId) {
-            if (!confirm(`Delete registration ${regId}? Cannot be undone.`)) return;
+            if (!confirm(`Delete registration ${regId}?\n\nYou have 7 seconds to undo after deletion.`)) return;
+            const snapshot = allRegistrations.filter(r => r.regId === regId);
             try {
                 await deleteRegistration(regId);
                 allRegistrations = allRegistrations.filter(r => r.regId !== regId);
                 updateStats(); buildCharts(); populateEventFilter(); filterData();
+                showUndoToast(`Deleted <strong>${snapshot[0]?.name || regId}</strong>`, snapshot);
             } catch (err) { alert('Failed: ' + err.message); }
         }
 
@@ -3826,7 +3998,7 @@
                 };
 
                 await addRegistration(data);
-                
+
                 // Trigger automated email
                 sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, data);
 
@@ -3957,11 +4129,11 @@
             let net = (revenue + sponsors) - expenses;
 
             doc.setFontSize(12); doc.setTextColor(0);
-            doc.text(`Revenue from Registrations: ₹${revenue.toLocaleString('en-IN')}`, 20, 50);
-            doc.text(`Revenue from Sponsorships: ₹${sponsors.toLocaleString('en-IN')}`, 20, 60);
-            doc.text(`Total Expenditures: ₹${expenses.toLocaleString('en-IN')}`, 20, 70);
+            doc.text(`Revenue from Registrations: Rs. ${revenue.toLocaleString('en-IN')}`, 20, 50);
+            doc.text(`Revenue from Sponsorships:  Rs. ${sponsors.toLocaleString('en-IN')}`, 20, 60);
+            doc.text(`Total Expenditures:         Rs. ${expenses.toLocaleString('en-IN')}`, 20, 70);
             doc.setFontSize(14); doc.setFont(undefined, 'bold');
-            doc.text(`Final Net Balance: ₹${net.toLocaleString('en-IN')}`, 20, 85);
+            doc.text(`Final Net Balance: Rs. ${net.toLocaleString('en-IN')}`, 20, 85);
 
             // Expense Table
             doc.setFontSize(14); doc.text("Expenditure Breakdown", 20, 105);
@@ -4584,8 +4756,94 @@
             }
         }
 
+        // ══ LIVE NOTIFY ENGINE ══
+        let liveNotifyLinks = [];
+        
+        function prepLiveNotify() {
+            const ev = document.getElementById('liveNotifyEvent').value;
+            const venue = document.getElementById('liveNotifyVenue').value.trim();
+            const listArea = document.getElementById('liveNotifyArea');
+            const listDiv = document.getElementById('liveNotifyList');
+            
+            if (!ev) return alert('Select an event first.');
+            if (!venue) return alert('Enter the venue.');
+            
+            // Extract phones for this event
+            const phones = new Set();
+            allRegistrations.forEach(r => {
+                let isEventPart = false;
+                if (r.event && r.event.toLowerCase().includes(ev.toLowerCase())) isEventPart = true;
+                if (r.teamMembersByEvent && r.teamMembersByEvent[ev]) isEventPart = true;
+                
+                if (isEventPart) {
+                    if (r.phone) {
+                        const p = r.phone.replace(/\D/g, '');
+                        if (p.length >= 10) phones.add(p.slice(-10));
+                    }
+                    if (r.teamMembersByEvent && r.teamMembersByEvent[ev] && r.teamMembersByEvent[ev].members) {
+                        r.teamMembersByEvent[ev].members.forEach(m => {
+                            if (m.phone) {
+                                const p = m.phone.replace(/\D/g, '');
+                                if (p.length >= 10) phones.add(p.slice(-10));
+                            }
+                        });
+                    }
+                }
+            });
+            
+            if (phones.size === 0) {
+                return alert('No phone numbers found for this event.');
+            }
+            
+            const msg = `Hi! This is a live update from Elexsiya 26. The event *${ev}* is starting soon!\n\n📍 *Venue:* ${venue}\n\nPlease reach the venue immediately.`;
+            
+            let html = `<strong>Found ${phones.size} participants.</strong><br><br>`;
+            liveNotifyLinks = [];
+            
+            Array.from(phones).forEach(p => {
+                const link = `https://wa.me/91${p}?text=${encodeURIComponent(msg)}`;
+                liveNotifyLinks.push(link);
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid #eee;">
+                    <span style="font-family: monospace; font-size: 0.95rem;">📱 ${p}</span>
+                    <a href="${link}" target="_blank" style="padding:6px 14px; background:rgba(22,163,74,0.1); border: 1px solid rgba(22,163,74,0.3); color:#16a34a; text-decoration:none; border-radius:4px; font-size:0.8rem; font-weight:bold; transition: 0.2s;">Send</a>
+                </div>`;
+            });
+            
+            listDiv.innerHTML = html;
+            listArea.style.display = 'block';
+        }
+        
+        function sendToAllLiveNotify() {
+            if (liveNotifyLinks.length === 0) return;
+            if (!confirm(`This will attempt to open ${liveNotifyLinks.length} WhatsApp tabs in sequence.\n\n⚠️ CRITICAL: Your browser's Popup Blocker MUST be disabled for this site, or it will stop after the first tab.\n\nReady to proceed?`)) return;
+            
+            const btn = document.querySelector('#liveNotifyArea button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Sending... Please wait';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+
+            let i = 0;
+            const batchInterval = setInterval(() => {
+                if (i >= liveNotifyLinks.length) {
+                    clearInterval(batchInterval);
+                    btn.innerHTML = '✅ Done!';
+                    btn.style.background = '#16a34a';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        btn.style.opacity = '1';
+                        btn.style.background = 'var(--emirates-red)';
+                    }, 3000);
+                    return;
+                }
+                window.open(liveNotifyLinks[i], '_blank');
+                i++;
+            }, 800); // 800ms delay to bypass aggressive popup limiting
+        }
+
         // Initial load
-        async function waitForDb(cb, n=25) {
+        async function waitForDb(cb, n = 25) {
             if (window.db) cb();
             else if (n > 0) setTimeout(() => waitForDb(cb, n - 1), 200);
             else console.warn("Database connection timed out in Dashboard.");
@@ -4597,6 +4855,16 @@
             loadCMSConfig();
         });
     </script>
+    <!-- Undo Delete Toast -->
+    <div class="undo-toast" id="undoToast">
+        <svg class="undo-toast-timer" viewBox="0 0 28 28">
+            <circle cx="14" cy="14" r="12"/>
+            <circle class="progress" id="undoTimerProgress" cx="14" cy="14" r="12"/>
+        </svg>
+        <div class="undo-toast-msg" id="undoToastMsg">Registration deleted</div>
+        <button class="undo-toast-btn" id="undoToastBtn" onclick="performUndo()">↩ Undo</button>
+    </div>
+
 </body>
 
 </html>
