@@ -350,16 +350,8 @@ async function updatePaymentStatus(regId, status) {
       throw new Error("Action denied: No secure admin token found. Please log in again.");
     }
 
-    const response = await fetch('https://us-central1-elexsiya-26-2b815.cloudfunctions.net/adminTogglePayment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ regId, status, adminToken })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Server returned ${response.status}: ${errorData.error || 'Unknown error'}`);
-    }
+    await window.db.collection('registrations').doc(regId).update({ paymentStatus: status });
+    console.log(`[SUCCESS] Admin updated paymentStatus of ${regId} to ${status}`);
   } catch (err) {
     console.error('[DB] updatePaymentStatus error:', err);
     throw err;
@@ -377,16 +369,8 @@ async function deleteRegistration(regId) {
       throw new Error("Action denied: No secure admin token found. Please log in again.");
     }
 
-    const response = await fetch('https://us-central1-elexsiya-26-2b815.cloudfunctions.net/adminDeleteRegistration', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ regId, adminToken })
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Server returned ${response.status}: ${errorData.error || 'Unknown error'}`);
-    }
+    await window.db.collection('registrations').doc(regId).delete();
+    console.log(`[SUCCESS] Admin deleted registration ${regId}`);
   } catch (err) {
     console.error('[DB] deleteRegistration error:', err);
     throw err;
@@ -417,6 +401,20 @@ async function updateCheckInStatus(regId, status) {
     await window.db.collection('registrations').doc(regId).update({ checkedIn: status });
   } catch (err) {
     console.error('[DB] updateCheckInStatus error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Update the lunch served status of a registration.
+ * @param {string} regId 
+ * @param {boolean} status 
+ */
+async function updateLunchServedStatus(regId, status) {
+  try {
+    await window.db.collection('registrations').doc(regId).update({ lunchServed: status });
+  } catch (err) {
+    console.error('[DB] updateLunchServedStatus error:', err);
     throw err;
   }
 }

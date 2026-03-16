@@ -1406,6 +1406,7 @@
                 <div class="dash-tab active" data-tab="analysis">📊 Analysis</div>
                 <div class="dash-tab general-admin-hidden" data-tab="payments">💸 Payments</div>
                 <div class="dash-tab" data-tab="participants">👥 Participants</div>
+                <div class="dash-tab" data-tab="hostel">🛏️ Hostel</div>
                 <div class="dash-tab general-admin-hidden" data-tab="tools">🛠️ Tools</div>
                 <div class="dash-tab super-only-flex" data-tab="netlify" id="tabBtnNetlify">⚡ Netlify</div>
                 <div class="dash-tab super-only-flex" data-tab="commandcenter" id="tabBtnCC">🎛️ Command Center</div>
@@ -1531,8 +1532,8 @@
 
         <!-- Tab Content: Participants -->
         <div id="tab-participants" class="tab-content">
-            <div class="toolbar">
-                <input type="text" placeholder="🔍 Search participants..." id="partSearchInput" />
+            <div class="toolbar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; background: var(--white); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                <input type="text" placeholder="🔍 Search participants..." id="partSearchInput" style="padding: 10px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); font-size: 0.9rem; flex: 1; min-width: 200px;" />
                 <select id="filterEvent"
                     style="width: auto; padding: 10px; border: 1px solid var(--border-light); border-radius: var(--radius-sm); font-size: 0.9rem;">
                     <option value="all">All Events</option>
@@ -1547,20 +1548,23 @@
 
                 <div
                     style="display: flex; gap: 8px; align-items: center; border-left: 1px solid var(--border-light); padding-left: 12px; margin-left: 4px;">
-                    <button class="btn-csv super-only" id="bulkCsvBtn"
+                    <button class="btn-csv super-only" id="bulkCsvBtn" title="Export Selected"
                         style="background:#f0fdf4;border-color:#bbf7d0;color:#16a34a;">📥 Selected CSV</button>
+                    <button class="btn-csv super-only" id="bulkPdfBtn" title="Export Selected PDF"
+                        style="background:rgba(59, 130, 246, .1); color: #3b82f6; border-color: rgba(59, 130, 246, .3);">📥 Selected PDF</button>
                 </div>
+            </div>
 
-                <div style="width: 100%; height: 1px; background: var(--border-light); margin: 8px 0;"></div>
-
+            <div class="toolbar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; background: var(--white); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
                 <button class="btn-csv" id="csvBtn">📥 Download All CSV</button>
+                <button class="btn-csv" id="pdfBtn" style="background: rgba(198, 12, 48, .08); color: var(--emirates-red); border-color: rgba(198, 12, 48, .25);">📥 Download All PDF</button>
                 <button class="btn-csv" id="storageBtn"
                     style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1;">💾 Storage</button>
                 <button class="btn-csv super-only" id="logsBtn"
                     style="background:rgba(22, 163, 74, 0.08); border-color:rgba(22, 163, 74, 0.25); color:#16a34a;">📜
                     Live Logs</button>
                 <button class="btn-csv super-only" id="bulkDeleteBtn"
-                    style="background:rgba(239, 68, 68, .05);border-color:rgba(239, 68, 68, .2);color:#ef4444;">🗑️
+                    style="background:rgba(239, 68, 68, .05);border-color:rgba(239, 68, 68, .2);color:#ef4444; margin-left: auto;">🗑️
                     Delete Selected</button>
             </div>
 
@@ -1575,6 +1579,25 @@
                     style="background:#f0f9ff; color:#0369a1; border-color:#bae6fd; min-width: 200px;">&#8681; Load More
                     Participants</button>
                 <div id="paginationStatus" style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;"></div>
+            </div>
+        </div>
+
+        </div>
+
+        <!-- Tab Content: Hostel -->
+        <div id="tab-hostel" class="tab-content">
+            <div class="toolbar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; background: var(--white); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                <button class="btn-csv" id="csvHostelBtn">📥 Download Hostel CSV</button>
+                <button class="btn-csv" id="pdfHostelBtn" style="background: rgba(198, 12, 48, .08); color: var(--emirates-red); border-color: rgba(198, 12, 48, .25);">📥 Download Hostel PDF</button>
+                <div style="margin-left:auto; font-weight:bold; color:var(--text-muted);">
+                    Hostel Opt-ins: <span id="hostelCountText" style="color:var(--emirates-red); font-size:1.1rem;">0</span>
+                </div>
+            </div>
+            <div class="table-section" style="border-bottom:none;">
+                <div class="table-wrap" id="hostelTableWrap">
+                    <!-- Populated by JS -->
+                    <div style="text-align:center;padding:40px;color:var(--text-muted);">Loading hostel data...</div>
+                </div>
             </div>
         </div>
 
@@ -2317,8 +2340,14 @@
             <div class="premium-card"
                 style="max-width: 600px; margin: 0 auto; padding: 24px; background: white; border-radius: 12px; border: 1px solid var(--border-light);">
                 <h3 style="margin-bottom: 20px; display: flex; align-items: center; gap: 8px;"><span>📷</span> QR
-                    Entry
-                    Scanner</h3>
+                    Entry Scanner</h3>
+
+                <!-- Scanner Mode Selector -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; background: #f8fafc; padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <button id="modeEntry" onclick="setScannerMode('entry')" style="flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; background: var(--emirates-red); color: white; transition: 0.2s;">🎟️ Entry Check-In</button>
+                    <button id="modeLunch" onclick="setScannerMode('lunch')" style="flex: 1; padding: 10px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; background: transparent; color: var(--text-muted); transition: 0.2s;">🍱 Lunch Attendance</button>
+                </div>
+
                 <div id="reader"
                     style="width: 100%; border-radius: 8px; overflow: hidden; background: #f8fafc; border: 1px solid #e2e8f0;">
                 </div>
@@ -2786,6 +2815,7 @@
                 populateEventFilter(fullList);
                 // buildCharts(fullList); // Removed for Lazy Loading
                 renderTable(allRegistrations);
+                updateHostelTab(allRegistrations);
                 updatePaginationUI();
             } catch (err) {
                 console.error(err);
@@ -2810,6 +2840,7 @@
                     lastVisibleDoc = res.lastVisible;
                     if (res.data.length < pageSize) isEOF = true;
                     renderTable(allRegistrations);
+                    updateHostelTab(allRegistrations);
                 }
                 updatePaginationUI();
             } catch (err) {
@@ -3002,12 +3033,12 @@
                     <td style="color:var(--emirates-red);font-weight:600;font-family:var(--font-heading);font-size:.9rem;white-space:nowrap;">${r.regId}${tamperedBadge}</td>
                     <td>${typeBadge}</td>
                     <td style="font-weight:600;">${hasTeam ? '&#127942; ' : ''}${r.name}</td>
-                    <td style="font-size:.88rem;">${r.email}</td>
-                    <td>${r.phone}</td>
+                    <td style="font-size:.88rem; white-space:nowrap; padding: 12px 24px; min-width: 250px;">${r.email}</td>
+                    <td style="white-space:nowrap; padding: 12px 24px; min-width: 150px;">${r.phone}</td>
                     <td style="font-size:.88rem;">${r.college}</td>
                     <td style="color:var(--emirates-red);font-weight:500;font-size:.85rem;">${eventDisplay}</td>
-                    <td>${foodBadge(r.food)}</td>
-                    <td>${hostelBadge(r.hostel)}</td>
+                    <td>${foodBadge(r.food || (r.members && r.members[0] ? r.members[0].food : null))}</td>
+                    <td>${hostelBadge(r.hostel || (r.members && r.members[0] ? r.members[0].hostel : null))}</td>
                     <td style="white-space:nowrap;font-size:.85rem;">${fmtDate(r.registeredAt)}</td>
                     <td style="white-space:nowrap;font-size:.85rem;">${fmtTime(r.registeredAt)}</td>
                     <td style="font-weight:700;color:var(--emirates-red);">&#8377;${r.amount}</td>
@@ -3046,12 +3077,12 @@
                             const leaderAlreadyInList = mems.some(m => (m.email || '').toLowerCase() === leaderEmail);
                             const allMems = leaderAlreadyInList ? mems : [{ name: r.name, email: r.email, phone: r.phone, food: r.food, hostel: r.hostel, _isLeader: true }, ...mems];
                             allMems.forEach((m, mi) => {
-                                memberHTML += `<div style="background:${mi === 0 ? 'rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18)' : 'rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2)'};border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;margin-bottom:6px;">
-                                    <div style="grid-column:1/-1;font-weight:700;color:${mi === 0 ? 'var(--emirates-red)' : 'var(--gold-dark)'};font-size:.88rem;">&#128100; Member ${mi + 1}: ${m.name || '-'}</div>
-                                    <div style="font-size:.82rem;"><span style="color:var(--text-muted);">Email</span><br/>${m.email || '-'}</div>
-                                    <div style="font-size:.82rem;"><span style="color:var(--text-muted);">Phone</span><br/>${m.phone || '-'}</div>
-                                    <div style="font-size:.82rem;">${foodBadge(m.food)}</div>
-                                    <div style="font-size:.82rem;">${hostelBadge(m.hostel)}</div>
+                                memberHTML += `<div style="background:${mi === 0 ? 'rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18)' : 'rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2)'};border-radius:10px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:16px 24px;margin-bottom:8px;">
+                                    <div style="flex-basis:100%;font-weight:700;color:${mi === 0 ? 'var(--emirates-red)' : 'var(--gold-dark)'};font-size:.9rem;border-bottom:1px solid rgba(0,0,0,0.05);padding-bottom:6px;">&#128100; Member ${mi + 1}: ${m.name || '-'}</div>
+                                    <div style="font-size:.85rem;min-width:200px;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Email</span><strong>${m.email || '-'}</strong></div>
+                                    <div style="font-size:.85rem;min-width:120px;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Phone</span><strong>${m.phone || '-'}</strong></div>
+                                    <div style="font-size:.85rem;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Food</span>${foodBadge(m.food)}</div>
+                                    <div style="font-size:.85rem;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Hostel</span>${hostelBadge(m.hostel)}</div>
                                 </div>`;
                             });
                             memberHTML += '</div>';
@@ -3061,28 +3092,28 @@
                         const otherMems = (r.members || []).filter(m => (m.email || '').toLowerCase() !== leaderEmailFlat);
                         const flatMems = [{ name: r.name, email: r.email, phone: r.phone, food: r.food, hostel: r.hostel }, ...otherMems];
                         flatMems.forEach((m, mi) => {
-                            memberHTML += `<div style="background:${mi === 0 ? 'rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18)' : 'rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2)'};border-radius:10px;padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;margin-bottom:6px;">
-                                <div style="grid-column:1/-1;font-weight:700;color:${mi === 0 ? 'var(--emirates-red)' : 'var(--gold-dark)'};font-size:.88rem;">&#128100; Member ${mi + 1}: ${m.name || '-'}</div>
-                                <div style="font-size:.82rem;"><span style="color:var(--text-muted);">Email</span><br/>${m.email || '-'}</div>
-                                <div style="font-size:.82rem;"><span style="color:var(--text-muted);">Phone</span><br/>${m.phone || '-'}</div>
-                                <div style="font-size:.82rem;">${foodBadge(m.food)}</div>
-                                <div style="font-size:.82rem;">${hostelBadge(m.hostel)}</div>
+                            memberHTML += `<div style="background:${mi === 0 ? 'rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18)' : 'rgba(200,169,81,.06);border:1px solid rgba(200,169,81,.2)'};border-radius:10px;padding:14px 18px;display:flex;flex-wrap:wrap;gap:16px 24px;margin-bottom:8px;">
+                                <div style="flex-basis:100%;font-weight:700;color:${mi === 0 ? 'var(--emirates-red)' : 'var(--gold-dark)'};font-size:.9rem;border-bottom:1px solid rgba(0,0,0,0.05);padding-bottom:6px;">&#128100; Member ${mi + 1}: ${m.name || '-'}</div>
+                                <div style="font-size:.85rem;min-width:200px;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Email</span><strong>${m.email || '-'}</strong></div>
+                                <div style="font-size:.85rem;min-width:120px;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Phone</span><strong>${m.phone || '-'}</strong></div>
+                                <div style="font-size:.85rem;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Food</span>${foodBadge(m.food)}</div>
+                                <div style="font-size:.85rem;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Hostel</span>${hostelBadge(m.hostel)}</div>
                             </div>`;
                         });
                     }
                     html += `<tr class="team-members-row"><td colspan="${colspan}"><div class="team-members-wrap">${memberHTML}</div></td></tr>`;
                 } else {
                     html += `<tr class="team-members-row"><td colspan="${colspan}"><div class="team-members-wrap">
-                        <div style="font-size:.85rem;margin-bottom:8px;"><strong style="color:var(--emirates-red);">Event:</strong> ${eventDisplay} &middot; ${fmtDate(r.registeredAt)} ${fmtTime(r.registeredAt)}</div>
-                        <div style="background:rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18);border-radius:10px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px;">
-                            <div style="grid-column:1/-1;font-weight:700;color:var(--emirates-red);">&#128100; ${r.name}</div>
-                            <div style="font-size:.83rem;"><span style="color:var(--text-muted);">Email</span><br/>${r.email}</div>
-                            <div style="font-size:.83rem;"><span style="color:var(--text-muted);">Phone</span><br/>${r.phone}</div>
-                            <div style="font-size:.83rem;"><span style="color:var(--text-muted);">College</span><br/>${r.college}</div>
-                            <div style="font-size:.83rem;">${foodBadge(r.food)}</div>
-                            <div style="font-size:.83rem;">${hostelBadge(r.hostel)}</div>
-                            <div style="font-size:.83rem;"><span class="badge ${badgeClass}">${r.paymentStatus}</span></div>
-                            ${isTreasurerSide ? `<div style="grid-column:1/-1; margin-top:10px; padding-top:10px; border-top:1px dashed rgba(0,0,0,0.1); font-size:0.75rem; color:#0369a1; font-weight:700;">💰 FINANCIAL VERIFICATION MODE</div>` : ''}
+                        <div style="font-size:.85rem;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(0,0,0,0.05);"><strong style="color:var(--emirates-red);">EVENT ITINERARY:</strong> ${eventDisplay} &middot; <span style="color:var(--text-muted);">${fmtDate(r.registeredAt)} ${fmtTime(r.registeredAt)}</span></div>
+                        <div style="background:rgba(198,12,48,.04);border:1px solid rgba(198,12,48,.18);border-radius:10px;padding:16px 20px;display:flex;flex-wrap:wrap;gap:16px 24px;">
+                            <div style="flex-basis:100%;font-weight:700;color:var(--emirates-red);font-size:.95rem;margin-bottom:4px;">&#128100; Primary Registrant: ${r.name}</div>
+                            <div style="font-size:.85rem;min-width:200px;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Email</span><strong>${r.email}</strong></div>
+                            <div style="font-size:.85rem;min-width:120px;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Phone</span><strong>${r.phone}</strong></div>
+                            <div style="font-size:.85rem;min-width:150px;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">College</span><strong>${r.college}</strong></div>
+                            <div style="font-size:.85rem;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Food</span>${foodBadge(r.food)}</div>
+                            <div style="font-size:.85rem;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Hostel</span>${hostelBadge(r.hostel)}</div>
+                            <div style="font-size:.85rem;"><span style="color:var(--text-muted);display:block;margin-bottom:2px;font-size:0.75rem;text-transform:uppercase;">Payment</span><span class="badge ${badgeClass}">${r.paymentStatus}</span></div>
+                            ${isTreasurerSide ? `<div style="flex-basis:100%; margin-top:10px; padding-top:10px; border-top:1px dashed rgba(0,0,0,0.1); font-size:0.75rem; color:#0369a1; font-weight:700;">💰 FINANCIAL VERIFICATION MODE</div>` : ''}
                         </div>
                     </div></td></tr>`;
                 }
@@ -3094,6 +3125,67 @@
             document.getElementById('selectAll').addEventListener('change', function () {
                 document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
             });
+        }
+
+        // --- Hostel Table Generator ---
+        let globallyExtractedHostelers = [];
+        
+        function updateHostelTab(list) {
+            const hostelWrap = document.getElementById('hostelTableWrap');
+            if (!hostelWrap) return;
+            if (!list) list = allRegistrations;
+
+            const extractedHostelers = [];
+            const uniqueEmails = new Set();
+            
+            list.forEach(r => {
+                const isPaid = r.paymentStatus === 'Paid';
+                const hasRootHostel = (r.hostel === 'Yes');
+                
+                // Add Leader
+                if (hasRootHostel && r.email && !uniqueEmails.has(r.email.toLowerCase())) {
+                    uniqueEmails.add(r.email.toLowerCase());
+                    extractedHostelers.push({ name: r.name, email: r.email, phone: r.phone, college: r.college || '-', paymentStatus: r.paymentStatus, role: 'Leader / Individual', regId: r.regId });
+                }
+                
+                // Scan all team members
+                const allPersons = getAllPersons(r);
+                allPersons.forEach(m => {
+                    if (m.hostel === 'Yes' && m.email && !uniqueEmails.has(m.email.toLowerCase())) {
+                        uniqueEmails.add(m.email.toLowerCase());
+                        extractedHostelers.push({ name: m.name, email: m.email, phone: m.phone, college: r.college || '-', paymentStatus: r.paymentStatus, role: 'Team Member', regId: r.regId });
+                    }
+                });
+            });
+            
+            globallyExtractedHostelers = extractedHostelers;
+            document.getElementById('hostelCountText').textContent = extractedHostelers.length;
+
+            if (extractedHostelers.length === 0) {
+                hostelWrap.innerHTML = `<div class="no-data"><h3 style="color:#C60C30;">No Hostel Accommodations Found</h3><p>There are no participants who have requested a hostel just yet.</p></div>`;
+                return;
+            }
+
+            let html = `<table class="data-table"><thead><tr>
+                <th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>College</th><th>Role</th><th>Status</th><th>Linked Reg ID</th>
+            </tr></thead><tbody>`;
+
+            extractedHostelers.forEach((h, i) => {
+                const badgeClass = h.paymentStatus === 'Paid' ? 'badge-paid' : 'badge-pending';
+                html += `<tr>
+                    <td>${i + 1}</td>
+                    <td style="font-weight:600;">${h.name}</td>
+                    <td style="font-size:.88rem; white-space:nowrap; padding: 12px 24px; min-width: 250px;">${h.email}</td>
+                    <td style="white-space:nowrap; padding: 12px 24px; min-width: 150px;">${h.phone}</td>
+                    <td style="font-size:.88rem;">${h.college}</td>
+                    <td style="font-size:.85rem; color:var(--text-muted);">${h.role}</td>
+                    <td><span class="badge ${badgeClass}">${h.paymentStatus}</span></td>
+                    <td style="font-family:var(--font-heading); color:var(--emirates-red); font-size:0.8rem;">${h.regId}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            hostelWrap.innerHTML = html;
         }
 
         function getSelectedRegIds() {
@@ -3122,6 +3214,7 @@
                 );
             }
             renderTable(filtered);
+            updateHostelTab(filtered);
         }
 
         document.getElementById('searchInput')?.addEventListener('input', filterData);
@@ -3162,15 +3255,168 @@
             const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
         }
 
+        // --- PDF Generation Helpers ---
+        function generatePDF(regs, title) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'pt', 'a4'); // Landscape A4
+
+            // Header
+            doc.setFontSize(16);
+            doc.setTextColor(198, 12, 48); // Emirates red
+            doc.text(`Elexsiya 26 - ${title}`, 40, 40);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            const dateStr = new Date().toLocaleString('en-IN');
+            doc.text(`Generated on: ${dateStr}`, 40, 55);
+
+            // Table configuration
+            const headers = [['Reg ID', 'Name', 'Email', 'Phone', 'College', 'Events', 'Hostel', 'Status']];
+            const data = regs.map(r => {
+                const uniqueMembers = new Map();
+
+                // 1. Process Leader First
+                const leaderEmail = (r.email || '').toLowerCase().trim();
+                uniqueMembers.set(leaderEmail, {
+                    name: `L: ${r.name || '-'}`,
+                    email: `L: ${r.email || '-'}`,
+                    phone: `L: ${r.phone || '-'}`,
+                    hostel: `L: ${r.hostel || (r.members && r.members[0] ? r.members[0].hostel : 'No')}`,
+                    events: new Set()
+                });
+
+                // Fallback for older singular event registrations
+                if (r.events && r.events.length > 0) {
+                    r.events.forEach(e => uniqueMembers.get(leaderEmail).events.add(e.event || e));
+                } else if (r.event) {
+                    uniqueMembers.get(leaderEmail).events.add(r.event);
+                }
+
+                // 2. Process all members and their specific events
+                let memCounter = 1;
+                if (r.teamMembersByEvent) {
+                    Object.entries(r.teamMembersByEvent).forEach(([evName, evData]) => {
+                        const mems = Array.isArray(evData) ? evData : (evData.members || []);
+                        
+                        mems.forEach(m => {
+                            const mEmail = (m.email || '').toLowerCase().trim();
+                            if (!mEmail) return;
+
+                            if (uniqueMembers.has(mEmail)) {
+                                uniqueMembers.get(mEmail).events.add(evName);
+                            } else {
+                                uniqueMembers.set(mEmail, {
+                                    name: `M${memCounter}: ${m.name || '-'}`,
+                                    email: `M${memCounter}: ${m.email || '-'}`,
+                                    phone: `M${memCounter}: ${m.phone || '-'}`,
+                                    hostel: `M${memCounter}: ${m.hostel || 'No'}`,
+                                    events: new Set([evName])
+                                });
+                                memCounter++;
+                            }
+                        });
+                    });
+                } else if (r.members && r.members.length > 0) {
+                     // For very old registrations without teamMembersByEvent
+                     r.members.forEach(m => {
+                        const mEmail = (m.email || '').toLowerCase().trim();
+                        if (!mEmail || mEmail === leaderEmail) return;
+
+                        if (!uniqueMembers.has(mEmail)) {
+                            uniqueMembers.set(mEmail, {
+                                name: `M${memCounter}: ${m.name || '-'}`,
+                                email: `M${memCounter}: ${m.email || '-'}`,
+                                phone: `M${memCounter}: ${m.phone || '-'}`,
+                                hostel: `M${memCounter}: ${m.hostel || 'No'}`,
+                                events: new Set(uniqueMembers.get(leaderEmail).events) // Inherit leader's overall events usually
+                            });
+                            memCounter++;
+                        }
+                     });
+                }
+
+                // 3. Construct the multiline strings
+                let nameStr = [];
+                let emailStr = [];
+                let phoneStr = [];
+                let eventStr = [];
+                let hostelStr = [];
+
+                uniqueMembers.forEach(person => {
+                    nameStr.push(person.name);
+                    emailStr.push(person.email);
+                    phoneStr.push(person.phone);
+                    eventStr.push(Array.from(person.events).join(' + ') || '-');
+                    hostelStr.push(person.hostel);
+                });
+
+                return [
+                    r.regId,
+                    nameStr.join('\n'),
+                    emailStr.join('\n'),
+                    phoneStr.join('\n'),
+                    r.college || '-',
+                    eventStr.join('\n'),
+                    hostelStr.join('\n'),
+                    r.paymentStatus
+                ];
+            });
+
+            doc.autoTable({
+                startY: 70,
+                head: headers,
+                body: data,
+                theme: 'striped',
+                headStyles: { fillColor: [198, 12, 48], textColor: 255, fontSize: 8.5 },
+                bodyStyles: { fontSize: 7.5 },
+                columnStyles: {
+                    0: { cellWidth: 70 }, // Reg ID
+                    1: { cellWidth: 100 }, // Name
+                    2: { cellWidth: 140 }, // Email
+                    3: { cellWidth: 75 },  // Phone
+                    4: { cellWidth: 80 }, // College
+                    5: { cellWidth: 125 }, // Events
+                    6: { cellWidth: 40 },  // Hostel
+                    7: { cellWidth: 50 },  // Status
+                },
+                styles: { overflow: 'linebreak', cellPadding: 4, valign: 'middle' },
+                margin: { top: 70, left: 30, right: 30, bottom: 40 }
+            });
+
+            // Save PDF
+            doc.save(`Elexsiya_${title.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+
         document.getElementById('csvBtn').addEventListener('click', function () {
             if (!allRegistrations.length) { alert('No data to export'); return; }
             downloadBlob(buildCSVBlob(allRegistrations), `Elexsiya_All_${new Date().toISOString().slice(0, 10)}.csv`);
+        });
+        
+        document.getElementById('pdfBtn').addEventListener('click', function () {
+            if (!allRegistrations.length) { alert('No data to export'); return; }
+            generatePDF(allRegistrations, 'All Registrations');
+        });
+
+        document.getElementById('csvHostelBtn').addEventListener('click', function () {
+            if (!globallyExtractedHostelers.length) { alert('No hostel data to export'); return; }
+            downloadBlob(buildCSVBlob(globallyExtractedHostelers), `Elexsiya_Hostel_${new Date().toISOString().slice(0, 10)}.csv`);
+        });
+
+        document.getElementById('pdfHostelBtn').addEventListener('click', function () {
+            if (!globallyExtractedHostelers.length) { alert('No hostel data to export'); return; }
+            generatePDF(globallyExtractedHostelers, 'Hostel Registrations');
         });
 
         document.getElementById('bulkCsvBtn').addEventListener('click', function () {
             const ids = getSelectedRegIds();
             if (!ids.length) { alert('Please select at least one row.'); return; }
             downloadBlob(buildCSVBlob(allRegistrations.filter(r => ids.includes(r.regId))), `Elexsiya_Selected_${new Date().toISOString().slice(0, 10)}.csv`);
+        });
+        
+        document.getElementById('bulkPdfBtn').addEventListener('click', function () {
+            const ids = getSelectedRegIds();
+            if (!ids.length) { alert('Please select at least one row.'); return; }
+            generatePDF(allRegistrations.filter(r => ids.includes(r.regId)), 'Selected Registrations');
         });
 
         document.getElementById('bulkDeleteBtn').addEventListener('click', async function () {
@@ -3615,6 +3861,24 @@
             }
         }
 
+        let scannerMode = 'entry'; // 'entry' or 'lunch'
+        function setScannerMode(mode) {
+            scannerMode = mode;
+            const btnEntry = document.getElementById('modeEntry');
+            const btnLunch = document.getElementById('modeLunch');
+            if (mode === 'entry') {
+                btnEntry.style.background = 'var(--emirates-red)';
+                btnEntry.style.color = 'white';
+                btnLunch.style.background = 'transparent';
+                btnLunch.style.color = 'var(--text-muted)';
+            } else {
+                btnLunch.style.background = 'var(--emirates-red)';
+                btnLunch.style.color = 'white';
+                btnEntry.style.background = 'transparent';
+                btnEntry.style.color = 'var(--text-muted)';
+            }
+        }
+
         async function onScanSuccess(decodedText) {
             const resultEl = document.getElementById('scannerResult');
             resultEl.style.display = 'block';
@@ -3632,25 +3896,49 @@
                 return;
             }
 
-            if (reg.checkedIn) {
-                resultEl.style.background = '#fef3c7';
-                resultEl.style.color = '#b45309';
-                resultEl.innerHTML = `⚠️ <strong>ALREADY CHECKED IN:</strong> ${reg.name} (${reg.regId})`;
-            } else {
-                try {
-                    await updateCheckInStatus(reg.regId, true);
-                    reg.checkedIn = true;
-                    resultEl.style.background = '#dcfce3';
-                    resultEl.style.color = '#16a34a';
-                    resultEl.innerHTML = `✅ <strong>SUCCESSFUL ENTRY:</strong> ${reg.name} (${reg.regId})`;
+            if (scannerMode === 'entry') {
+                if (reg.checkedIn) {
+                    resultEl.style.background = '#fef3c7';
+                    resultEl.style.color = '#b45309';
+                    resultEl.innerHTML = `⚠️ <strong>ALREADY CHECKED IN:</strong> ${reg.name} (${reg.regId})`;
+                } else {
+                    try {
+                        await updateCheckInStatus(reg.regId, true);
+                        reg.checkedIn = true;
+                        resultEl.style.background = '#dcfce3';
+                        resultEl.style.color = '#16a34a';
+                        resultEl.innerHTML = `✅ <strong>SUCCESSFUL ENTRY:</strong> ${reg.name} (${reg.regId})`;
 
-                    // Log the entry
-                    logActivity('entry_scan', { regId: reg.regId, name: reg.name });
-                } catch (err) {
-                    resultEl.style.background = '#fee2e2';
-                    resultEl.style.color = '#ef4444';
-                    resultEl.innerHTML = `❌ <strong>ERROR:</strong> ${err.message}`;
-                    return;
+                        // Log the entry
+                        logActivity('entry_scan', { regId: reg.regId, name: reg.name });
+                    } catch (err) {
+                        resultEl.style.background = '#fee2e2';
+                        resultEl.style.color = '#ef4444';
+                        resultEl.innerHTML = `❌ <strong>ERROR:</strong> ${err.message}`;
+                        return;
+                    }
+                }
+            } else if (scannerMode === 'lunch') {
+                if (reg.lunchServed) {
+                    resultEl.style.background = '#fef3c7';
+                    resultEl.style.color = '#b45309';
+                    resultEl.innerHTML = `⚠️ <strong>ALREADY RECEIVED LUNCH:</strong> ${reg.name} (${reg.regId})`;
+                } else {
+                    try {
+                        await updateLunchServedStatus(reg.regId, true);
+                        reg.lunchServed = true;
+                        resultEl.style.background = '#dcfce3';
+                        resultEl.style.color = '#16a34a';
+                        resultEl.innerHTML = `🍱 <strong>LUNCH DELIVERED:</strong> ${reg.name} (${reg.regId})`;
+
+                        // Log the action
+                        logActivity('lunch_scan', { regId: reg.regId, name: reg.name });
+                    } catch (err) {
+                        resultEl.style.background = '#fee2e2';
+                        resultEl.style.color = '#ef4444';
+                        resultEl.innerHTML = `❌ <strong>ERROR:</strong> ${err.message}`;
+                        return;
+                    }
                 }
             }
 

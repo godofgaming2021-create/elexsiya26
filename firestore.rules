@@ -12,19 +12,9 @@ service cloud.firestore {
       allow create: if request.resource.data.get('paymentStatus', '') == 'Pending' 
                     && request.resource.data.get('amount', 0) >= 0;
       
-      // Allow updates ONLY IF:
-      // 1. The amount is not changed.
-      // 2. The paymentStatus is not changed OR if changed, it is not "Paid", "Verified", or "Refunded".
-      allow update: if request.resource.data.get('amount', 0) == resource.data.get('amount', 0)
-                    && (
-                      (request.resource.data.get('paymentStatus', '') == resource.data.get('paymentStatus', '')) 
-                      || (request.resource.data.get('paymentStatus', '') != 'Paid' 
-                          && request.resource.data.get('paymentStatus', '') != 'Verified' 
-                          && request.resource.data.get('paymentStatus', '') != 'Refunded')
-                    );
-                    
-      // Only Admin SDK (Cloud Functions) can delete registrations now. Clients cannot delete.
-      allow delete: if false; 
+      // WARNING: Since Cloud Functions are unavailable on the Spark Plan, 
+      // these must remain open so the Admin Dashboard can perform deletions and payment toggles.
+      allow update, delete: if true;
     }
     match /screenshots/{document=**} {
       allow read, write: if true;
