@@ -569,7 +569,7 @@
                     { id: 'bug-arena', icon: '📱', name: 'Bug Arena', desc: 'Find and fix bugs in tricky code snippets. The fastest debugger wins the crown!', maxTeam: 3, teamOnly: true },
                 ],
                 nonTechnical: [
-                    { id: 'upside-down', icon: '🎤', name: 'Upside Down', desc: 'Everything you know is flipped! Think backwards, act fast, and conquer this topsy-turvy challenge.', maxTeam: 2, teamOnly: true },
+                    { id: 'upside-down', icon: '🎤', name: 'Upside Down', desc: 'Everything you know is flipped! Think backwards, act fast, and conquer this topsy-turvy challenge.', maxTeam: 3, teamOnly: true },
                     { id: 'mindfusion', icon: '🎨', name: 'Mindfusion', desc: 'Fuse logic, creativity, and teamwork to crack mind-bending puzzles and brain teasers.', maxTeam: 3, teamOnly: true },
                     { id: 'unmuted', icon: '🎮', name: 'Unmuted', desc: 'Speak up and stand out! An open-mic style event to share ideas, stories, and bold opinions.', maxTeam: 3, teamOnly: true },
                     { id: 'ideart', icon: '📸', name: 'Ideart', desc: 'Where ideas meet art. Express your imagination through creative design and visual storytelling.', maxTeam: 3, teamOnly: true },
@@ -589,14 +589,14 @@
                     const isChess = ev.isChess === true;
                     const teamLabel = isChess ? 'Individual / Multi-Entry'
                         : ev.maxTeam === 1 ? 'Individual'
-                            : teamOnly ? `Team of ${ev.maxTeam}`
+                            : teamOnly ? (ev.maxTeam === 3 ? "Team of 2 or 3" : `Team of ${ev.maxTeam}`)
                                 : `Up to ${ev.maxTeam} Members`;
 
                     let sizePills = '';
                     if (ev.maxTeam > 1 && !isChess) {
-                        const startN = teamOnly ? ev.maxTeam : 2;
+                        const startN = 2; // Allow 2 or 3 for all team events
                         for (let n = startN; n <= ev.maxTeam; n++) {
-                            const autoActive = teamOnly ? 'active' : '';
+                            const autoActive = ''; // No default selection to force user choice
                             sizePills += `<div class="size-pill ${autoActive}" data-size="${n}">${n}</div>`;
                         }
                     }
@@ -615,9 +615,9 @@
                         participationHTML = `
                             <span class="participation-label">Participation: Team Only</span>
                             <div class="participation-toggle">
-                                <button class="part-btn active" data-mode="team" style="cursor:default;">👥 Team of ${ev.maxTeam}</button>
+                                <button class="part-btn active" data-mode="team" style="cursor:default;">👥 Team (2 or 3 Members)</button>
                             </div>
-                            <div class="team-size-row show" id="sizeRow-${ev.id}" style="display:none">
+                            <div class="team-size-row show" id="sizeRow-${ev.id}">
                                 <div class="size-pills">${sizePills}</div>
                             </div>`;
                     } else {
@@ -762,7 +762,7 @@
                             name,
                             isChess,
                             mode: isChess ? 'team' : (isTeamOnly ? 'team' : 'individual'),
-                            teamSize: isChess ? chessCount : (isTeamOnly ? maxTeam : null)
+                            teamSize: isChess ? chessCount : null // Always force selection for team events
                         });
                     }
                     refreshBar();
@@ -846,7 +846,7 @@
                             sr.style.padding = '6px';
                             setTimeout(() => { sr.style.outline = ''; sr.style.padding = ''; }, 1800);
                         }
-                        alert(`Please select a team size of at least 2 for "${s.name}". A team must have more than 1 member.`);
+                        alert(`Please select your team size (2 or 3 members) for "${s.name}". A team must have more than 1 member.`);
                         return;
                     }
                 }
