@@ -1255,15 +1255,27 @@
                             });
                         }
                         if (!isChess) return;
-                        add(r.name, r.regId, r.college, r.phone);
-                        if (Array.isArray(r.members)) r.members.forEach(m => add(m.name, r.regId, m.college || r.college, m.phone));
+
                         if (r.teamMembersByEvent) {
+                            let added = false;
                             Object.entries(r.teamMembersByEvent).forEach(([ev, evData]) => {
                                 if (ev.toLowerCase().includes('chess')) {
                                     const mems = Array.isArray(evData) ? evData : evData.members || [];
-                                    mems.forEach(m => add(m.name, r.regId, m.college || r.college, m.phone));
+                                    mems.forEach(m => {
+                                        add(m.name, r.regId, m.college || r.college, m.phone);
+                                        added = true;
+                                    });
                                 }
                             });
+                            // Fallback just in case `teamMembersByEvent` exists but `chess` isn't fully matched in the object keys
+                            if (!added) {
+                                add(r.name, r.regId, r.college, r.phone);
+                            }
+                        } else {
+                            add(r.name, r.regId, r.college, r.phone);
+                            if (Array.isArray(r.members)) {
+                                r.members.forEach(m => add(m.name, r.regId, m.college || r.college, m.phone));
+                            }
                         }
                     });
 

@@ -2353,6 +2353,7 @@
                 </div>
                 <div id="scannerResult" style="margin-top: 20px; padding: 15px; border-radius: 8px; display: none;">
                 </div>
+                <button id="rescanBtn" onclick="resumeScan()" style="display: none; width: 100%; margin-top: 15px; padding: 12px; border-radius: 6px; border: none; font-weight: 700; cursor: pointer; background: var(--emirates-red); color: white; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 12px rgba(198, 12, 48, 0.2);">📸 SCAN</button>
 
                 <div style="margin-top: 24px;">
                     <h4
@@ -3862,6 +3863,14 @@
         }
 
         let scannerMode = 'entry'; // 'entry' or 'lunch'
+        let isScanPaused = false;
+
+        function resumeScan() {
+            isScanPaused = false;
+            document.getElementById('scannerResult').style.display = 'none';
+            document.getElementById('rescanBtn').style.display = 'none';
+        }
+
         function setScannerMode(mode) {
             scannerMode = mode;
             const btnEntry = document.getElementById('modeEntry');
@@ -3880,8 +3889,12 @@
         }
 
         async function onScanSuccess(decodedText) {
+            if (isScanPaused) return;
+            isScanPaused = true;
+
             const resultEl = document.getElementById('scannerResult');
             resultEl.style.display = 'block';
+            document.getElementById('rescanBtn').style.display = 'block';
             resultEl.innerHTML = `⏳ Verifying <strong>${decodedText}</strong>...`;
             resultEl.style.background = '#f1f5f9';
             resultEl.style.color = '#475569';
