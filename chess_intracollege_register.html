@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://storage.googleapis.com https://api.emailjs.com;">
+    <title>Intra College Chess Registration – Elexsiya MSEC</title>
+    <meta name="description" content="Register for Intra College Chess Tournament at Elexsiya 26 with 30rs entry fee." />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" /></noscript>
+    <link rel="stylesheet" href="styles.css?v=4" />
+    <style>
+        .page-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 100px 20px 80px;
+            background: var(--bg-warm);
+        }
+
+        .form-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 560px;
+            animation: fadeInUp .6s ease-out;
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .04);
+        }
+
+        .form-header { text-align: center; margin-bottom: 32px; }
+        .form-header h1 {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .form-header p { color: var(--emirates-red); font-weight: 600; font-size: 1.1rem; }
+
+        .fee-badge {
+            display: inline-block;
+            background: rgba(198, 12, 48, 0.1);
+            color: var(--emirates-red);
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            border: 1px solid rgba(198, 12, 48, 0.2);
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-dark); }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius);
+            font-family: var(--font-body);
+            transition: var(--transition);
+            box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--emirates-red);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(198, 12, 48, 0.1);
+        }
+        .error-msg { color: var(--emirates-red); font-size: 0.8rem; margin-top: 4px; display: none; }
+        .has-error .error-msg { display: block; }
+        .has-error input, .has-error select { border-color: var(--emirates-red); }
+
+        .btn-submit { width: 100%; padding: 16px; font-size: 1.1rem; margin-top: 20px; letter-spacing: .1em; }
+
+        /* Payment Section */
+        #paymentSection { display: none; }
+        #paymentSection.visible { display: block; }
+
+        .payment-divider {
+            border: none;
+            border-top: 2px dashed var(--border-light);
+            margin: 32px 0;
+        }
+
+        .payment-header-inner {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .payment-header-inner h2 {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .reg-summary-box {
+            background: rgba(198, 12, 48, .03);
+            border: 1px solid rgba(198, 12, 48, .12);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 24px;
+        }
+        .reg-summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.9rem;
+        }
+        .reg-summary-row:last-child { border-bottom: none; }
+        .reg-summary-label { color: var(--text-muted); }
+        .reg-summary-value { font-weight: 700; color: var(--text-dark); }
+
+        .upi-qr-wrap {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .upi-qr-wrap img {
+            width: 420px;
+            height: 420px;
+            object-fit: contain;
+            border: 2px solid var(--border-light);
+            border-radius: 16px;
+            padding: 10px;
+            background: #fff;
+            box-shadow: 0 4px 16px rgba(0,0,0,.06);
+        }
+        .upi-qr-wrap p {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .amount-badge {
+            display: inline-block;
+            background: #16a34a;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 800;
+            padding: 6px 20px;
+            border-radius: 50px;
+            margin: 8px 0;
+        }
+
+        /* Upload */
+        .upload-section { margin-top: 24px; }
+        .upload-label { display: block; font-weight: 600; color: var(--text-dark); margin-bottom: 10px; font-size: 0.95rem; }
+        #screenshotInput { display: none; }
+        .file-pick-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px;
+            background: #f8f9fa;
+            border: 1.5px dashed var(--border-light);
+            border-radius: var(--radius);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 16px;
+        }
+        .file-pick-label:hover { border-color: var(--emirates-red); color: var(--emirates-red); background: rgba(198,12,48,0.02); }
+        .file-pick-label.has-file { border-color: #16a34a; border-style: solid; background: rgba(22,163,74,.04); color: #16a34a; }
+        .preview-thumb { max-width: 100%; max-height: 180px; border-radius: var(--radius); margin: 0 auto 16px; display: none; border: 1px solid var(--border-light); }
+        .preview-thumb.visible { display: block; }
+        .upload-error { color: var(--emirates-red); font-size: 0.82rem; margin-bottom: 12px; display: none; }
+
+        /* Receipt */
+        #receiptSection { display: none; }
+        #receiptSection.visible { display: block; }
+        .receipt-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 32px 28px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,.2);
+        }
+        .receipt-card::before {
+            content: '♟️';
+            position: absolute;
+            font-size: 8rem;
+            right: -10px;
+            top: -10px;
+            opacity: 0.06;
+        }
+        .receipt-logo {
+            font-family: var(--font-heading);
+            font-size: 0.85rem;
+            letter-spacing: 0.15em;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        .receipt-title {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #ffd700;
+            margin-bottom: 4px;
+        }
+        .receipt-subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 28px; }
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,.08);
+            font-size: 0.9rem;
+        }
+        .receipt-row:last-child { border-bottom: none; }
+        .receipt-key { color: rgba(255,255,255,0.55); }
+        .receipt-val { font-weight: 700; color: white; }
+        .receipt-total-row {
+            background: rgba(255,215,0,0.12);
+            border: 1px solid rgba(255,215,0,0.25);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .receipt-total-label { font-size: 0.9rem; color: rgba(255,255,255,0.7); }
+        .receipt-total-amount { font-size: 1.6rem; font-weight: 800; color: #ffd700; font-family: var(--font-heading); }
+        .receipt-status-badge {
+            display: inline-block;
+            background: rgba(255,165,0,0.15);
+            border: 1px solid rgba(255,165,0,0.35);
+            color: orange;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 20px;
+        }
+        .receipt-footer {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255,255,255,.1);
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+            text-align: center;
+        }
+        .receipt-reg-id {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: #ffd700;
+            letter-spacing: 0.05em;
+        }
+        .btn-done { width: 100%; padding: 14px; margin-top: 20px; font-size: 1rem; }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar" id="mainNav">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="logo.jpg" alt="Elexsiya 26" class="logo-img" />
+                <span class="logo-text">Elexsiya</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-wrap">
+        <div class="form-container">
+            <div class="form-header">
+                <h1>♟️ Chess Tournament</h1>
+                <p>Intra College Registration</p>
+                <div class="fee-badge">Entry Fee: &#8377;30</div>
+                <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 10px 16px; margin-top: 10px; font-size: 0.88rem; color: #856404; font-weight: 600; text-align: center;">
+                    ⚠️ Note: Food will not be provided
+                </div>
+            </div>
+
+            <!-- STEP 1: Registration Form -->
+            <form id="chessForm" novalidate>
+                <div class="form-group" id="nameGroup">
+                    <label>Full Name *</label>
+                    <input type="text" id="name" placeholder="Full name" required />
+                    <div class="error-msg">Please enter your full name</div>
+                </div>
+
+                <div class="form-group" id="emailGroup">
+                    <label>Email *</label>
+                    <input type="email" id="email" placeholder="email@example.com" required />
+                    <div class="error-msg">Please enter a valid email</div>
+                </div>
+
+                <div class="form-group" id="phoneGroup">
+                    <label>Phone *</label>
+                    <input type="tel" id="phone" placeholder="10-digit mobile number" maxlength="15" required />
+                    <div class="error-msg">Please enter a valid phone number</div>
+                </div>
+
+                <div class="form-group" id="yearGroup">
+                    <label>Year *</label>
+                    <select id="year" required>
+                        <option value="">Select Year</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
+                    <div class="error-msg">Please select your year</div>
+                </div>
+
+                <div class="form-group" id="departmentGroup">
+                    <label>Department *</label>
+                    <input type="text" id="department" placeholder="e.g. Computer Science" required />
+                    <div class="error-msg">Please enter your department</div>
+                </div>
+
+                <button type="submit" class="btn btn-red btn-submit" id="submitBtn">Proceed to Payment &#8594;</button>
+            </form>
+
+            <!-- STEP 2: Payment Section (shown after form submit) -->
+            <div id="paymentSection">
+                <hr class="payment-divider">
+                <div class="payment-header-inner">
+                    <h2>&#128179; Payment</h2>
+                    <p style="color:var(--text-muted); font-size:0.9rem;">Scan the QR and pay &#8377;30, then upload your screenshot below.</p>
+                </div>
+
+                <div class="reg-summary-box" id="regSummaryBox">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="upi-qr-wrap">
+                    <img src="hari.jpeg" alt="UPI QR Code – Pay ₹30" />
+                    <div class="amount-badge">&#8377;30</div>
+                    <p>&#128247; Scan with any UPI app &amp; pay &#8377;30</p>
+                </div>
+
+                <div class="upload-section">
+                    <label class="upload-label">&#128248; Upload Payment Screenshot *</label>
+                    <img id="previewThumb" class="preview-thumb" alt="Preview" />
+                    <input type="file" id="screenshotInput" accept="image/*" />
+                    <label for="screenshotInput" class="file-pick-label" id="filePickLabel">
+                        &#128196; Select Payment Screenshot
+                    </label>
+                    <div class="upload-error" id="uploadError">Please select a screenshot to confirm payment</div>
+                    <button class="btn btn-red" id="confirmPaymentBtn" style="width:100%; padding:16px; font-size:1rem;">
+                        &#10003; Confirm Payment &amp; Get Receipt
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Receipt (shown after upload) -->
+            <div id="receiptSection">
+                <hr class="payment-divider">
+                <div class="receipt-card" id="receiptCard">
+                    <div class="receipt-logo">Elexsiya 26 &#8226; MSEC</div>
+                    <div class="receipt-title">&#128196; RECEIPT</div>
+                    <div class="receipt-subtitle">Chess Intracollege Tournament</div>
+
+                    <div id="receiptRows"><!-- Populated by JS --></div>
+
+                    <div class="receipt-total-row">
+                        <span class="receipt-total-label">Amount Paid</span>
+                        <span class="receipt-total-amount">&#8377;30</span>
+                    </div>
+                    <div>
+                        <span class="receipt-status-badge">&#9203; Verification Pending</span>
+                    </div>
+                    <div class="receipt-footer">
+                        Thank you for registering! Your slot will be confirmed after payment verification by the organizers.
+                    </div>
+                </div>
+                <a href="https://chat.whatsapp.com/BEyfnegs1rHBlPY1JhlERL?mode=gi_t" target="_blank" class="btn" style="width: 100%; padding: 14px; margin-top: 20px; font-size: 1rem; background: #25D366; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.811.883 3.145.883 3.182 0 5.768-2.585 5.768-5.766 0-3.181-2.586-5.767-5.764-5.765zM20 12.052c0-4.438-3.603-8.042-8.041-8.042S3.918 7.614 3.918 12.052c0 1.924.605 3.592 1.581 5.076l-1.077 3.935 4.033-1.058c1.435.836 2.906 1.229 4.496 1.229 4.438 0 8.041-3.604 8.041-8.042zm-8.236 4.966c-.198.502-.916.895-1.503.953-.393.038-.853.076-2.535-.615-2.028-.823-3.32-2.887-3.414-3.02C4.218 14.2 3 12.433 3 10.603c0-1.83 1.01-2.617 1.292-2.91.283-.292.8-.403 1.13-.403.267 0 .502.012.721.026.262.015.52.058.742.593.266.643.834 2.072.91 2.22.075.148.115.312.02.502-.102.198-.178.293-.32.482-.142.188-.283.433-.42.564-.122.115-.262.262-.11.535.152.272.673 1.14 1.455 1.838.99.883 1.82 1.144 2.083 1.267.262.124.417.104.577-.075.16-.18.705-.824.896-1.107.19-.282.38-.236.643-.138.263.097 1.638.775 1.918.914.28.139.467.208.536.326.068.117.068.682-.13 1.184z"/>
+                    </svg>
+                    Join WhatsApp Group
+                </a>
+                <button class="btn btn-red btn-done" onclick="window.location.href='index.html'" style="margin-top: 10px;">&#8592; Back to Home</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js?v=1.1"></script>
+    <script src="shared.js?v=1.1"></script>
+
+    <script>
+        let savedRegPayload = null;
+
+        // ── STEP 1: Form Submit → Save to DB, Show Payment ──
+        document.getElementById('chessForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            let valid = true;
+
+            const name = document.getElementById('name').value.trim();
+            if (!name) { document.getElementById('nameGroup').classList.add('has-error'); valid = false; }
+            else { document.getElementById('nameGroup').classList.remove('has-error'); }
+
+            const email = document.getElementById('email').value.trim();
+            const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRx.test(email)) { document.getElementById('emailGroup').classList.add('has-error'); valid = false; }
+            else { document.getElementById('emailGroup').classList.remove('has-error'); }
+
+            const phone = document.getElementById('phone').value.trim();
+            if (!phone || phone.length < 10) { document.getElementById('phoneGroup').classList.add('has-error'); valid = false; }
+            else { document.getElementById('phoneGroup').classList.remove('has-error'); }
+
+            const year = document.getElementById('year').value;
+            if (!year) { document.getElementById('yearGroup').classList.add('has-error'); valid = false; }
+            else { document.getElementById('yearGroup').classList.remove('has-error'); }
+
+            const department = document.getElementById('department').value.trim();
+            if (!department) { document.getElementById('departmentGroup').classList.add('has-error'); valid = false; }
+            else { document.getElementById('departmentGroup').classList.remove('has-error'); }
+
+            if (!valid) return;
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Saving...';
+
+            try {
+                const regId = await generateRegId();
+                const yearLabel = { '1': '1st Year', '2': '2nd Year', '3': '3rd Year', '4': '4th Year' }[year] || year + ' Year';
+                const members = [{ name, email, phone, year: yearLabel, department, hostel: 'No' }];
+                const teamMembersByEvent = {
+                    'Chess Intracollege': { teamName: '', members, domain: '' }
+                };
+
+                savedRegPayload = {
+                    regId,
+                    name,
+                    email,
+                    phone,
+                    year: yearLabel,
+                    department,
+                    hostel: 'No',
+                    verifiedViaGoogle: false,
+                    event: 'Chess Intracollege',
+                    events: [{ event: 'Chess Intracollege', participationMode: 'Individual', teamSize: 1 }],
+                    teamMembersByEvent,
+                    members,
+                    teamSize: 1,
+                    amount: 30,
+                    paymentStatus: 'Pending',
+                    registeredAt: new Date().toISOString()
+                };
+
+                await addRegistration(savedRegPayload);
+
+                // Populate summary
+                document.getElementById('regSummaryBox').innerHTML = `
+                    <div class="reg-summary-row"><span class="reg-summary-label">Reg ID</span><span class="reg-summary-value" style="color:var(--emirates-red); font-family:var(--font-heading);">${regId}</span></div>
+                    <div class="reg-summary-row"><span class="reg-summary-label">Name</span><span class="reg-summary-value">${name}</span></div>
+                    <div class="reg-summary-row"><span class="reg-summary-label">Department</span><span class="reg-summary-value">${department} &bull; ${yearLabel}</span></div>
+                    <div class="reg-summary-row"><span class="reg-summary-label">Event</span><span class="reg-summary-value">Chess Intracollege</span></div>
+                    <div class="reg-summary-row"><span class="reg-summary-label">Amount</span><span class="reg-summary-value" style="color:#16a34a;">&#8377;30</span></div>
+                `;
+
+                // Show payment section & scroll
+                document.getElementById('paymentSection').classList.add('visible');
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Registered – Now Pay Below';
+                submitBtn.style.background = '#16a34a';
+                document.getElementById('chessForm').querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+                document.getElementById('paymentSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            } catch (error) {
+                console.error('Error submitting:', error);
+                alert('Failed to submit. Please check your connection and try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Proceed to Payment →';
+            }
+        });
+
+        // ── Screenshot preview ──
+        document.getElementById('screenshotInput').addEventListener('change', function () {
+            const file = this.files[0];
+            const filePickLabel = document.getElementById('filePickLabel');
+            const previewThumb = document.getElementById('previewThumb');
+            const uploadError = document.getElementById('uploadError');
+
+            if (!file) {
+                filePickLabel.classList.remove('has-file');
+                filePickLabel.innerHTML = '&#128196; Select Payment Screenshot';
+                previewThumb.classList.remove('visible');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                uploadError.textContent = 'Please select a valid image file (PNG, JPG, etc).';
+                uploadError.style.display = 'block';
+                this.value = '';
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                uploadError.textContent = 'File too large. Max is 5MB.';
+                uploadError.style.display = 'block';
+                this.value = '';
+                return;
+            }
+            uploadError.style.display = 'none';
+            filePickLabel.classList.add('has-file');
+            filePickLabel.innerHTML = '&#10003; ' + file.name;
+            const reader = new FileReader();
+            reader.onload = ev => { previewThumb.src = ev.target.result; previewThumb.classList.add('visible'); };
+            reader.readAsDataURL(file);
+        });
+
+        // ── STEP 2: Upload screenshot, show receipt ──
+        document.getElementById('confirmPaymentBtn').addEventListener('click', async function () {
+            const file = document.getElementById('screenshotInput').files[0];
+            const uploadError = document.getElementById('uploadError');
+
+            if (!file) { uploadError.textContent = 'Please select a screenshot to confirm payment'; uploadError.style.display = 'block'; return; }
+            if (!savedRegPayload) { alert('Registration data not found. Please refresh and try again.'); return; }
+
+            if (window.location.protocol === 'file:') {
+                alert('⚠️ Firebase Storage does not work when opened via file:// protocol.\nPlease use a live server (e.g. VS Code Live Server).');
+                return;
+            }
+
+            this.disabled = true;
+            this.innerHTML = '&#9203; Uploading...';
+            uploadError.style.display = 'none';
+
+            try {
+                await uploadPaymentScreenshot(savedRegPayload, file);
+
+                // Show receipt
+                const reg = savedRegPayload;
+                document.getElementById('receiptRows').innerHTML = `
+                    <div class="receipt-row"><span class="receipt-key">Reg ID</span><span class="receipt-val receipt-reg-id">${reg.regId}</span></div>
+                    <div class="receipt-row"><span class="receipt-key">Name</span><span class="receipt-val">${reg.name}</span></div>
+                    <div class="receipt-row"><span class="receipt-key">Email</span><span class="receipt-val">${reg.email}</span></div>
+                    <div class="receipt-row"><span class="receipt-key">Phone</span><span class="receipt-key">${reg.phone}</span></div>
+                    <div class="receipt-row"><span class="receipt-key">Year</span><span class="receipt-val">${reg.year}</span></div>
+                    <div class="receipt-row"><span class="receipt-key">Department</span><span class="receipt-val">${reg.department}</span></div>
+                    <div class="receipt-row"><span class="receipt-key">Event</span><span class="receipt-val">Chess Intracollege</span></div>
+                    <div class="receipt-row"><span class="receipt-key">Date</span><span class="receipt-val">${new Date().toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })}</span></div>
+                `;
+                document.getElementById('receiptSection').classList.add('visible');
+                document.getElementById('receiptSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                this.innerHTML = '&#10003; Submitted!';
+
+            } catch (err) {
+                console.error('Upload failed:', err);
+                let msg = '&#10060; Upload failed. Please check your connection and try again.';
+                if (err.code === 'storage/unauthorized') msg = '&#9888;&#65039; Permission denied: Firebase Storage rules are blocking the upload.';
+                alert(msg);
+                this.disabled = false;
+                this.innerHTML = '&#10003; Confirm Payment &amp; Get Receipt';
+            }
+        });
+    </script>
+</body>
+
+</html>
+
