@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess Intercollege Dashboard – Elexsiya 26</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" /></noscript>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --chess-blue: #0369a1;
+            --chess-blue-light: rgba(3,105,161,0.08);
+        }
+        body { background: #f8fafc; font-family: 'Poppins', sans-serif; }
+
+        .ci-header {
+            background: linear-gradient(135deg, #0369a1 0%, #1e40af 100%);
+            color: white;
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .ci-header h1 { font-family: 'Cinzel', serif; font-size: 1.6rem; margin: 0; letter-spacing: 0.05em; }
+        .ci-header .subtitle { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
+        .back-btn {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.22); }
+
+        .ci-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            padding: 24px 32px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .stat-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+        }
+        .stat-box .val { font-size: 2rem; font-weight: 800; font-family: 'Cinzel', serif; color: var(--chess-blue); }
+        .stat-box .lbl { font-size: 0.78rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+
+        .ci-toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 16px 32px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .ci-toolbar input, .ci-toolbar select {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .ci-toolbar input:focus, .ci-toolbar select:focus { border-color: var(--chess-blue); }
+        .ci-toolbar input { flex: 1; min-width: 220px; }
+        .ci-btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            transition: 0.2s;
+        }
+        .ci-btn:hover { background: #f1f5f9; }
+        .ci-btn.primary { background: var(--chess-blue); color: white; border-color: transparent; }
+        .ci-btn.primary:hover { background: #0c5a8a; }
+        .ci-btn.green { background: #16a34a; color: white; border-color: transparent; }
+
+        .ci-main { padding: 24px 32px; }
+
+        /* Table */
+        .ci-table-wrap {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .ci-table { width: 100%; border-collapse: collapse; }
+        .ci-table thead tr { background: linear-gradient(135deg, #0369a1 0%, #1e40af 100%); color: white; }
+        .ci-table thead th { padding: 14px 16px; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        .ci-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+        .ci-table tbody tr:hover { background: #f8fafc; }
+        .ci-table tbody td { padding: 14px 16px; font-size: 0.88rem; color: #334155; vertical-align: middle; }
+        .ci-table tbody tr:last-child { border-bottom: none; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-paid { background: rgba(22,163,74,.1); color: #16a34a; border: 1px solid rgba(22,163,74,.25); }
+        .badge-pending { background: rgba(234,179,8,.1); color: #92400e; border: 1px solid rgba(234,179,8,.3); }
+        .badge-vr { background: rgba(59,130,246,.1); color: #1d4ed8; border: 1px solid rgba(59,130,246,.3); }
+
+        .action-btn {
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+            transition: 0.15s;
+            margin-right: 4px;
+        }
+        .action-btn:hover { background: #e2e8f0; }
+        .action-btn.approve { background: rgba(22,163,74,.08); color: #16a34a; border-color: rgba(22,163,74,.25); }
+        .action-btn.approve:hover { background: rgba(22,163,74,.18); }
+        .action-btn.reject { background: rgba(239,68,68,.06); color: #dc2626; border-color: rgba(239,68,68,.2); }
+        .action-btn.reject:hover { background: rgba(239,68,68,.14); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+
+        /* Payment screenshot modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 520px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-box h3 { margin-bottom: 16px; color: #1e293b; }
+        .modal-box img { max-width: 100%; max-height: 400px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .modal-close {
+            margin-top: 16px;
+            padding: 10px 24px;
+            background: #64748b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        @media(max-width: 768px) {
+            .ci-header, .ci-toolbar, .ci-main, .ci-stats { padding-left: 16px; padding-right: 16px; }
+            .ci-table thead { display: none; }
+            .ci-table tbody td { display: block; border: none; padding: 6px 14px; }
+            .ci-table tbody td::before { content: attr(data-label) ': '; font-weight: 700; color: #64748b; }
+            .ci-table tbody tr { border-bottom: 2px solid #f1f5f9; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="ci-header">
+        <div>
+            <h1>♟️ Chess Intercollege Dashboard</h1>
+            <div class="subtitle">Elexsiya 26 – Inter College Chess Registrations</div>
+        </div>
+        <a href="dashboard.html" class="back-btn">← Back to Main Dashboard</a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="ci-stats" id="statsRow">
+        <div class="stat-box"><div class="val" id="statTotal">—</div><div class="lbl">Total Registered</div></div>
+        <div class="stat-box"><div class="val" id="statPaid" style="color:#16a34a;">—</div><div class="lbl">Paid</div></div>
+        <div class="stat-box"><div class="val" id="statPending" style="color:#d97706;">—</div><div class="lbl">Pending</div></div>
+        <div class="stat-box"><div class="val" id="statRevenue" style="color:#0369a1;">—</div><div class="lbl">Total Revenue</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="ci-toolbar">
+        <input type="text" id="ciSearch" placeholder="🔍 Search by name, email, phone, ID..." oninput="filterTable()" />
+        <select id="ciStatus" onchange="filterTable()">
+            <option value="all">All Status</option>
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+            <option value="Verification Required">Verification Required</option>
+        </select>
+        <button class="ci-btn primary" onclick="downloadCSV()">📥 Download CSV</button>
+        <button class="ci-btn" style="background:#C60C30;color:white;border:none;" onclick="downloadPDF()">📥 Download PDF</button>
+        <button class="ci-btn" id="bulkZipBtn" style="background:#0369a1;color:white;border-color:transparent;" onclick="downloadAllScreenshots()">📦 Download Screenshots (ZIP)</button>
+        <button class="ci-btn" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;" onclick="loadData()">🔄 Refresh</button>
+    </div>
+
+    <!-- Main Table -->
+    <div class="ci-main">
+        <div class="ci-table-wrap">
+            <table class="ci-table" id="ciTable">
+                <thead>
+                    <tr>
+                        <th>Reg ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Year</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ciTableBody">
+                    <tr><td colspan="9" style="text-align:center; padding:40px; color:#94a3b8;">⏳ Loading data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="ciCount" style="text-align:right; margin-top:10px; font-size:0.82rem; color:#94a3b8;"></div>
+    </div>
+
+    <!-- Screenshot Modal -->
+    <div class="modal-overlay" id="screenshotModal">
+        <div class="modal-box">
+            <h3>📸 Payment Screenshot</h3>
+            <div id="modalContent"><!-- screenshot --></div>
+            <button class="modal-close" onclick="document.getElementById('screenshotModal').classList.remove('open')">Close</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js?v=1.1"></script>
+    <script src="shared.js?v=1.1"></script>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+
+        function waitForDb(cb, n = 30) {
+            if (window.db) cb();
+            else if (n > 0) setTimeout(() => waitForDb(cb, n - 1), 200);
+            else console.error('DB not available.');
+        }
+
+        async function loadData() {
+            document.getElementById('ciTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">⏳ Loading...</td></tr>';
+            try {
+                const fetchOp = window.db.collection('registrations')
+                    .where('event', '==', 'Chess Intercollege')
+                    .get();
+                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 15000));
+                const snap = await Promise.race([fetchOp, timeout]);
+                console.log(`[DB] Fetched ${snap.size} Intercollege Chess registrations.`);
+
+                allData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                allData.sort((a, b) => (b.registeredAt || '').localeCompare(a.registeredAt || ''));
+
+                updateStats();
+                filterTable();
+            } catch (err) {
+                document.getElementById('ciTableBody').innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#ef4444;">❌ Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        function updateStats() {
+            const total = allData.length;
+            const paid = allData.filter(r => r.paymentStatus === 'Paid').length;
+            const pending = allData.filter(r => r.paymentStatus !== 'Paid').length;
+            const revenue = paid * 30;
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statPaid').textContent = paid;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statRevenue').textContent = '₹' + revenue;
+        }
+
+        function filterTable() {
+            const query = document.getElementById('ciSearch').value.toLowerCase().trim();
+            const status = document.getElementById('ciStatus').value;
+            filteredData = allData.filter(r => {
+                const matchStatus = status === 'all' || r.paymentStatus === status;
+                const matchQuery = !query || [r.name, r.email, r.phone, r.regId, r.department, r.year]
+                    .some(v => (v || '').toLowerCase().includes(query));
+                return matchStatus && matchQuery;
+            });
+            renderTable(filteredData);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('ciTableBody');
+            document.getElementById('ciCount').textContent = `Showing ${data.length} of ${allData.length} registrations`;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="icon">♟️</div><p>No registrations found.</p></div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(r => {
+                const statusClass = r.paymentStatus === 'Paid' ? 'badge-paid' : r.paymentStatus === 'Verification Required' ? 'badge-vr' : 'badge-pending';
+                const dateStr = r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                const hasScreenshot = !!(r.paymentScreenshotURL || r.screenshotURL);
+
+                return `<tr>
+                    <td data-label="Reg ID"><span style="font-family:monospace;color:#0369a1;font-weight:700;">${r.regId || '—'}</span></td>
+                    <td data-label="Name"><strong>${r.name || '—'}</strong></td>
+                    <td data-label="Department">${r.department || '—'}</td>
+                    <td data-label="Year">${r.year || '—'}</td>
+                    <td data-label="Email" style="font-size:0.82rem;">${r.email || '—'}</td>
+                    <td data-label="Phone">${r.phone || '—'}</td>
+                    <td data-label="Status"><span class="status-badge ${statusClass}">${r.paymentStatus || 'Pending'}</span></td>
+                    <td data-label="Date" style="font-size:0.82rem;">${dateStr}</td>
+                    <td data-label="Actions">
+                        ${hasScreenshot ? `<button class="action-btn" onclick="viewScreenshot('${r.id}')">🖼 Screenshot</button>` : ''}
+                        ${r.paymentStatus !== 'Paid' ? `<button class="action-btn approve" onclick="updateStatus('${r.id}', 'Paid')">✅ Approve</button>` : ''}
+                        <button class="action-btn reject" onclick="deleteReg('${r.id}', '${(r.name||'').replace(/'/g,"\\'")}')">🗑</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function updateStatus(docId, status) {
+            try {
+                await window.db.collection('registrations').doc(docId).update({ paymentStatus: status });
+                const item = allData.find(r => r.id === docId);
+                if (item) item.paymentStatus = status;
+                updateStats();
+                filterTable();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteReg(docId, name) {
+            if (!confirm(`Delete registration for "${name}"? This cannot be undone.`)) return;
+            try {
+                await window.db.collection('registrations').doc(docId).delete();
+                allData = allData.filter(r => r.id !== docId);
+                updateStats();
+                filterTable();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function viewScreenshot(docId) {
+            const record = allData.find(r => r.id === docId);
+            if (!record) return;
+            const url = record.paymentScreenshotURL || record.screenshotURL;
+            if (!url) { alert('No screenshot available.'); return; }
+            document.getElementById('modalContent').innerHTML = `<img src="${url}" alt="Payment Screenshot" />`;
+            document.getElementById('screenshotModal').classList.add('open');
+        }
+
+        async function downloadAllScreenshots() {
+            const btn = document.getElementById('bulkZipBtn');
+            const originalText = btn.innerHTML;
+            
+            const pending = filteredData.filter(r => r.paymentStatus !== 'Paid' && (r.paymentScreenshotURL || r.screenshotURL));
+            if (pending.length === 0) {
+                alert('No pending registrations with screenshots found in the current view.');
+                return;
+            }
+
+            if (!confirm(`Download ${pending.length} screenshots as ZIP?`)) return;
+
+            btn.innerHTML = '⏳ Zipping...';
+            btn.disabled = true;
+
+            try {
+                const zip = new JSZip();
+                let added = 0;
+
+                for (const r of pending) {
+                    const imgSrc = r.paymentScreenshotURL || r.screenshotURL;
+                    if (!imgSrc) continue;
+
+                    try {
+                        const res = await fetch(imgSrc);
+                        if (!res.ok) throw new Error('Fetch failed');
+                        const blob = await res.blob();
+                        
+                        const ext = blob.type.split('/')[1] || 'jpg';
+                        const safeName = (r.name || 'Unknown').replace(/[^a-zA-Z0-9 ]/g, "").trim();
+                        const filename = `${safeName}_${r.regId}.${ext}`;
+                        
+                        zip.file(filename, blob);
+                        added++;
+                    } catch (e) {
+                        console.warn('Failed to fetch screenshot for', r.regId, e);
+                    }
+                }
+
+                if (added === 0) {
+                    alert('⚠️ CORS Error: Could not download images.\n\nTo fix this:\n1. Open your terminal in this folder.\n2. Run: gsutil cors set cors.json gs://YOUR_BUCKET_NAME\n(Replace YOUR_BUCKET_NAME with your Firebase Storage bucket URL)');
+                } else {
+                    const content = await zip.generateAsync({ type: 'blob' });
+                    saveAs(content, `Chess_Intercollege_Screenshots_${new Date().toISOString().slice(0,10)}.zip`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to generate ZIP.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function downloadCSV() {
+            if (filteredData.length === 0) { alert('No data to export.'); return; }
+            const headers = ['Reg ID', 'Name', 'Department', 'Year', 'Email', 'Phone', 'Status', 'Registered At'];
+            const rows = filteredData.map(r => [
+                r.regId || '', r.name || '', r.department || '', r.year || '',
+                r.email || '', r.phone || '', r.paymentStatus || '', r.registeredAt || ''
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+            const csv = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `chess_intercollege_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+
+        function downloadPDF() {
+            const data = (filteredData && filteredData.length > 0) ? filteredData : allData;
+            if (data.length === 0) { alert('No data to export.'); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'pt', 'a4');
+
+            doc.setFontSize(18);
+            doc.setTextColor(3, 105, 161); // Chess blue
+            doc.text('ELEXSIYA 26 - CHESS INTERCOLLEGE REGISTRATIONS', 40, 40);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            const dateStr = new Date().toLocaleString('en-IN');
+            doc.text(`Generated on: ${dateStr} | Total: ${data.length}`, 40, 55);
+
+            const headers = [['Reg ID', 'Name', 'Department', 'Year', 'Email', 'Phone', 'Status', 'Date']];
+            const body = data.map(r => [
+                r.regId || '-',
+                r.name || '-',
+                r.department || '-',
+                r.year || '-',
+                r.email || '-',
+                r.phone || '-',
+                r.paymentStatus || 'Pending',
+                r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '-'
+            ]);
+
+            doc.autoTable({
+                startY: 70,
+                head: headers,
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [3, 105, 161], textColor: 255, fontSize: 9 },
+                bodyStyles: { fontSize: 8 },
+                columnStyles: {
+                    0: { cellWidth: 60 },
+                    1: { cellWidth: 100 },
+                    2: { cellWidth: 80 },
+                    3: { cellWidth: 40 },
+                    4: { cellWidth: 150 },
+                    5: { cellWidth: 80 },
+                    6: { cellWidth: 70 },
+                    7: { cellWidth: 70 }
+                },
+                styles: { overflow: 'linebreak', cellPadding: 4 },
+                margin: { left: 40, right: 40 }
+            });
+
+            doc.save(`Chess_Intercollege_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+
+        waitForDb(loadData);
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</body>
+</html>

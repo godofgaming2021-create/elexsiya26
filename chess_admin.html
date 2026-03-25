@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chess Admin – Tournament</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
         *,
         *::before,
@@ -995,7 +997,10 @@
 
     <div class="top-bar">
         <h1>♟️ Chess Tournament Manager</h1>
-        <button class="btn-logout" onclick="logout()">🔓 Logout</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button class="btn" style="background:#C60C30;color:white;border:none;padding:8px 18px;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.82rem;" onclick="generateParticipantPDF()">📥 Participant PDF</button>
+            <button class="btn-logout" onclick="logout()">🔓 Logout</button>
+        </div>
     </div>
 
     <!-- ══════════════ LIVE NOTIFY ══════════════ -->
@@ -1233,28 +1238,34 @@
                 el('sa-stats').textContent = '⏳ Connecting to database…';
                 try {
                     const fetchOp = window.db.collection('registrations').get();
-                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 3000));
+                    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 15000));
                     const snap = await Promise.race([fetchOp, timeout]);
+                    console.log(`[DB] Fetched ${snap.size} total registrations for Chess.`);
                     const seen = new Set();
 
-                    function add(name, regId, college, phone) {
+                    function add(name, regId, college, phone, year, dept) {
                         const key = (name || '').toLowerCase().trim();
                         if (key && !seen.has(key)) {
                             seen.add(key);
-                            S.a.allPlayers.push({ name: name || 'Unknown', regId: regId || '—', college: college || '—', phone: phone || '' });
+                            S.a.allPlayers.push({ name: name || 'Unknown', regId: regId || '—', college: college || '—', phone: phone || '', year: year || '', dept: dept || '' });
                         }
                     }
 
                     snap.docs.forEach(d => {
                         const r = d.data();
-                        let isChess = (r.event || '').toLowerCase().trim() === 'chess';
+                        let isChessStr = (r.event || '').toLowerCase().trim();
+                        let isChess = isChessStr === 'chess' || isChessStr === 'chess intercollege';
                         if (!isChess && Array.isArray(r.events)) {
                             isChess = r.events.some(e => {
                                 const n = typeof e === 'object' ? e.event || '' : e || '';
-                                return n.toLowerCase().trim() === 'chess';
+                                let nStr = n.toLowerCase().trim();
+                                return nStr === 'chess' || nStr === 'chess intercollege';
                             });
                         }
                         if (!isChess) return;
+
+                        // Detect intercollege type
+                        const isIntercollege = isChessStr === 'chess intercollege' || (Array.isArray(r.events) && r.events.some(e => (typeof e === 'object' ? e.event || '' : e || '').toLowerCase().trim() === 'chess intercollege'));
 
                         if (r.teamMembersByEvent) {
                             let added = false;
@@ -1262,19 +1273,18 @@
                                 if (ev.toLowerCase().includes('chess')) {
                                     const mems = Array.isArray(evData) ? evData : evData.members || [];
                                     mems.forEach(m => {
-                                        add(m.name, r.regId, m.college || r.college, m.phone);
+                                        add(m.name, r.regId, m.college || r.college, m.phone, m.year || r.year, m.department || r.department);
                                         added = true;
                                     });
                                 }
                             });
-                            // Fallback just in case `teamMembersByEvent` exists but `chess` isn't fully matched in the object keys
                             if (!added) {
-                                add(r.name, r.regId, r.college, r.phone);
+                                add(r.name, r.regId, r.college, r.phone, r.year, r.department);
                             }
                         } else {
-                            add(r.name, r.regId, r.college, r.phone);
+                            add(r.name, r.regId, r.college, r.phone, r.year, r.department);
                             if (Array.isArray(r.members)) {
-                                r.members.forEach(m => add(m.name, r.regId, m.college || r.college, m.phone));
+                                r.members.forEach(m => add(m.name, r.regId, m.college || r.college, m.phone, m.year || r.year, m.department || r.department));
                             }
                         }
                     });
@@ -1301,6 +1311,7 @@
 
                 el('sa-att-list').innerHTML = S.a.allPlayers.map(p => {
                     const isPresent = S.a.attendance[p.name];
+                    const extraInfo = p.dept ? `${p.dept}${p.year ? ' &bull; ' + p.year : ''}` : (p.college && p.college !== '—' ? p.college : '');
                     return `
             <div class="att-row ${isPresent ? 'present' : 'absent'}"
                  id="att-row-${sanitizeId(p.name)}"
@@ -1308,7 +1319,7 @@
                 <div class="att-checkbox">${isPresent ? '✓' : ''}</div>
                 <div style="flex:1;">
                     <div class="att-player-name">${p.name}</div>
-                    <div class="att-player-id">${p.regId}</div>
+                    <div class="att-player-id">${p.regId}${extraInfo ? ' &nbsp;|&nbsp; ' + extraInfo : ''}</div>
                 </div>
                 <span class="att-status">${isPresent ? 'Present' : 'Absent'}</span>
             </div>`;
@@ -1946,6 +1957,50 @@
                     window.open(liveNotifyLinks[i], '_blank');
                     i++;
                 }, 800);
+            }
+
+            function generateParticipantPDF() {
+                const playersA = S.a.allPlayers || [];
+                const playersB = S.b.allPlayers || [];
+                const allPlayers = [...playersA, ...playersB];
+                if (allPlayers.length === 0) { alert('No participant data loaded yet.'); return; }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'pt', 'a4');
+
+                doc.setFontSize(18);
+                doc.setTextColor(198, 12, 48); // Emirates red
+                doc.text('ELEXSIYA 26 - CHESS TOURNAMENT PARTICIPANTS', 40, 40);
+
+                doc.setFontSize(10);
+                doc.setTextColor(100);
+                const dateStr = new Date().toLocaleString('en-IN');
+                doc.text(`Generated on: ${dateStr} | Total: ${allPlayers.length}`, 40, 55);
+
+                const headers = [['Reg ID', 'Name', 'College', 'Group/Status']];
+                const body = allPlayers.map(p => {
+                    let group = 'Group A';
+                    // Check if it's in B
+                    if (playersB.some(pb => pb.regId === p.regId && pb.name === p.name)) group = 'Group B';
+                    return [
+                        p.regId || '-',
+                        p.name || '-',
+                        p.college || '-',
+                        group
+                    ];
+                });
+
+                doc.autoTable({
+                    startY: 70,
+                    head: headers,
+                    body: body,
+                    theme: 'striped',
+                    headStyles: { fillColor: [198, 12, 48], textColor: 255, fontSize: 10 },
+                    bodyStyles: { fontSize: 9 },
+                    margin: { left: 40, right: 40 }
+                });
+
+                doc.save(`Chess_Participants_${new Date().toISOString().slice(0, 10)}.pdf`);
             }
 
             // ── Init ──

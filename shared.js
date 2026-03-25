@@ -126,29 +126,25 @@ let _registrationsCache = null;
 async function getRegistrations(forceRefresh = false) {
   if (!window.db) { console.warn('[DB] window.db not ready'); return []; }
 
-  // Return cached data if available and refresh not forced
-  // IMPORTANT: Only use cache if it actually has data — never return a stale empty array
   if (_registrationsCache && _registrationsCache.length > 0 && !forceRefresh) {
     return _registrationsCache;
   }
 
   try {
-    // 8-second timeout: prevents a stale Firestore connection from hanging
-    // background reads (e.g. from dashboard) which could block writes.
     const collection = window.db.collection('registrations');
     let fetchOp;
     
     try {
-      // Final attempt: Ordered query (requires index)
-      // Reduced timeout to 3s for faster fallback if index is missing
+      // Increased timeout to 15s for large databases
       fetchOp = collection.orderBy('registeredAt', 'desc').get();
       const fetchTimeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('READ_TIMEOUT')), 3000)
+        setTimeout(() => reject(new Error('READ_TIMEOUT')), 15000)
       );
       const snapshot = await Promise.race([fetchOp, fetchTimeout]);
       _registrationsCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log(`[DB] getRegistrations (ordered) success: ${_registrationsCache.length} records`);
     } catch (queryErr) {
-      console.warn('[DB] Ordered fetch failed, attempting simple fetch fallback...', queryErr);
+      console.warn('[DB] Ordered fetch failed or timed out, attempting simple fallback...', queryErr.message);
       // Fallback: Simple get (works even if index is missing)
       const simpleSnap = await collection.get();
       const unsorted = simpleSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -159,6 +155,7 @@ async function getRegistrations(forceRefresh = false) {
         return db - da;
       });
       _registrationsCache = unsorted;
+      console.log(`[DB] getRegistrations (fallback) success: ${_registrationsCache.length} records`);
     }
     
     return _registrationsCache;
@@ -167,7 +164,7 @@ async function getRegistrations(forceRefresh = false) {
     if (err.code === 'permission-denied') {
       alert("⚠️ Firebase Permission Denied. Your Cloud Firestore Rules are blocking read access. Please update your rules to allow read/write (see README-FIREBASE.txt).");
     }
-    return _registrationsCache || []; // Return stale cache if fetch fails
+    return _registrationsCache || []; 
   }
 }
 
@@ -186,13 +183,14 @@ async function getPaginatedRegistrations(lastVisibleDoc = null, pageSize = 50) {
       query = query.startAfter(lastVisibleDoc);
     }
 
-    // Add 3s timeout to pagination fetch too
+    // Increased timeout to 15s
     const fetchOp = query.get();
     const fetchTimeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('READ_TIMEOUT')), 3000)
+      setTimeout(() => reject(new Error('READ_TIMEOUT')), 15000)
     );
     
     const snapshot = await Promise.race([fetchOp, fetchTimeout]);
+    console.log(`[DB] getPaginatedRegistrations success: ${snapshot.docs.length} docs`);
     return {
       docs: snapshot.docs,
       data: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
@@ -464,12 +462,13 @@ async function getSponsorships() {
   try {
     const fetchOp = window.db.collection('sponsorships').orderBy('timestamp', 'desc').get();
     const fetchTimeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('READ_TIMEOUT')), 3000)
+      setTimeout(() => reject(new Error('READ_TIMEOUT')), 15000)
     );
     const snap = await Promise.race([fetchOp, fetchTimeout]);
+    console.log(`[DB] getSponsorships success: ${snap.size} records`);
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.warn('[DB] getSponsorships error (likely timeout/missing index):', err);
+    console.warn('[DB] getSponsorships error (likely timeout/missing index):', err.message);
     return [];
   }
 }
@@ -504,12 +503,13 @@ async function getExpenditures() {
   try {
     const fetchOp = window.db.collection('expenditures').orderBy('timestamp', 'desc').get();
     const fetchTimeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('READ_TIMEOUT')), 3000)
+      setTimeout(() => reject(new Error('READ_TIMEOUT')), 15000)
     );
     const snap = await Promise.race([fetchOp, fetchTimeout]);
+    console.log(`[DB] getExpenditures success: ${snap.size} records`);
     return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (err) {
-    console.warn('[DB] getExpenditures error (likely timeout/missing index):', err);
+    console.warn('[DB] getExpenditures error (likely timeout/missing index):', err.message);
     return [];
   }
 }

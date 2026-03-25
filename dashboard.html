@@ -1396,9 +1396,16 @@
     <div class="dashboard">
         <div class="container">
 
-            <div class="dash-header">
-                <h1>📊 Dashboard</h1>
-                <p>Overview of all registrations and payments</p>
+            <div class="dash-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+                <div>
+                    <h1>📊 Dashboard</h1>
+                    <p>Overview of all registrations and payments</p>
+                </div>
+                <a href="chess_intercollege_dashboard.html"
+                   style="display:inline-flex; align-items:center; gap:10px; padding:12px 22px; background:linear-gradient(135deg,#0369a1,#1e40af); color:white; border-radius:12px; text-decoration:none; font-weight:700; font-size:0.95rem; box-shadow:0 4px 14px rgba(3,105,161,0.3); transition:transform 0.15s;"
+                   onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    ♟️ Chess Intercollege Dashboard
+                </a>
             </div>
 
             <!-- Tabs Navigation -->
@@ -1558,6 +1565,7 @@
             <div class="toolbar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; background: var(--white); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
                 <button class="btn-csv" id="csvBtn">📥 Download All CSV</button>
                 <button class="btn-csv" id="pdfBtn" style="background: rgba(198, 12, 48, .08); color: var(--emirates-red); border-color: rgba(198, 12, 48, .25);">📥 Download All PDF</button>
+                <button class="btn-csv" id="chessIntercollegeBtn" onclick="document.getElementById('filterEvent').value = 'Chess Intercollege'; filterData();" style="background: rgba(3, 105, 161, .08); color: #0369a1; border-color: rgba(3, 105, 161, .25);">♟️ Chess Intercollege</button>
                 <button class="btn-csv" id="storageBtn"
                     style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1;">💾 Storage</button>
                 <button class="btn-csv super-only" id="logsBtn"
@@ -1604,9 +1612,12 @@
         <!-- Tab Content: Payments -->
         <div id="tab-payments" class="tab-content">
             <div class="screenshots-section visible" id="screenshotsSectionTab" style="display:block;">
-                <div class="screenshots-header">
-                    <h2>📸 Payment Verification Panel</h2>
-                    <span id="screenshotCountTab" style="color:var(--text-muted);font-size:0.9rem;"></span>
+                <div class="screenshots-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <div>
+                        <h2>📸 Payment Verification Panel</h2>
+                        <span id="screenshotCountTab" style="color:var(--text-muted);font-size:0.9rem;"></span>
+                    </div>
+                    <button class="btn-csv" id="bulkZipBtn" onclick="downloadAllPendingScreenshots()" style="background:var(--emirates-red); color:white; border:none;">📦 Download Pending (ZIP)</button>
                 </div>
                 <div class="screenshots-grid" id="screenshotsGridTab">
                     <div style="text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1;">⏳ Loading
@@ -2787,6 +2798,8 @@
         }
 
         let allRegistrations = [], allSponsors = [], allExpenditures = [];
+        let fullListCache = []; 
+        let currentFilteredData = [];
         let eventChartInst = null, timelineChartInst = null;
 
         let lastVisibleDoc = null;
@@ -2932,7 +2945,7 @@
             const onspot = list.filter(r => r.onSpot === true).length;
             const online = list.length - onspot;
             const paid = list.filter(r => r.paymentStatus === 'Paid').length;
-            const revenue = list.filter(r => r.paymentStatus === 'Paid').reduce((sum, r) => sum + r.amount, 0);
+            const revenue = list.filter(r => r.paymentStatus === 'Paid').reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
 
             const onlineEl = document.getElementById('onlineRegs');
             const onspotEl = document.getElementById('onspotRegs');
@@ -3257,12 +3270,27 @@
             const query = (document.getElementById('partSearchInput') || document.getElementById('searchInput'))?.value.toLowerCase().trim() || '';
             const status = document.getElementById('filterStatus')?.value || 'all';
             const event = document.getElementById('filterEvent')?.value || 'all';
-            let filtered = allRegistrations;
+            
+            // Use fullListCache for searching even if not currently in paginated view
+            let source = (fullListCache && fullListCache.length > 0) ? fullListCache : allRegistrations;
+            let filtered = source;
+
             if (status !== 'all') filtered = filtered.filter(r => r.paymentStatus === status);
             if (event !== 'all') {
                 filtered = filtered.filter(r => {
-                    if (r.events && r.events.length > 0) return r.events.some(e => (e.event || e) === event);
-                    return r.event === event;
+                    let hasEvent = false;
+                    if (r.events && r.events.length > 0) {
+                        hasEvent = r.events.some(e => (e.event || e) === event);
+                        if (!hasEvent && event === 'Chess') {
+                            hasEvent = r.events.some(e => (e.event || e) === 'Chess Intercollege');
+                        }
+                    } else {
+                        hasEvent = r.event === event;
+                        if (!hasEvent && event === 'Chess') {
+                            hasEvent = r.event === 'Chess Intercollege';
+                        }
+                    }
+                    return hasEvent;
                 });
             }
             if (query) {
@@ -3274,8 +3302,23 @@
                     (r.phone || '').includes(query)
                 );
             }
+            
+            currentFilteredData = filtered;
             renderTable(filtered);
             updateHostelTab(filtered);
+
+            // Update download button labels
+            const pdfBtn = document.getElementById('pdfBtn');
+            const csvBtn = document.getElementById('csvBtn');
+            if (pdfBtn && csvBtn) {
+                if (event !== 'all') {
+                    pdfBtn.textContent = `📥 Download ${event} PDF`;
+                    csvBtn.textContent = `📥 Download ${event} CSV`;
+                } else {
+                    pdfBtn.textContent = `📥 Download All PDF`;
+                    csvBtn.textContent = `📥 Download All CSV`;
+                }
+            }
         }
 
         document.getElementById('searchInput')?.addEventListener('input', filterData);
@@ -3332,7 +3375,7 @@
             doc.text(`Generated on: ${dateStr}`, 40, 55);
 
             // Table configuration
-            const headers = [['Reg ID', 'Name', 'Email', 'Phone', 'College', 'Events', 'Hostel', 'Status']];
+            const headers = [['Reg ID', 'Name', 'Email', 'Phone', 'College', 'Events', 'Team Name', 'Domain/Detail', 'Hostel', 'Status']];
             const data = regs.map(r => {
                 const uniqueMembers = new Map();
 
@@ -3355,8 +3398,19 @@
 
                 // 2. Process all members and their specific events
                 let memCounter = 1;
+
+                // Extract global team names and domains
+                let teamNames = [];
+                let domains = [];
+
                 if (r.teamMembersByEvent) {
                     Object.entries(r.teamMembersByEvent).forEach(([evName, evData]) => {
+                        // Extract global team names and domains for the columns
+                        if (!Array.isArray(evData)) {
+                             if (evData.teamName) teamNames.push(`${evName}: ${evData.teamName}`);
+                             if (evData.domain) domains.push(`${evName}: ${evData.domain}`);
+                        }
+
                         const mems = Array.isArray(evData) ? evData : (evData.members || []);
                         
                         mems.forEach(m => {
@@ -3396,6 +3450,9 @@
                      });
                 }
 
+                const teamNameStr = teamNames.length > 0 ? teamNames.join('\n') : '-';
+                const domainStr = domains.length > 0 ? domains.join('\n') : '-';
+
                 // 3. Construct the multiline strings
                 let nameStr = [];
                 let emailStr = [];
@@ -3418,6 +3475,8 @@
                     phoneStr.join('\n'),
                     r.college || '-',
                     eventStr.join('\n'),
+                    teamNameStr,
+                    domainStr,
                     hostelStr.join('\n'),
                     r.paymentStatus
                 ];
@@ -3431,14 +3490,16 @@
                 headStyles: { fillColor: [198, 12, 48], textColor: 255, fontSize: 8.5 },
                 bodyStyles: { fontSize: 7.5 },
                 columnStyles: {
-                    0: { cellWidth: 70 }, // Reg ID
-                    1: { cellWidth: 100 }, // Name
-                    2: { cellWidth: 140 }, // Email
-                    3: { cellWidth: 75 },  // Phone
+                    0: { cellWidth: 55 }, // Reg ID
+                    1: { cellWidth: 90 }, // Name
+                    2: { cellWidth: 120 }, // Email
+                    3: { cellWidth: 65 },  // Phone
                     4: { cellWidth: 80 }, // College
-                    5: { cellWidth: 125 }, // Events
-                    6: { cellWidth: 40 },  // Hostel
-                    7: { cellWidth: 50 },  // Status
+                    5: { cellWidth: 100 }, // Events
+                    6: { cellWidth: 80 }, // Team Name
+                    7: { cellWidth: 80 }, // Domain
+                    8: { cellWidth: 40 },  // Hostel
+                    9: { cellWidth: 50 },  // Status
                 },
                 styles: { overflow: 'linebreak', cellPadding: 4, valign: 'middle' },
                 margin: { top: 70, left: 30, right: 30, bottom: 40 }
@@ -3448,14 +3509,38 @@
             doc.save(`Elexsiya_${title.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
         }
 
-        document.getElementById('csvBtn').addEventListener('click', function () {
-            if (!allRegistrations.length) { alert('No data to export'); return; }
-            downloadBlob(buildCSVBlob(allRegistrations), `Elexsiya_All_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.getElementById('csvBtn')?.addEventListener('click', function () {
+            const eventVal = document.getElementById('filterEvent')?.value || 'all';
+            const statusVal = document.getElementById('filterStatus')?.value || 'all';
+            const queryVal = document.getElementById('partSearchInput')?.value || '';
+            
+            // If any filter is active, use currentFilteredData (it might be empty)
+            const isFiltered = eventVal !== 'all' || statusVal !== 'all' || queryVal.trim() !== '';
+            const data = isFiltered ? currentFilteredData : allRegistrations;
+            
+            const eventTitle = eventVal !== 'all' ? eventVal.toUpperCase() : 'ALL';
+            const statusTitle = statusVal !== 'all' ? `_${statusVal.toUpperCase()}` : '';
+            downloadBlob(buildCSVBlob(data), `Elexsiya_${eventTitle}${statusTitle}_${new Date().toISOString().slice(0, 10)}.csv`);
         });
         
-        document.getElementById('pdfBtn').addEventListener('click', function () {
-            if (!allRegistrations.length) { alert('No data to export'); return; }
-            generatePDF(allRegistrations, 'All Registrations');
+        document.getElementById('pdfBtn')?.addEventListener('click', function () {
+            const eventVal = document.getElementById('filterEvent')?.value || 'all';
+            const statusVal = document.getElementById('filterStatus')?.value || 'all';
+            const queryVal = document.getElementById('partSearchInput')?.value || '';
+
+            const isFiltered = eventVal !== 'all' || statusVal !== 'all' || queryVal.trim() !== '';
+            const data = isFiltered ? currentFilteredData : allRegistrations;
+
+            const eventTitle = eventVal !== 'all' ? eventVal.toUpperCase() : 'ALL';
+            const statusTitle = statusVal !== 'all' ? ` (${statusVal})` : '';
+            const title = `Registrations - ${eventTitle}${statusTitle}`;
+            
+            if (data.length === 0) {
+                alert("No participants found matching the current filters.");
+                return;
+            }
+            
+            generatePDF(data, title);
         });
 
         document.getElementById('csvHostelBtn').addEventListener('click', function () {
@@ -3694,7 +3779,14 @@
             try {
                 const snap = await db.collection('screenshots').get();
                 const docs = snap.docs.map(d => d.data());
-                screenshotCount.textContent = `${docs.length} screenshot${docs.length !== 1 ? 's' : ''} uploaded`;
+                
+                const pendingDocs = docs.filter(s => {
+                    const reg = allRegistrations.find(r => r.regId === s.regId);
+                    return reg && reg.paymentStatus !== 'Paid';
+                });
+                
+                document.getElementById('screenshotCountTab').textContent = `${pendingDocs.length} pending verification(s)`;
+                
                 if (docs.length === 0) { screenshotsGrid.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-muted);grid-column:1/-1;">No screenshots uploaded yet.</div>`; return; }
                 screenshotsGrid.innerHTML = docs.map(s => {
                     const reg = allRegistrations.find(r => r.regId === s.regId) || {};
@@ -3721,6 +3813,71 @@
                 }).join('');
             } catch (err) { screenshotsGrid.innerHTML = `<div style="text-align:center;padding:40px;color:var(--emirates-red);grid-column:1/-1;">&#10060; ${err.message}</div>`; }
         }
+
+        async function downloadAllPendingScreenshots() {
+            const btn = document.getElementById('bulkZipBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Zipping...';
+            btn.disabled = true;
+
+            try {
+                const snap = await db.collection('screenshots').get();
+                const docs = snap.docs.map(d => d.data());
+                
+                const pendingDocs = docs.filter(s => {
+                    const reg = allRegistrations.find(r => r.regId === s.regId);
+                    return reg && reg.paymentStatus !== 'Paid';
+                });
+
+                if (pendingDocs.length === 0) {
+                    alert('No pending screenshots available for download.');
+                    return;
+                }
+
+                const zip = new JSZip();
+                let added = 0;
+
+                for (const s of pendingDocs) {
+                    const reg = allRegistrations.find(r => r.regId === s.regId) || {};
+                    const imgSrc = s.storageURL || s.imageData;
+                    if (!imgSrc) continue;
+
+                    try {
+                        let blob;
+                        if (imgSrc.startsWith('data:')) {
+                            const res = await fetch(imgSrc);
+                            blob = await res.blob();
+                        } else {
+                            // Direct URL fetch (might have CORS issues, so using no-cors if needed)
+                            const res = await fetch(imgSrc);
+                            blob = await res.blob();
+                        }
+
+                        const ext = blob.type.split('/')[1] || 'jpg';
+                        const safeName = (reg.name || 'Unknown').replace(/[^a-zA-Z0-9 ]/g, "").trim();
+                        const filename = `${safeName}_${s.regId}.${ext}`;
+                        zip.file(filename, blob);
+                        added++;
+                    } catch (e) {
+                        console.warn('Failed to fetch image for', s.regId, e);
+                    }
+                }
+
+                if (added === 0) {
+                    alert('⚠️ CORS Error: Could not download images.\n\nTo fix this:\n1. Open your terminal in this folder.\n2. Run: gsutil cors set cors.json gs://YOUR_BUCKET_NAME\n(Replace YOUR_BUCKET_NAME with your Firebase Storage bucket URL)');
+                } else {
+                    const content = await zip.generateAsync({ type: 'blob' });
+                    saveAs(content, `Pending_Payments_${new Date().toISOString().slice(0,10)}.zip`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to generate ZIP.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
 
         function downloadScreenshot(regId, dataUrl) { const a = document.createElement('a'); a.href = dataUrl; a.download = `payment_${regId}.jpg`; a.click(); }
 
@@ -3858,7 +4015,6 @@
 
         // ── Tabs Logic ──
         let chartsInitialized = false;
-        let fullListCache = null;
 
         document.querySelectorAll('.dash-tab').forEach(tab => {
             tab.addEventListener('click', function () {
@@ -5285,6 +5441,8 @@
         <button class="undo-toast-btn" id="undoToastBtn" onclick="performUndo()">↩ Undo</button>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </body>
 
 </html>

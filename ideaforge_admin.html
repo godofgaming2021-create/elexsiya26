@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.netlify.com;">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <title>Idea Forge Admin – Elexsiya 26</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -128,8 +130,9 @@
                 <div class="toolbar-right" id="actionBtns">
                     <!-- Buttons dynamically populated -->
                 </div>
-                <div class="toolbar-right" style="margin-left: 10px;">
+                <div class="toolbar-right" style="margin-left: 10px; display: flex; gap: 8px;">
                     <button class="btn-action btn-csv" id="downloadCsvBtn">⤓ Download CSV</button>
+                    <button class="btn-action" id="downloadPdfBtn" style="background:#C60C30;color:white;border:none;">📥 Download PDF</button>
                 </div>
             </div>
 
@@ -203,9 +206,9 @@
             console.log("[DB] Starting Idea Forge data fetch...");
             try {
                 const fetchOp = db.collection('registrations').get();
-                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 3000));
+                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 15000));
                 const snap = await Promise.race([fetchOp, timeout]);
-                console.log(`[DB] Fetched ${snap.size} total registrations.`);
+                console.log(`[DB] Fetched ${snap.size} total registrations from Firestore.`);
                 allData = [];
 
                 snap.forEach(doc => {
@@ -581,56 +584,70 @@
             renderTable(filtered);
         });
 
-        // CSV Download
-        document.getElementById('downloadCsvBtn').addEventListener('click', () => {
-            if (allData.length === 0) return alert('No data to download.');
-            
-            let csvContent = "Rank,Points,Reg ID,Team Name,Domain,Team Leader,Email,Phone,College,Department,Year,Event,Payment Status,Reg Date\n";
+        // PDF Download
+        document.getElementById('downloadPdfBtn')?.addEventListener('click', () => {
+            if (allData.length === 0) return alert('No data to export.');
+            generatePDF(allData, 'Idea Forge Registrations');
+        });
 
-            allData.forEach(row => {
-                const escapeCsv = (str) => `"${(str || '').toString().replace(/"/g, '""')}"`;
-                
-                // Extract teamName & domain for CSV
+        function generatePDF(regs, title) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'pt', 'a4');
+
+            doc.setFontSize(18);
+            doc.setTextColor(198, 12, 48);
+            doc.text(`ELEXSIYA 26 - ${title.toUpperCase()}`, 40, 40);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            const dateStr = new Date().toLocaleString('en-IN');
+            doc.text(`Generated on: ${dateStr}`, 40, 55);
+
+            const headers = [['Rank', 'Reg ID', 'Team Name', 'Domain', 'Leader', 'Email', 'Phone', 'College', 'Status']];
+            const data = regs.map(r => {
                 let teamName = '';
                 let domain = '';
-                if (row.teamMembersByEvent && row.teamMembersByEvent['Idea Forge']) {
-                    teamName = row.teamMembersByEvent['Idea Forge'].teamName || '';
-                    domain = row.teamMembersByEvent['Idea Forge'].domain || '';
+                if (r.teamMembersByEvent && r.teamMembersByEvent['Idea Forge']) {
+                    teamName = r.teamMembersByEvent['Idea Forge'].teamName || '';
+                    domain = r.teamMembersByEvent['Idea Forge'].domain || '';
                 }
-
-                const dateObj = row.registeredAt ? new Date(row.registeredAt) : null;
-                const dStr = dateObj ? dateObj.toLocaleString() : '';
-
-                const line = [
-                    row.ideaForgeMeta.order === 99999 ? 'Unset' : row.ideaForgeMeta.order,
-                    row.ideaForgeMeta.points,
-                    escapeCsv(row.regId),
-                    escapeCsv(teamName),
-                    escapeCsv(domain),
-                    escapeCsv(row.name),
-                    escapeCsv(row.email),
-                    escapeCsv(row.phone),
-                    escapeCsv(row.college),
-                    escapeCsv(row.department),
-                    escapeCsv(row.year),
-                    escapeCsv(row.event),
-                    escapeCsv(row.paymentStatus),
-                    escapeCsv(dStr)
-                ].join(',');
-
-                csvContent += line + "\n";
+                return [
+                    r.ideaForgeMeta.order === 99999 ? '-' : r.ideaForgeMeta.order,
+                    r.regId || '-',
+                    teamName || 'Individual',
+                    domain || '-',
+                    r.name || '-',
+                    r.email || '-',
+                    r.phone || '-',
+                    r.college || '-',
+                    r.paymentStatus || 'Pending'
+                ];
             });
 
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `ideaforge_registrations_${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        });
+            doc.autoTable({
+                startY: 70,
+                head: headers,
+                body: data,
+                theme: 'striped',
+                headStyles: { fillColor: [198, 12, 48], textColor: 255, fontSize: 9 },
+                bodyStyles: { fontSize: 8 },
+                columnStyles: {
+                    0: { cellWidth: 35 },
+                    1: { cellWidth: 60 },
+                    2: { cellWidth: 80 },
+                    3: { cellWidth: 80 },
+                    4: { cellWidth: 90 },
+                    5: { cellWidth: 130 },
+                    6: { cellWidth: 70 },
+                    7: { cellWidth: 90 },
+                    8: { cellWidth: 50 },
+                },
+                styles: { overflow: 'linebreak', cellPadding: 4 },
+                margin: { left: 30, right: 30 }
+            });
+
+            doc.save(`Elexsiya_IdeaForge_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
 
         // ══ LIVE NOTIFY ENGINE ══
         let liveNotifyLinks = [];
