@@ -1254,18 +1254,18 @@
                     snap.docs.forEach(d => {
                         const r = d.data();
                         let isChessStr = (r.event || '').toLowerCase().trim();
-                        let isChess = isChessStr === 'chess' || isChessStr === 'chess intercollege';
+                        let isChess = isChessStr === 'chess' || isChessStr === 'chess intracollege';
                         if (!isChess && Array.isArray(r.events)) {
                             isChess = r.events.some(e => {
                                 const n = typeof e === 'object' ? e.event || '' : e || '';
                                 let nStr = n.toLowerCase().trim();
-                                return nStr === 'chess' || nStr === 'chess intercollege';
+                                return nStr === 'chess' || nStr === 'chess intracollege';
                             });
                         }
                         if (!isChess) return;
 
                         // Detect intercollege type
-                        const isIntercollege = isChessStr === 'chess intercollege' || (Array.isArray(r.events) && r.events.some(e => (typeof e === 'object' ? e.event || '' : e || '').toLowerCase().trim() === 'chess intercollege'));
+                        const isIntercollege = isChessStr === 'chess intracollege' || (Array.isArray(r.events) && r.events.some(e => (typeof e === 'object' ? e.event || '' : e || '').toLowerCase().trim() === 'chess intracollege'));
 
                         if (r.teamMembersByEvent) {
                             let added = false;

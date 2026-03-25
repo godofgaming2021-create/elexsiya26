@@ -1401,10 +1401,10 @@
                     <h1>📊 Dashboard</h1>
                     <p>Overview of all registrations and payments</p>
                 </div>
-                <a href="chess_intercollege_dashboard.html"
+                <a href="chess_intracollege_dashboard.html"
                    style="display:inline-flex; align-items:center; gap:10px; padding:12px 22px; background:linear-gradient(135deg,#0369a1,#1e40af); color:white; border-radius:12px; text-decoration:none; font-weight:700; font-size:0.95rem; box-shadow:0 4px 14px rgba(3,105,161,0.3); transition:transform 0.15s;"
                    onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
-                    ♟️ Chess Intercollege Dashboard
+                    ♟️ Chess Intracollege Dashboard
                 </a>
             </div>
 
@@ -1565,7 +1565,7 @@
             <div class="toolbar" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; background: var(--white); padding: 16px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
                 <button class="btn-csv" id="csvBtn">📥 Download All CSV</button>
                 <button class="btn-csv" id="pdfBtn" style="background: rgba(198, 12, 48, .08); color: var(--emirates-red); border-color: rgba(198, 12, 48, .25);">📥 Download All PDF</button>
-                <button class="btn-csv" id="chessIntercollegeBtn" onclick="document.getElementById('filterEvent').value = 'Chess Intercollege'; filterData();" style="background: rgba(3, 105, 161, .08); color: #0369a1; border-color: rgba(3, 105, 161, .25);">♟️ Chess Intercollege</button>
+                <button class="btn-csv" id="chessIntercollegeBtn" onclick="document.getElementById('filterEvent').value = 'Chess Intracollege'; filterData();" style="background: rgba(3, 105, 161, .08); color: #0369a1; border-color: rgba(3, 105, 161, .25);">♟️ Chess Intracollege</button>
                 <button class="btn-csv" id="storageBtn"
                     style="background:#f0f9ff;border-color:#bae6fd;color:#0369a1;">💾 Storage</button>
                 <button class="btn-csv super-only" id="logsBtn"
@@ -3282,12 +3282,12 @@
                     if (r.events && r.events.length > 0) {
                         hasEvent = r.events.some(e => (e.event || e) === event);
                         if (!hasEvent && event === 'Chess') {
-                            hasEvent = r.events.some(e => (e.event || e) === 'Chess Intercollege');
+                            hasEvent = r.events.some(e => (e.event || e) === 'Chess Intracollege');
                         }
                     } else {
                         hasEvent = r.event === event;
                         if (!hasEvent && event === 'Chess') {
-                            hasEvent = r.event === 'Chess Intercollege';
+                            hasEvent = r.event === 'Chess Intracollege';
                         }
                     }
                     return hasEvent;
