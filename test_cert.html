@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Certificate Generation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            max-width: 90vw;
+            max-height: 90vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div style="font-family: 'Cinzel'; visibility: hidden; position: absolute;">Preload</div>
+    <div style="font-family: 'Montserrat'; visibility: hidden; position: absolute;">Preload</div>
+    <canvas id="certCanvas"></canvas>
+
+    <script>
+        const EVENT_QUOTES = {
+            "Project Expo": `"Innovation distinguishes between a leader and a follower."`,
+            "Idea Forge": `"Ideas are the currency of the future. Never stop forging them."`,
+            "Tazky Among Uz": `"In the game of strategy, trust your instincts and outwit the rest."`,
+            "CurrentClash": `"Electricity is really just organized lightning."`,
+            "Clever Hunt": `"Every puzzle is a conversation with the person who made it."`,
+            "Bug Arena": `"A good programmer looks both ways before crossing a one-way street."`,
+            "Upside Down": `"Sometimes you have to turn everything upside down to find the right perspective."`,
+            "Mindfusion": `"Great minds don't think alike, they think together."`,
+            "Unmuted": `"Your voice and your story possess the power to change the world."`,
+            "Ideart": `"Art is not what you see, but what you make others see."`,
+            "Chess": `"Chess is the gymnasium of the mind. Every move is a new puzzle."`
+        };
+
+        async function drawCertificate(canvas, participantName, eventName, year, collegeName) {
+            const W = 1414, H = 1000;
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            const templateImg = await new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = 'final.jpeg';
+            });
+
+            if (templateImg) {
+                ctx.drawImage(templateImg, 0, 0, W, H);
+            } else {
+                ctx.fillStyle = '#fdf8f0';
+                ctx.fillRect(0, 0, W, H);
+                ctx.fillStyle = '#8B0000';
+                ctx.font = "bold 60px 'Cinzel', serif";
+                ctx.textAlign = 'center';
+                ctx.fillText('TEMPLATE MISSING', W / 2, H / 2);
+            }
+
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillStyle = '#1a0a00';
+
+            // 1. Participant Name
+            ctx.textAlign = 'left';
+            ctx.font = "bold 32px 'Cinzel', serif";
+            ctx.fillText(participantName, 580, 490);
+
+            // 2. Year
+            ctx.textAlign = 'left';
+            ctx.font = "bold 30px 'Cinzel', serif";
+            ctx.fillText(year, 1110, 490);
+
+            // 3. College Name
+            if (collegeName) {
+                ctx.textAlign = 'center';
+                ctx.font = "bold 30px 'Cinzel', serif";
+                ctx.fillText(collegeName, W / 2, 550, 1060);
+            }
+
+            // 4. Event Name
+            ctx.textAlign = 'left';
+            ctx.font = "bold 28px 'Cinzel', serif";
+            ctx.fillText(eventName, 760, 610, 500);
+
+            // 5. Event Quote
+            const fallbackQuote = `"Success is not final, failure is not fatal: it is the courage to continue that counts."`;
+            let quoteText = fallbackQuote;
+            for (const key in EVENT_QUOTES) {
+                if (eventName.toLowerCase().includes(key.toLowerCase())) {
+                    quoteText = EVENT_QUOTES[key];
+                    break;
+                }
+            }
+            ctx.textAlign = 'center';
+            ctx.font = "italic bold 24px Montserrat, sans-serif";
+            ctx.fillStyle = '#A88B3A'; // Elexsiya Gold-Dark Title Theme
+            ctx.fillText(quoteText, W / 2, 745, 1200);
+        }
+
+        async function init() {
+            // Wait for font
+            try { 
+                await document.fonts.load("bold 32px 'Cinzel'"); 
+                await document.fonts.load("italic 400 22px 'Montserrat'");
+            } catch(e){}
+            
+            const canvas = document.getElementById('certCanvas');
+            await drawCertificate(
+                canvas, 
+                "SAMPLE PARTICIPANT", 
+                "ROBO WARS 2026", 
+                "3rd Year", 
+                "XYZ INSTITUTE OF TECHNOLOGY"
+            );
+        }
+
+        setTimeout(init, 500); // slight delay to ensure fonts & image might be ready
+    </script>
+</body>
+</html>

@@ -685,6 +685,21 @@
             }
             if (!eventsArr.length) { window.location.href = 'events.html'; return; }
 
+            try {
+                const closedEvents = await getClosedEvents();
+                const blockedEvents = eventsArr.filter(e => closedEvents.includes(e.event));
+                if (blockedEvents.length > 0) {
+                    const blockedNames = blockedEvents.map(e => e.event).join(', ');
+                    alert(`Registration for "${blockedNames}" has been closed. Please select other events.`);
+                    sessionStorage.removeItem('selectedEvents');
+                    sessionStorage.removeItem('selectedEvent');
+                    window.location.href = 'events.html';
+                    return;
+                }
+            } catch(e) {
+                console.warn('[DB] Could not check closed events:', e);
+            }
+
             // Priority Sort: Individual (1), then Team of 2, then Team of 3
             eventsArr.sort((a, b) => (a.teamSize || 1) - (b.teamSize || 1));
 

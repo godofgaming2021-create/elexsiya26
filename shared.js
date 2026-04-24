@@ -30,6 +30,7 @@ const EMAILJS_PUBLIC_KEY = 'pgGsFDU3f8cldU5Rt';
 const EMAILJS_SERVICE_ID = 'service_a8408v9';
 const EMAILJS_TEMPLATE_REGISTRATION = 'template_od6lwxm';
 const EMAILJS_TEMPLATE_VERIFICATION = 'template_28y3izs';
+const EMAILJS_TEMPLATE_CERTIFICATE = 'template_certificate';
 
 // Initialize EmailJS
 (function() {
@@ -231,6 +232,20 @@ async function addRegistration(reg) {
 
   // Vulnerability 27: Strict backend conflict checking
   const eventList = reg.events ? reg.events.map(e => e.event) : [reg.event];
+  
+  // Enforce Registration Block
+  try {
+    const closedEvents = await getClosedEvents();
+    for (const e of eventList) {
+      if (closedEvents.includes(e)) {
+        throw new Error(`Registration for "${e}" has been closed. Please remove it and try again.`);
+      }
+    }
+  } catch(e) {
+    if (e.message && e.message.includes('has been closed')) throw e;
+    console.warn('[DB] Could not check closed events:', e);
+  }
+
   if (hasTimeConflict(eventList)) {
     throw new Error("Time conflict detected between selected events. Registration rejected.");
   }
@@ -337,6 +352,53 @@ async function sendAutomatedEmail(templateId, regData) {
 }
 
 /**
+ * Upload a generated certificate blob to Firebase Storage.
+ * @param {string} regId
+ * @param {Blob} blob
+ * @returns {Promise<string>} Download URL
+ */
+async function uploadCertificateImage(regId, blob) {
+  if (!window.storage) throw new Error('Firebase Storage not initialized');
+  // ── HELPER: timeout wrapper ──
+  function withTimeout(promise, ms, label) {
+    const t = new Promise((_, reject) => setTimeout(() => reject(new Error(`TIMEOUT_${label}`)), ms));
+    return Promise.race([promise, t]);
+  }
+  const storageRef = window.storage.ref(`certificates/${regId}_${Date.now()}.jpg`);
+  const snap = await withTimeout(storageRef.put(blob), 15000, 'STORAGE_PUT');
+  const downloadURL = await withTimeout(snap.ref.getDownloadURL(), 5000, 'GET_URL');
+  console.log('[CERT UPLOAD] Storage upload successful:', downloadURL);
+  return downloadURL;
+}
+
+/**
+ * Send the certificate email to the participant using EmailJS.
+ * @param {Object} regData
+ * @param {string} downloadURL
+ */
+async function sendCertificateEmail(regData, downloadURL) {
+  if (typeof emailjs === 'undefined') throw new Error('[EmailJS] SDK not loaded');
+  const templateParams = {
+    name: regData.name,
+    to_name: regData.name,
+    email: regData.email,
+    to_email: regData.email,
+    reg_id: regData.regId,
+    certificate_url: downloadURL,
+    event_details: regData.event || (regData.events ? regData.events.map(e => e.event).join(', ') : 'Symposium')
+  };
+  console.log('[EmailJS] Sending certificate email for:', regData.regId);
+  try {
+    const response = await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_CERTIFICATE, templateParams);
+    console.log('[EmailJS] Cert Success:', response.status, response.text);
+    return response;
+  } catch (err) {
+    console.error('[EmailJS] Cert Send Error:', err);
+    throw err;
+  }
+}
+
+/**
  * Update the paymentStatus field of a registration by its regId.
  * @param {string} regId
  * @param {string} status - 'Paid' | 'Pending'
@@ -396,7 +458,11 @@ async function updateRegistrationData(regId, newData) {
  */
 async function updateCheckInStatus(regId, status) {
   try {
-    await window.db.collection('registrations').doc(regId).update({ checkedIn: status });
+    const updateData = { checkedIn: status };
+    if (status === true) {
+      updateData.checkedInAt = new Date().toISOString(); // Save actual check-in time
+    }
+    await window.db.collection('registrations').doc(regId).update(updateData);
   } catch (err) {
     console.error('[DB] updateCheckInStatus error:', err);
     throw err;

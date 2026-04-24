@@ -143,6 +143,53 @@
         .back-link:hover {
             color: var(--emirates-red);
         }
+
+        /* Year picker panel */
+        .year-picker {
+            display: none;
+            text-align: center;
+        }
+        .year-picker h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+        .year-picker p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+        .year-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .btn-year {
+            flex: 1;
+            padding: 18px 10px;
+            border: 2px solid #eee;
+            border-radius: 14px;
+            background: white;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            transition: all 0.2s;
+        }
+        .btn-year:hover {
+            border-color: var(--emirates-red);
+            background: #fff5f7;
+            color: var(--emirates-red);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(198,12,48,0.12);
+        }
+        .year-icon {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 
@@ -166,6 +213,23 @@
             <button type="submit" class="btn-login" id="loginSubmit">Login to Portal</button>
             <div id="errorMsg" class="error-msg"></div>
         </form>
+        <div id="yearPicker" class="year-picker">
+            <div style="font-size:2rem; margin-bottom:12px;">🎓</div>
+            <h3>Select Your Year of Study</h3>
+            <p>This will appear on your participation certificate.</p>
+            <div class="year-buttons">
+                <button class="btn-year" onclick="selectYear('1st')">
+                    <span class="year-icon">1️⃣</span>1st Year
+                </button>
+                <button class="btn-year" onclick="selectYear('2nd')">
+                    <span class="year-icon">2️⃣</span>2nd Year
+                </button>
+                <button class="btn-year" onclick="selectYear('3rd')">
+                    <span class="year-icon">3️⃣</span>3rd Year
+                </button>
+            </div>
+        </div>
+
         <div id="chessLoginPrompt" style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
             <p style="font-size:0.85rem; color:var(--text-muted); cursor:pointer;" onclick="toggleChessMode()"
                 id="toggleText">
@@ -224,17 +288,52 @@
             error.style.display = 'none';
 
             try {
-                // Query Firestore for matching registration
-                const snap = await db.collection('registrations')
+                let userData = null;
+                let loggedInName = null;
+
+                // ── Phase 1: Try Team Leader login (fast indexed query) ──
+                const leaderFetchOp = db.collection('registrations')
                     .where('email', '==', email)
                     .where('phone', '==', phone)
                     .get();
+                const leaderFetchTimeout = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('LEADER_FETCH_TIMEOUT')), 10000)
+                );
+                const leaderSnap = await Promise.race([leaderFetchOp, leaderFetchTimeout]);
 
-                if (snap.empty) {
-                    throw new Error('No registration found with these credentials. Please check your data.');
+                if (!leaderSnap.empty) {
+                    userData = leaderSnap.docs[0].data();
+                    loggedInName = userData.name; // Leader's own name
+                } else {
+                    // ── Phase 2: Team Member fallback (scan members arrays) ──
+                    // Fetch registrations that have a members array (team registrations)
+                    const teamFetchOp = db.collection('registrations')
+                        .where('paymentStatus', '==', 'Paid')
+                        .get();
+                    const teamFetchTimeout = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('TEAM_FETCH_TIMEOUT')), 12000)
+                    );
+                    const teamSnap = await Promise.race([teamFetchOp, teamFetchTimeout]);
+
+                    for (const doc of teamSnap.docs) {
+                        const reg = doc.data();
+                        if (!reg.members || !Array.isArray(reg.members)) continue;
+                        // Check each team member's credentials
+                        const matchedMember = reg.members.find(m =>
+                            (m.email || '').toLowerCase() === email && m.phone === phone
+                        );
+                        if (matchedMember) {
+                            userData = reg; // Use the parent team registration
+                            loggedInName = matchedMember.name; // Use THIS member's name
+                            break;
+                        }
+                    }
                 }
 
-                const userData = snap.docs[0].data();
+                if (!userData) {
+                    throw new Error('No registration found with these credentials.');
+                }
+
                 if (userData.paymentStatus !== 'Paid') {
                     throw new Error('Your registration is pending payment verification.');
                 }
@@ -243,39 +342,62 @@
                     throw new Error('This portal is strictly for Chess participants.');
                 }
 
-                // Generate signature for security (Vuln 24)
+                // Compute the event string exactly as it will be stored in session
+                // so the signature matches on certificate.html verification
+                const storedEvent = userData.allEvents || userData.event || 'Elexsiya 26';
+
+                // Generate signature for security (must use storedEvent, not raw userData.event)
                 const signature = await _calcChecksum({
                     regId: userData.regId,
                     email: userData.email,
-                    event: userData.event,
+                    event: storedEvent,
                     amount: userData.amount,
                     registeredAt: userData.registeredAt
                 });
 
-                // Store in session
+                // Store in session — use the logged-in member's NAME, but the TEAM's regId
                 sessionStorage.setItem('partUser', JSON.stringify({
                     regId: userData.regId,
-                    name: userData.name,
-                    event: userData.event,
-                    email: userData.email,
+                    name: loggedInName,       // Individual member's name for their pass
+                    event: storedEvent,
+                    email: userData.email,    // Leader's email (for signature verification)
                     amount: userData.amount,
                     registeredAt: userData.registeredAt,
                     signature: signature
                 }));
+                // Store redirect target
+                window._certRedirect = isChessMode ? 'chess_certificate.html' : 'certificate.html';
 
                 localStorage.removeItem('partLoginAttempts');
-                window.location.href = isChessMode ? 'chess_certificate.html' : 'certificate.html';
+
+                if (isChessMode) {
+                    // Chess doesn't need year — redirect immediately
+                    window.location.href = 'chess_certificate.html';
+                } else {
+                    // Show year picker
+                    document.getElementById('partLoginForm').style.display = 'none';
+                    document.getElementById('chessLoginPrompt').style.display = 'none';
+                    document.querySelector('.login-card p:last-child') && 
+                        (document.querySelector('.login-card p:last-child').style.display = 'none');
+                    document.getElementById('yearPicker').style.display = 'block';
+                }
             } catch (err) {
                 localStorage.setItem('lastPartLoginAttempt', now.toString());
                 localStorage.setItem('partLoginAttempts', (attemptCount + 1).toString());
 
-                // Generic error for security
-                error.textContent = 'Invalid credentials or login failed. Please check your details.';
+                error.textContent = err.message.includes('TIMEOUT')
+                    ? 'Connection timed out. Please check your internet and try again.'
+                    : 'Invalid credentials or login failed. Please check your details.';
                 error.style.display = 'block';
                 btn.disabled = false;
-                btn.textContent = 'Login to Portal';
+                btn.textContent = isChessMode ? 'Enter Chess ♟️ Portal' : 'Login to Portal';
             }
         });
+
+        function selectYear(year) {
+            sessionStorage.setItem('partYear', year);
+            window.location.href = 'certificate.html';
+        }
     </script>
 </body>
 

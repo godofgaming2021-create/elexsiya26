@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elexsiya 26 - On-Spot Registration Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f8fafc; margin: 0; padding: 20px 20px 60px; color: #1e293b; }
+        
+        /* ── Top bar ── */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1000px;
+            margin: 0 auto 24px;
+            background: white;
+            padding: 16px 26px;
+            border-radius: var(--radius-lg, 12px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .05);
+        }
+
+        .top-bar h1 {
+            color: var(--emirates-red, #c60c30);
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            font-size: 1.35rem;
+        }
+
+        .btn-csv {
+            background: #f1f5f9; border: 1px solid #ddd; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; color: #475569;
+        }
+        .btn-csv:hover { opacity: 0.9; }
+
+        /* ── On-Spot Wizard Styles ── */
+        .os-step { display: none; animation: fadeIn 0.3s ease; }
+        .os-step.active { display: block; }
+
+        .step-dot {
+            width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; border: 2px solid #e2e8f0;
+            display: flex; align-items: center; justify-content: center; font-weight: 700; color: #94a3b8; font-size: 0.9rem;
+        }
+        .step-dot.active { background: #c60c30; border-color: #c60c30; color: white; }
+        .step-line { flex: 1; height: 2px; background: #e2e8f0; margin-top: 15px; min-width: 40px; }
+
+        .os-events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .os-event-card {
+            background: #fff; border: 1.5px solid #f1f5f9; border-radius: 12px; padding: 15px;
+            cursor: pointer; transition: 0.2s; position: relative;
+        }
+        .os-event-card:hover { border-color: #ddd; transform: translateY(-2px); }
+        .os-event-card.selected { border-color: #c60c30; background: rgba(198, 12, 48, 0.03); }
+        .os-event-card h4 { margin: 10px 0 5px; font-size: 0.95rem; }
+        .os-event-card .emoji { font-size: 1.5rem; }
+        .os-event-card .check { position: absolute; top: 10px; right: 10px; opacity: 0; color: #c60c30; }
+        .os-event-card.selected .check { opacity: 1; }
+
+        .os-member-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .os-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 600px) { .os-form-grid { grid-template-columns: 1fr; } }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Print formatting */
+        @media print {
+            body * { visibility: hidden; }
+            #printableIdCard, #printableIdCard * { visibility: visible; }
+            #printableIdCard { position: absolute; left: 0; top: 0; width: 300px; }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <h1>🎟️ On-Spot Registration</h1>
+        <div>
+            <button class="btn-csv" onclick="window.location.href='onspot_participants.html'">📋 View Participants</button>
+            <button class="btn-csv" onclick="window.history.back()">🔙 Back</button>
+            <button class="btn-csv" onclick="logout()" style="background: rgba(198, 12, 48, .08); color: #c60c30; border: 1px solid rgba(198, 12, 48, .22);">Logout</button>
+        </div>
+    </div>
+
+    <!-- Pass Generator Invisible Elements -->
+    <div style="display:none;">
+        <input type="text" id="passSearchId" />
+    </div>
+    <div id="passPreviewArea" style="display:none;"></div>
+
+    <div class="premium-card" style="max-width: 1000px; margin: 0 auto; padding: 32px; background: white; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0, 0, 0, .05);">
+
+        <!-- Progress Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
+            <div>
+                <h2 style="color: #c60c30; margin: 0;">⚡ Advanced On-Spot Registration</h2>
+                <p style="color: #94a3b8; margin: 5px 0 0;">Follow the steps to register participants on-site.</p>
+            </div>
+            <div id="osStepIndicator" style="display: flex; gap: 10px;">
+                <span class="step-dot active" data-step="1">1</span>
+                <span class="step-line"></span>
+                <span class="step-dot" data-step="2">2</span>
+                <span class="step-line"></span>
+                <span class="step-dot" data-step="3">3</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Event Selection -->
+        <div id="osStep1" class="os-step active">
+            <h3 style="margin-bottom: 20px; font-size: 1.1rem; border-left: 4px solid #c60c30; padding-left: 12px;">Step 1: Choose Events</h3>
+            <div id="osEventsContainer" class="os-events-grid"></div>
+
+            <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                <div id="osSelectionSummary" style="margin-right: auto; align-self: center; font-weight: 600; color: #c60c30;"></div>
+                <button onclick="osNextStep(2)" id="osStep1Next" class="btn-csv" style="background: #c60c30; color: white; border: none; opacity: 0.5;" disabled>Next Step: Participant Details →</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Participant Details -->
+        <div id="osStep2" class="os-step">
+            <h3 style="margin-bottom: 20px; font-size: 1.1rem; border-left: 4px solid #c60c30; padding-left: 12px;">Step 2: Participant & Team Details</h3>
+            <div id="osDetailsContainer"></div>
+
+            <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                <button onclick="osNextStep(1)" class="btn-csv" style="background: #f1f5f9; color: #1e293b; border: 1px solid #ddd;">← Back</button>
+                <button onclick="osNextStep(3)" class="btn-csv" style="background: #c60c30; color: white; border: none;">Next Step: Final Review →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Summary & Payment -->
+        <div id="osStep3" class="os-step">
+            <h3 style="margin-bottom: 20px; font-size: 1.1rem; border-left: 4px solid #c60c30; padding-left: 12px;">Step 3: Financial Summary & Confirm</h3>
+            <div id="osSummaryContainer" class="premium-card" style="background: #f8fafc; padding: 25px;"></div>
+
+            <div style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 15px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
+                <button onclick="osNextStep(2)" class="btn-csv" style="background: #f1f5f9; color: #1e293b; border: 1px solid #ddd;">← Back</button>
+                <button onclick="submitOnSpotRegistration()" id="osFinalBtn" class="btn-csv" style="background: #16a34a; color: white; border: none; font-weight: 700;">✅ Confirm Payment & Register</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- EmailJS for generating automated emails -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
+    <!-- Shared configuration and core logic -->
+    <script src="firebase-config.js"></script>
+    <script src="shared.js"></script>
+
+    <script>
+        // Use an initialization interval since Firebase connections might take a moment.
+        function waitForDb(cb, attempts = 25) {
+            if (window.db) cb();
+            else if (attempts > 0) setTimeout(() => waitForDb(cb, attempts - 1), 200);
+            else console.warn("Database connection timeout.");
+        }
+
+        // --- AUTHENTICATION ---
+        // Allow ANY valid admin (Super User, Treasurer, Chess Admin, IdeaForge Admin)
+        window.onload = () => {
+             waitForDb(() => {
+                 const isAdmin = sessionStorage.getItem('adminLoggedIn') === 'true';
+                 const isChessAdmin = sessionStorage.getItem('chessAdminLoggedIn') === 'true';
+                 const isIdeaForgeAdmin = sessionStorage.getItem('ideaForgeAdminLoggedIn') === 'true';
+
+                 if (isAdmin || isChessAdmin || isIdeaForgeAdmin) {
+                     // Authorized
+                     console.log("Admin authorized for On-Spot Registration.");
+                 } else {
+                     // Not authorized
+                     window.location.href = 'index.html';
+                 }
+             });
+        };
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+        }
+
+        // ── Advanced On-Spot Registration Logic ──
+        const OSEVENTS = {
+            technical: [
+                { id: 'project-expo', icon: '🧑‍💻', name: 'Project Expo', maxTeam: 3, fee: 250 },
+                { id: 'idea-forge', icon: '🌐', name: 'Idea Forge', maxTeam: 3, fee: 250 },
+                { id: 'tazky-among-uz', icon: '🤖', name: 'Tazky Among Uz', maxTeam: 3, fee: 250 },
+                { id: 'currentclash', icon: '📊', name: 'CurrentClash', maxTeam: 3, fee: 250 },
+                { id: 'clever-hunt', icon: '🔐', name: 'Clever Hunt', maxTeam: 3, fee: 250 },
+                { id: 'bug-arena', icon: '📱', name: 'Bug Arena', maxTeam: 3, fee: 250 },
+            ],
+            nonTechnical: [
+                { id: 'upside-down', icon: '🎤', name: 'Upside Down', maxTeam: 3, fee: 250 },
+                { id: 'mindfusion', icon: '🎨', name: 'Mindfusion', maxTeam: 3, fee: 250 },
+                { id: 'unmuted', icon: '🎮', name: 'Unmuted', maxTeam: 3, fee: 250 },
+                { id: 'ideart', icon: '📸', name: 'Ideart', maxTeam: 3, fee: 250 },
+            ],
+            special: [
+                { id: 'chess', icon: '♟️', name: 'Chess', maxTeam: 5, fee: 30, isChess: true },
+            ]
+        };
+
+        let osSelectedEvents = new Map();
+        let osCurrentStep = 1;
+
+        function renderOSEvents() {
+            const container = document.getElementById('osEventsContainer');
+            if (!container) return;
+
+            const all = [...OSEVENTS.technical, ...OSEVENTS.nonTechnical, ...OSEVENTS.special];
+
+            container.innerHTML = all.map(ev => {
+                const isSel = osSelectedEvents.has(ev.id);
+                return `
+                    <div class="os-event-card ${isSel ? 'selected' : ''}" onclick="toggleOSEvent('${ev.id}')">
+                        <span class="check">✓</span>
+                        <div class="emoji">${ev.icon}</div>
+                        <h4>${ev.name}</h4>
+                        <div style="font-size:0.75rem; color:#94a3b8;">${ev.isChess ? '₹30/player' : '₹250/person'}</div>
+                    </div>
+                `;
+            }).join('');
+
+            updateOSSelectionSummary();
+        }
+
+        function toggleOSEvent(id) {
+            const all = [...OSEVENTS.technical, ...OSEVENTS.nonTechnical, ...OSEVENTS.special];
+            const ev = all.find(e => e.id === id);
+
+            if (osSelectedEvents.has(id)) {
+                osSelectedEvents.delete(id);
+            } else {
+                osSelectedEvents.set(id, { ...ev, mode: ev.teamOnly ? 'team' : 'individual', teamSize: 1 });
+            }
+            renderOSEvents();
+        }
+
+        function updateOSSelectionSummary() {
+            const summaryEl = document.getElementById('osSelectionSummary');
+            const nextBtn = document.getElementById('osStep1Next');
+            const count = osSelectedEvents.size;
+
+            if (summaryEl) summaryEl.textContent = count > 0 ? `${count} event(s) selected` : '';
+            if (nextBtn) {
+                nextBtn.disabled = count === 0;
+                nextBtn.style.opacity = count === 0 ? '0.5' : '1';
+            }
+        }
+
+        function osNextStep(step) {
+            if (step === 2 && osSelectedEvents.size === 0) return;
+            document.querySelectorAll('.os-step').forEach(s => s.classList.remove('active'));
+            document.getElementById(`osStep${step}`).classList.add('active');
+
+            document.querySelectorAll('.step-dot').forEach(d => {
+                const s = parseInt(d.dataset.step);
+                d.classList.toggle('active', s <= step);
+            });
+
+            osCurrentStep = step;
+            if (step === 1) renderOSEvents();
+            if (step === 2) renderOSDetails();
+            if (step === 3) renderOSSummary();
+        }
+
+        function renderOSDetails() {
+            const container = document.getElementById('osDetailsContainer');
+            if (!container) return;
+
+            let html = `
+                <div class="os-member-card" style="border-left: 5px solid #c60c30;">
+                    <div class="os-form-grid">
+                        <div style="grid-column: span 2;">
+                            <label style="display:block; font-size:0.8rem; font-weight:700; margin-bottom:5px;">Shared College Name *</label>
+                            <input type="text" id="osCollege" placeholder="e.g. ABC College" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            osSelectedEvents.forEach((ev, id) => {
+                const isIdeaForge = ev.name.toLowerCase() === 'idea forge' || ev.name.toLowerCase() === 'ideaforge';
+                const isTeamEventNotChess = (ev.maxTeam > 1 && !ev.isChess);
+
+                html += `
+                    <div class="os-member-card">
+                        <h4 style="color:#c60c30; margin-bottom:15px; text-transform:uppercase;">📌 ${ev.name}</h4>
+                        
+                        <div style="margin-bottom:15px; display:flex; gap:20px; align-items:center;">
+                            <label style="font-weight:700; font-size:0.85rem;">Mode:</label>
+                            ${ev.maxTeam > 1 && !ev.teamOnly ? `
+                                <select onchange="updateOSSelectedMode('${id}', this.value)" style="padding:5px; border-radius:4px;">
+                                    <option value="individual">Individual</option>
+                                    <option value="team">Team / Multiple</option>
+                                </select>
+                                <div id="osSizeWrap_${id}" style="display:none;">
+                                    Size: <input type="number" id="osSize_${id}" value="2" min="2" max="${ev.maxTeam}" style="width:60px; padding:5px;" onchange="updateOSSelectedSize('${id}', this.value)">
+                                </div>
+                            ` : (ev.maxTeam > 1 ? `<span>Team of ${ev.maxTeam}</span>` : `<span>Individual</span>`)}
+                        </div>
+
+                        ${isIdeaForge ? `
+                        <div style="margin-bottom:15px;">
+                            <label style="display:block; font-size:0.8rem; font-weight:700; color:#c60c30; margin-bottom:5px;">🌐 Project Domain *</label>
+                            <select id="osDomain_${id}" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; background:white;">
+                                <option value="Emerging technology" selected>Emerging technology</option>
+                                <option value="Embedded and iot">Embedded and iot</option>
+                                <option value="AI and ML">AI and ML</option>
+                                <option value="EV technology">EV technology</option>
+                            </select>
+                        </div>` : ''}
+
+                        ${isTeamEventNotChess ? `
+                        <div style="margin-bottom:15px;">
+                            <label style="display:block; font-size:0.8rem; font-weight:700; color:#c60c30; margin-bottom:5px;">👥 Team Name *</label>
+                            <input type="text" id="osTeamName_${id}" placeholder="e.g. Dream Team" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                        </div>` : ''}
+
+                        <div id="osMembers_${id}">
+                            ${renderOSMemberFields(id, ev.teamSize || 1)}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateOSSelectedMode(id, mode) {
+            const ev = osSelectedEvents.get(id);
+            ev.mode = mode;
+            ev.teamSize = mode === 'team' ? (ev.maxTeam || 2) : 1;
+
+            const sizeWrap = document.getElementById(`osSizeWrap_${id}`);
+            if (sizeWrap) sizeWrap.style.display = mode === 'team' ? 'block' : 'none';
+
+            document.getElementById(`osMembers_${id}`).innerHTML = renderOSMemberFields(id, ev.teamSize);
+        }
+
+        function updateOSSelectedSize(id, size) {
+            const ev = osSelectedEvents.get(id);
+            ev.teamSize = parseInt(size);
+            document.getElementById(`osMembers_${id}`).innerHTML = renderOSMemberFields(id, ev.teamSize);
+        }
+
+        function renderOSMemberFields(evId, count) {
+            let html = '';
+            for (let i = 1; i <= count; i++) {
+                html += `
+                    <div style="padding:15px; background:white; border-radius:8px; margin-bottom:10px; border:1px solid #f1f5f9;">
+                        <div style="font-size:0.75rem; font-weight:800; color:#94a3b8; margin-bottom:10px;">PARTICIPANT ${i}</div>
+                        <div class="os-form-grid">
+                            <input type="text" id="os_${evId}_m${i}_name" placeholder="Name" style="width:100%; padding:8px; border:1px solid #eee; border-radius:4px;">
+                            <input type="email" id="os_${evId}_m${i}_email" placeholder="Email" style="width:100%; padding:8px; border:1px solid #eee; border-radius:4px;">
+                            <input type="tel" id="os_${evId}_m${i}_phone" placeholder="Phone" maxlength="10" style="width:100%; padding:8px; border:1px solid #eee; border-radius:4px;">
+                            <select id="os_${evId}_m${i}_food" style="width:100%; padding:8px; border:1px solid #eee; border-radius:4px; grid-column: span 2;">
+                                <option value="Veg">Veg</option>
+                                <option value="Non-Veg">Non-Veg</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        function renderOSSummary() {
+            const container = document.getElementById('osSummaryContainer');
+            if (!container) return;
+
+            const emails = new Set();
+            osSelectedEvents.forEach((ev, id) => {
+                for (let i = 1; i <= ev.teamSize; i++) {
+                    const e = document.getElementById(`os_${id}_m${i}_email`).value.trim().toLowerCase();
+                    if (e) emails.add(e);
+                }
+            });
+
+            const uniqueCount = emails.size || 1;
+            const chessCount = [...osSelectedEvents.values()].filter(e => e.isChess).reduce((sum, e) => sum + e.teamSize, 0);
+            const baseFee = uniqueCount * 250;
+            const chessFee = chessCount * 30;
+            const total = baseFee + chessFee;
+
+            container.innerHTML = `
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items: center;">
+                    <div>
+                        <h4 style="margin-bottom:10px;">Event Lineup</h4>
+                        <ul style="list-style:none; padding:0; font-size:0.9rem;">
+                            ${[...osSelectedEvents.values()].map(e => `<li>✅ ${e.name} (${e.mode === 'team' ? `${e.teamSize} members` : 'Ind.'})</li>`).join('')}
+                        </ul>
+
+                        <div style="margin-top: 25px; padding: 15px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 5px; text-transform: uppercase; font-weight: 700;">Scan to Pay (UPI)</div>
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`upi://pay?pa=gunasekaran.g7111@okaxis&pn=GUNA&am=${total}&cu=INR&tn=ONSPOT_${Date.now()}`)}" 
+                                 style="width: 150px; height: 150px; border: 1px solid #eee; padding: 5px; border-radius: 8px;" alt="UPI QR">
+                            <div style="font-size: 0.85rem; font-weight: 700; color: #b45309; margin-top: 8px;">gunasekaran.g7111@okaxis</div>
+                        </div>
+                    </div>
+                    <div style="text-align:right;">
+                        <h4 style="margin-bottom:10px;">Financial Total</h4>
+                        <div style="font-size:1.1rem;">₹250 × ${uniqueCount} unique(s) = ₹${baseFee}</div>
+                        ${chessFee > 0 ? `<div style="font-size:1.1rem;">+ ₹30 × ${chessCount} Chess = ₹${chessFee}</div>` : ''}
+                        <div style="font-size:2rem; font-weight:800; color:#16a34a; margin-top:10px;">₹${total.toLocaleString('en-IN')}</div>
+                        <div style="font-size:0.8rem; color:#94a3b8;">(Accept Cash or QR Payment)</div>
+                    </div>
+                </div>
+            `;
+            container.dataset.totalToken = total; 
+        }
+
+        async function submitOnSpotRegistration() {
+            const btn = document.getElementById('osFinalBtn');
+            btn.disabled = true; btn.textContent = '⏳ Registering...';
+
+            try {
+                const college = document.getElementById('osCollege').value || 'Unknown';
+                const location = 'On-Spot'; // Default to an identifiable value
+                const totalAmount = parseInt(document.getElementById('osSummaryContainer').dataset.totalToken);
+
+                const events = [];
+                const members = [];
+
+                osSelectedEvents.forEach((ev, id) => {
+                    const isIdeaForge = ev.name.toLowerCase() === 'idea forge' || ev.name.toLowerCase() === 'ideaforge';
+                    const isTeamEventNotChess = (ev.maxTeam > 1 && !ev.isChess);
+                    
+                    const domainEl = document.getElementById(`osDomain_${id}`);
+                    const teamNameEl = document.getElementById(`osTeamName_${id}`);
+                    
+                    events.push({
+                        id, 
+                        name: ev.name, 
+                        mode: ev.mode, 
+                        teamSize: ev.teamSize,
+                        domain: isIdeaForge && domainEl ? domainEl.value : null,
+                        teamName: isTeamEventNotChess && teamNameEl ? teamNameEl.value : null
+                    });
+
+                    for (let i = 1; i <= ev.teamSize; i++) {
+                        members.push({
+                            event: ev.name,
+                            name: document.getElementById(`os_${id}_m${i}_name`).value.trim(),
+                            email: document.getElementById(`os_${id}_m${i}_email`).value.trim().toLowerCase(),
+                            phone: document.getElementById(`os_${id}_m${i}_phone`).value.trim(),
+                            food: document.getElementById(`os_${id}_m${i}_food`).value,
+                            hostel: 'No'
+                        });
+                    }
+                });
+
+                const leader = members[0];
+                if (!leader.name || !leader.email) throw new Error("Leader details (Member 1 of first event) are required.");
+
+                const domain = events.length > 0 && events[0].domain ? events[0].domain : 'Not Applicable';
+                const teamName = events.length > 0 && events[0].teamName ? events[0].teamName : 'Not Applicable';
+
+                const eventPayloads = events.map(e => ({
+                    event: e.name,
+                    participationMode: e.mode === 'team' ? (e.name.toLowerCase() === 'chess' ? 'Multiple Events' : 'Team') : 'Individual',
+                    teamSize: e.teamSize,
+                    domain: e.domain,
+                    teamName: e.teamName
+                }));
+
+                const data = {
+                    name: leader.name,
+                    email: leader.email,
+                    phone: leader.phone,
+                    college: college,
+                    startingLocation: location,
+                    allEvents: events.map(e => e.name).join(', '),
+                    events: eventPayloads,
+                    members: members.length > 1 ? members.slice(1) : [],
+                    domain: domain,
+                    teamName: teamName,
+                    amount: totalAmount,
+                    paymentStatus: 'Pending', // Create as Pending to comply with Firestore Rules
+                    onSpot: true,
+                    registeredAt: new Date().toISOString(),
+                    regId: await generateRegId()
+                };
+
+                await addRegistration(data);
+                
+                // Immediately update to Paid (Rules allow unhindered updates)
+                window.db.collection('registrations').doc(data.regId).update({ paymentStatus: 'Paid' }).catch(console.error);
+
+
+                // Assuming EmailJS is initialized properly in shared.js or index.html logic
+                if (typeof sendAutomatedEmail === 'function' && typeof EMAILJS_TEMPLATE_VERIFICATION !== 'undefined') {
+                    sendAutomatedEmail(EMAILJS_TEMPLATE_VERIFICATION, data);
+                } else {
+                    console.log("EmailJS template constants not defined. Make sure you load shared.js properly.");
+                }
+
+                alert(`SUCCESS! ELX-ID: ${data.regId}`);
+
+                // Generate Pass Locally
+                document.getElementById('passSearchId').value = data.regId;
+                generatePass(data); // Call modified generate pass with data immediately
+
+                // Reset Wizard
+                osSelectedEvents.clear();
+                osNextStep(1);
+            } catch (err) {
+                alert('Error processing registration: ' + err.message);
+                console.error(err);
+            } finally {
+                btn.disabled = false; btn.textContent = '✅ Confirm Payment & Register';
+            }
+        }
+        
+        // Custom PASS Generator for On-Spot that receives the registration data explicitly
+        function generatePass(reg) {
+            const area = document.getElementById('passPreviewArea');
+            area.style.display = 'block';
+            area.innerHTML = `
+                <div class="id-card-preview" id="printableIdCard">
+                    <div class="id-card-header" style="background:#c60c30; padding:10px; text-align:center; color:white;"><h3>ELEXSIYA 26</h3></div>
+                    <div class="id-card-body" style="padding:20px; text-align:center;">
+                        <div style="font-size:0.75rem; color:#666; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;">Official Entry Pass</div>
+                        <div class="id-card-name" style="color:black; font-family:'Montserrat', sans-serif; font-size:1.5rem; font-weight:bold;">${reg.name}</div>
+                        <div class="id-card-reg" style="background:#f0f0f0; padding:10px; border-radius:4px; font-size:1.2rem; font-weight:700; margin-bottom:10px; display:inline-block;">${reg.regId}</div>
+                        <div class="id-card-event" style="color:#c60c30; font-weight:700; font-size:0.9rem;">${reg.allEvents || 'Symposium Guest'}</div>
+                        <div class="id-card-qr" style="margin-top:15px; margin-bottom:15px;">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${reg.regId}" alt="QR" style="border:1px solid #eee; padding:5px; background:white;" />
+                        </div>
+                        <div style="font-size:0.85rem; font-weight:700; color:#333; margin-top:5px;">${reg.college}</div>
+                    </div>
+                    <div class="id-card-footer" style="background:#eee; padding:5px; text-align:center; font-size:0.8rem; color:#666;">This pass is mandatory for entry &middot; Team Elexsiya</div>
+                </div>
+            `;
+            // Trigger Print overlay for the pass
+            setTimeout(() => {
+                window.print();
+                area.style.display = 'none'; // hide it after printing
+            }, 500);
+        }
+
+        renderOSEvents();
+    </script>
+</body>
+</html>

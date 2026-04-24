@@ -8,6 +8,7 @@
         content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://api.qrserver.com; connect-src 'self' https://firestore.googleapis.com https://*.firebaseio.com https://api.netlify.com;">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <title>Idea Forge Admin – Elexsiya 26</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -87,30 +88,232 @@
         .ordering-mode .points-col { display: none; }
         .scoring-mode .rank-col { text-align: center; } 
 
+        /* Domain Filter Buttons */
+        .domain-filter { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+        .domain-btn {
+            padding: 10px 22px; border-radius: 50px; border: 2px solid var(--border-light);
+            font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: var(--font-body);
+            background: white; color: var(--text-muted); transition: 0.2s; letter-spacing: 0.04em;
+        }
+        .domain-btn:hover { border-color: var(--emirates-red); color: var(--emirates-red); }
+        .domain-btn.active { background: var(--emirates-red); color: white; border-color: var(--emirates-red); }
+        .domain-btn.all.active { background: var(--text-dark); border-color: var(--text-dark); }
+        .domain-btn.ev.active  { background: #16a34a; border-color: #16a34a; }
+        .domain-btn.aiml.active { background: #3b82f6; border-color: #3b82f6; }
+        .domain-btn.emerging.active { background: #8b5cf6; border-color: #8b5cf6; }
+        .domain-btn.embedded.active { background: #f59e0b; border-color: #d97706; }
+
+        /* Team Cards */
+        .team-cards-wrap { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-top: 8px; }
+        .team-card { background: white; border: 1px solid var(--border-light); border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
+        .team-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .team-card-name { font-family: var(--font-heading); font-size: 1rem; font-weight: 800; color: var(--gold-dark); letter-spacing: 0.04em; }
+        .team-card-domain { font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 50px; }
+        .domain-ev   { background: rgba(22,163,74,.12); color: #16a34a; }
+        .domain-aiml { background: rgba(59,130,246,.12); color: #3b82f6; }
+        .domain-emerging { background: rgba(139,92,246,.12); color: #8b5cf6; }
+        .domain-embedded { background: rgba(245,158,11,.12); color: #d97706; }
+        .domain-other { background: rgba(100,100,100,.1); color: #555; }
+        .team-card-leader { font-weight: 700; font-size: 0.9rem; color: var(--emirates-red); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .team-card-members { list-style: none; padding: 0; margin: 0; border-top: 1px dashed var(--border-light); padding-top: 10px; }
+        .team-card-members li { font-size: 0.82rem; color: var(--text-body); padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+        .team-card-members li:before { content: '👤'; font-size: 0.75rem; }
+        .team-card-regid { font-size: 0.72rem; color: var(--text-muted); font-family: monospace; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-light); }
+        .team-card-status { display: inline-block; padding: 2px 8px; border-radius: 50px; font-size: 0.7rem; font-weight: 700; margin-left: 6px; }
+
+        /* ── Domain Gate Overlay ── */
+        #domainGate {
+            position: fixed; inset: 0; z-index: 9999;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 50%, #0f0f0f 100%);
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.4s ease;
+        }
+        #domainGate.fade-out { opacity: 0; pointer-events: none; }
+        .gate-card {
+            background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 20px;
+            padding: 48px 40px;
+            max-width: 540px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        }
+
+        /* Split-Screen Scoring View */
+        #splitScoringSection { display: none; margin-bottom: 24px; }
+        .split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: flex-start; }
+        .scoring-panel { background: white; border-radius: 12px; border: 1px solid var(--border-light); padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,.05); }
+        .scoring-panel h3 { margin-bottom: 16px; font-family: var(--font-heading); color: var(--gold-dark); border-bottom: 2px solid var(--border-light); padding-bottom: 10px; display:flex; justify-content: space-between; align-items: center;}
+        
+        .score-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }
+        .score-row:hover { background: #f8fafc; }
+        .score-row-info { flex: 1; }
+        .score-row-name { font-weight: 700; font-size: 0.95rem; color: var(--text-heading); margin-bottom: 4px; }
+        .score-row-sub { font-size: 0.75rem; color: var(--text-muted); }
+        .arrangement-num-input { width: 80px; padding: 8px; border: 2px solid var(--border-light); border-radius: 6px; text-align: center; font-weight: 700; font-size: 1.1rem; outline: none; transition: border-color 0.2s; }
+        .arrangement-num-input:focus { border-color: var(--emirates-red); }
+        
+        .result-row { display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .result-rank { font-size: 1.2rem; font-weight: 800; color: var(--emirates-red); min-width: 30px; text-align: center; }
+
+        .gate-logo {
+            font-family: var(--font-heading);
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            color: rgba(255,255,255,.4);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+        .gate-title {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #ffd700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .gate-sub {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,.5);
+            margin-bottom: 36px;
+        }
+        .gate-domains {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        .gate-domain-btn {
+            padding: 20px 16px;
+            border-radius: 14px;
+            border: 2px solid rgba(255,255,255,.1);
+            background: rgba(255,255,255,.06);
+            color: white;
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.2s;
+            letter-spacing: 0.04em;
+        }
+        .gate-domain-btn .d-icon { font-size: 1.6rem; display: block; margin-bottom: 8px; }
+        .gate-domain-btn:hover { transform: translateY(-3px); }
+        .gate-domain-btn.ev   { border-color: rgba(22,163,74,.5);  }
+        .gate-domain-btn.ev:hover   { background: rgba(22,163,74,.25); border-color: #16a34a; }
+        .gate-domain-btn.aiml { border-color: rgba(59,130,246,.5); }
+        .gate-domain-btn.aiml:hover { background: rgba(59,130,246,.25); border-color: #3b82f6; }
+        .gate-domain-btn.emerging { border-color: rgba(139,92,246,.5); }
+        .gate-domain-btn.emerging:hover { background: rgba(139,92,246,.25); border-color: #8b5cf6; }
+        .gate-domain-btn.embedded { border-color: rgba(245,158,11,.5); }
+        .gate-domain-btn.embedded:hover { background: rgba(245,158,11,.25); border-color: #f59e0b; }
+
+        /* Domain chip in topbar */
+        .domain-chip {
+            padding: 5px 14px; border-radius: 50px; font-size: 0.8rem;
+            font-weight: 700; cursor: pointer; border: none; font-family: var(--font-body);
+            letter-spacing: 0.04em;
+        }
+        .chip-ev { background: rgba(22,163,74,.15); color: #16a34a; }
+        .chip-aiml { background: rgba(59,130,246,.15); color: #3b82f6; }
+        .chip-emerging { background: rgba(139,92,246,.15); color: #8b5cf6; }
+        .chip-embedded { background: rgba(245,158,11,.15); color: #d97706; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 2000; opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            background: white; border-radius: 16px; padding: 30px;
+            width: 90%; max-width: 450px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            transform: translateY(20px); transition: 0.3s;
+        }
+        .modal-overlay.active .modal-card { transform: translateY(0); }
+        .modal-title { font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--gold-dark); margin-bottom: 8px; }
+        .modal-desc { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 24px; }
+        .modal-options { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .modal-btn {
+            background: #f8fafc; border: 2px solid var(--border-light); padding: 16px;
+            border-radius: 12px; cursor: pointer; text-align: left; transition: 0.2s;
+        }
+        .modal-btn:hover { border-color: var(--emirates-red); background: white; }
+        .modal-btn strong { display: block; font-size: 1rem; color: var(--text-dark); margin-bottom: 4px; }
+        .modal-btn span { font-size: 0.8rem; color: var(--text-muted); }
+
         @media (max-width: 768px) {
             .dashboard { padding: 80px 0 40px; }
             .toolbar { flex-direction: column; align-items: stretch; gap: 15px;}
             .toolbar-left, .toolbar-right { flex-direction: column; align-items: stretch; }
             .toolbar input { max-width: none; width: 100%;}
+            .team-cards-wrap { grid-template-columns: 1fr; }
+            .gate-domains { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 
 <body>
 
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-card">
+            <div class="modal-title" id="exportModalTitle">Download Data</div>
+            <div class="modal-desc" id="exportModalDesc">Choose how you want the participants listed in this download.</div>
+            <div class="modal-options">
+                <button class="modal-btn" id="exportIndividualBtn">
+                    <strong>👤 Individual Details</strong>
+                    <span>Separate rows for every single person (leaders + members).</span>
+                </button>
+                <button class="modal-btn" id="exportTeamBtn">
+                    <strong>👥 Team Details</strong>
+                    <span>One row per team, with members grouped together.</span>
+                </button>
+            </div>
+            <button class="btn-action" onclick="closeExportModal()" style="width: 100%; justify-content: center; background: #e2e8f0; color: var(--text-dark); border: none;">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Domain Gate Overlay -->
+    <div id="domainGate">
+        <div class="gate-card">
+            <div class="gate-logo">Elexsiya 26 &bull; Idea Forge</div>
+            <div class="gate-title">Select Domain</div>
+            <div class="gate-sub">Choose your domain to view registered teams</div>
+            <div class="gate-domains">
+                <button class="gate-domain-btn ev" onclick="selectGateDomain('EV', this)">
+                    <span class="d-icon">&#9889;</span>EV
+                </button>
+                <button class="gate-domain-btn aiml" onclick="selectGateDomain('AIML', this)">
+                    <span class="d-icon">&#129302;</span>AIML
+                </button>
+                <button class="gate-domain-btn emerging" onclick="selectGateDomain('EMERGING', this)">
+                    <span class="d-icon">&#128640;</span>Emerging
+                </button>
+                <button class="gate-domain-btn embedded" onclick="selectGateDomain('EMBEDDED', this)">
+                    <span class="d-icon">&#128268;</span>Embedded
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Topbar -->
     <header class="topbar">
         <div class="container">
             <a href="index.html" class="logo">ELEXSIYA 26</a>
             <div class="topbar-right">
-                <span class="admin-name">🌐 Idea Forge Admin</span>
+                <button id="switchDomainBtn" class="domain-chip" style="display:none;" onclick="showGate()"></button>
+                <a href="onspot_dashboard.html" style="padding: 8px 16px; font-size: .85rem; background: #c60c30; border: none; color: white; border-radius: 50px; cursor: pointer; font-family: var(--font-body); font-weight: 600; text-decoration: none; margin-right: 15px;">&#127967; On-Spot Dashboard</a>
+                <span class="admin-name">&#127760; Idea Forge Admin</span>
                 <button class="btn-logout" id="logoutBtn">Logout</button>
             </div>
         </div>
     </header>
 
-    <!-- Dashboard Main -->
-    <main class="dashboard">
+    <!-- Dashboard Main (hidden until domain selected) -->
+    <main class="dashboard" id="mainDash" style="display:none;">
         <div class="container">
 
             <div class="dash-header">
@@ -119,19 +322,28 @@
                     <p>Order participants for presentation and evaluate scores.</p>
                 </div>
                 <div class="stats-badge">
-                    Participants: <span id="totalCount">0</span>
+                    <span id="domainLabel">All Domains</span>: <span id="totalCount">0</span> teams
                 </div>
+            </div>
+
+            <!-- Domain Filter -->
+            <div class="domain-filter" id="domainFilter">
+                <button class="domain-btn all active" data-domain="all" onclick="setDomain('all', this)">📋 All Domains</button>
+                <button class="domain-btn ev" data-domain="EV" onclick="setDomain('EV', this)">⚡ EV</button>
+                <button class="domain-btn aiml" data-domain="AIML" onclick="setDomain('AIML', this)">🤖 AIML</button>
+                <button class="domain-btn emerging" data-domain="EMERGING" onclick="setDomain('EMERGING', this)">🚀 Emerging</button>
+                <button class="domain-btn embedded" data-domain="EMBEDDED" onclick="setDomain('EMBEDDED', this)">🔌 Embedded</button>
             </div>
 
             <div class="toolbar">
                 <div class="toolbar-left">
-                    <input type="text" id="searchInput" placeholder="Search by name, email, REG ID..." />
+                    <input type="text" id="searchInput" placeholder="Search by name, team, email, REG ID..." />
                 </div>
                 <div class="toolbar-right" id="actionBtns">
                     <!-- Buttons dynamically populated -->
                 </div>
                 <div class="toolbar-right" style="margin-left: 10px; display: flex; gap: 8px;">
-                    <button class="btn-action btn-csv" id="downloadCsvBtn">⤓ Download CSV</button>
+                    <button class="btn-action btn-csv" id="downloadCsvBtn">⤓ Download Excel</button>
                     <button class="btn-action" id="downloadPdfBtn" style="background:#C60C30;color:white;border:none;">📥 Download PDF</button>
                 </div>
             </div>
@@ -150,6 +362,33 @@
                 <div id="liveNotifyArea" style="margin-top: 15px; display: none;">
                     <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-light); border-radius: 6px; padding: 10px; margin-bottom: 10px;" id="liveNotifyList"></div>
                     <button class="btn-action" onclick="sendToAllLiveNotify()" style="width: 100%; background: var(--emirates-red); color: white; display:block; text-align:center;">🚀 Send to All</button>
+                </div>
+            </div>
+
+            <!-- Team Cards View (shown when a domain is selected) -->
+            <div id="teamCardsSection" style="display:none; margin-bottom: 24px;">
+                <div class="team-cards-wrap" id="teamCardsWrap"></div>
+            </div>
+
+            <!-- New Split-Screen arrangement View -->
+            <div id="splitScoringSection" style="display: none;">
+                <div class="split-grid">
+                    <!-- Left: Input Side -->
+                    <div class="scoring-panel">
+                        <h3>
+                            <span>✏️ Arrangement Input</span>
+                            <button class="btn-action btn-confirm" style="font-size: 0.8rem; padding: 6px 12px;" onclick="updateLiveArrangement()">✔️ Update List</button>
+                        </h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Enter a number for each team. Click "Update List" to sort them on the right.</p>
+                        <div id="scoringInputContainer"></div>
+                    </div>
+                    
+                    <!-- Right: Results Side -->
+                    <div class="scoring-panel">
+                        <h3>📋 Arranged Points List</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Teams are displayed in ascending order.</p>
+                        <div id="scoringResultContainer"></div>
+                    </div>
                 </div>
             </div>
 
@@ -177,7 +416,7 @@
                 </div>
                 <div class="no-data" id="emptyState" style="display: none;">
                     <h3>No Registrations Found</h3>
-                    <p>There are no registrations manually fetched or they don't match your criteria.</p>
+                    <p>There are no registrations matching the selected domain.</p>
                 </div>
             </div>
 
@@ -198,8 +437,53 @@
             window.location.href = 'index.html';
         });
 
+        // ── Domain Gate Logic ──
+        const DOMAIN_CHIPS = {
+            EV:       { label: '⚡ EV Domain',       cls: 'chip-ev' },
+            AIML:     { label: '🤖 AIML Domain',     cls: 'chip-aiml' },
+            EMERGING: { label: '🚀 Emerging Domain', cls: 'chip-emerging' },
+            EMBEDDED: { label: '🔌 Embedded Domain', cls: 'chip-embedded' },
+        };
+
+        function selectGateDomain(domain, btn) {
+            btn.textContent = '⏳ Loading...';
+            btn.disabled = true;
+            // Animate gate out
+            const gate = document.getElementById('domainGate');
+            gate.classList.add('fade-out');
+            setTimeout(() => { gate.style.display = 'none'; }, 400);
+            // Show dashboard
+            document.getElementById('mainDash').style.display = 'block';
+            // Update switch-domain chip
+            const chip = document.getElementById('switchDomainBtn');
+            const info = DOMAIN_CHIPS[domain];
+            chip.textContent = '🔄 ' + (info ? info.label : domain) + ' — Switch';
+            chip.className = 'domain-chip ' + (info ? info.cls : '');
+            chip.style.display = 'inline-block';
+            // Apply domain filter and fetch
+            currentDomain = domain;
+            const labelMap = { EV: 'EV Domain', AIML: 'AIML Domain', EMERGING: 'Emerging Domain', EMBEDDED: 'Embedded Domain' };
+            document.getElementById('domainLabel').textContent = labelMap[domain] || domain;
+            // Sync filter buttons
+            document.querySelectorAll('.domain-btn').forEach(b => b.classList.remove('active'));
+            const matchBtn = document.querySelector(`.domain-btn[data-domain="${domain}"]`);
+            if (matchBtn) matchBtn.classList.add('active');
+            // Fetch data then render
+            waitForDb(fetchData);
+        }
+
+        function showGate() {
+            const gate = document.getElementById('domainGate');
+            gate.style.display = 'flex';
+            gate.style.opacity = '1';
+            gate.classList.remove('fade-out');
+            // Re-enable all gate buttons
+            gate.querySelectorAll('.gate-domain-btn').forEach(b => { b.disabled = false; b.innerHTML = b.innerHTML.replace('⏳ Loading...', b.dataset.origText || b.textContent); });
+        }
+
         let allData = [];
         let isScoringMode = false;
+        let currentDomain = 'all';
         let dragSrcEl = null;
 
         async function fetchData() {
@@ -243,7 +527,7 @@
                 sortData();
                 updateUIState();
                 
-                document.getElementById('totalCount').textContent = allData.length;
+                document.getElementById('totalCount').textContent = getFilteredData().length;
                 document.getElementById('loadingState').style.display = 'none';
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -273,91 +557,244 @@
             }
         }
 
-        function updateUIState() {
-            const tableSection = document.getElementById('dataTableSection');
-            if (isScoringMode) {
-                tableSection.classList.remove('ordering-mode');
-                tableSection.classList.add('scoring-mode');
-                document.getElementById('actionBtns').innerHTML = `
-                    <button class="btn-action btn-edit" id="editOrderBtn">✏️ Edit List Order</button>
-                    <button class="btn-action btn-confirm" id="savePointsBtn">💾 Save All Points</button>
-                `;
-                document.getElementById('editOrderBtn').addEventListener('click', () => toggleMode(false));
-                document.getElementById('savePointsBtn').addEventListener('click', savePoints);
-            } else {
-                tableSection.classList.remove('scoring-mode');
-                tableSection.classList.add('ordering-mode');
-                document.getElementById('actionBtns').innerHTML = `
-                    <button class="btn-action btn-confirm" id="confirmOrderBtn">✔️ Confirm Order & Start Scoring</button>
-                `;
-                document.getElementById('confirmOrderBtn').addEventListener('click', confirmOrder);
-            }
-            renderTable(allData);
+        // Normalise whatever is stored in Firestore to our short-code keys
+        function normaliseDomain(raw) {
+            const s = (raw || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (s.includes('ev') || s.includes('electric'))   return 'EV';
+            if (s.includes('ai') || s.includes('ml'))          return 'AIML';
+            if (s.includes('embed') || s.includes('iot'))      return 'EMBEDDED';
+            if (s.includes('emerg'))                           return 'EMERGING';
+            return (raw || '').toUpperCase().trim();
         }
 
-        function toggleMode(locked) {
-            isScoringMode = locked;
-            
-            // Note: If they toggle to order, we unlock locally. We don't save to DB until they hit confirm.
-            if (!locked) {
-                allData.forEach(item => item.ideaForgeMeta.locked = false);
+        function getFilteredData(domain) {
+            const d = domain !== undefined ? domain : currentDomain;
+            if (d === 'all') return allData;
+            return allData.filter(item => {
+                let rawDom = '';
+                if (item.teamMembersByEvent && item.teamMembersByEvent['Idea Forge']) {
+                    rawDom = item.teamMembersByEvent['Idea Forge'].domain || '';
+                }
+                // Also fall back to root-level domain field
+                if (!rawDom) rawDom = item.domain || '';
+                return normaliseDomain(rawDom) === d;
+            });
+        }
+
+        function setDomain(domain, btn) {
+            currentDomain = domain;
+            // Update active button
+            document.querySelectorAll('.domain-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            // Update label
+            const labelMap = { all: 'All Domains', EV: 'EV Domain', AIML: 'AIML Domain', EMERGING: 'Emerging Domain', EMBEDDED: 'Embedded Domain' };
+            document.getElementById('domainLabel').textContent = labelMap[domain] || domain;
+            const filtered = getFilteredData();
+            document.getElementById('totalCount').textContent = filtered.length;
+            renderCards(filtered);
+            renderTable(filtered);
+        }
+
+        function updateUIState() {
+            const tableSection = document.getElementById('dataTableSection');
+            const cardSection = document.getElementById('teamCardsSection');
+            const splitSection = document.getElementById('splitScoringSection');
+            const actionBtns = document.getElementById('actionBtns');
+
+            if (isScoringMode) {
+                tableSection.style.display = 'none';
+                cardSection.style.display = 'none';
+                splitSection.style.display = 'block';
+                actionBtns.innerHTML = `
+                    <button class="btn-action" style="background:var(--text-muted); color:white; border:none;" onclick="cancelScoring()">❌ Cancel</button>
+                    <button class="btn-action btn-confirm" onclick="saveScoringArrangement()">💾 Save Final Arrangement</button>
+                `;
+                buildSplitScoringView();
+            } else {
+                tableSection.style.display = 'block';
+                // Note: cardSection display is managed by renderCards
+                splitSection.style.display = 'none';
+                actionBtns.innerHTML = `
+                    <button class="btn-action btn-edit" onclick="beginScoring()">🏁 Arrange Teams</button>
+                    <button class="btn-action btn-confirm" id="savePointsBtn" onclick="savePoints()">💾 Save Scores</button>
+                `;
+                const filtered = getFilteredData();
+                renderCards(filtered);
+                renderTable(filtered);
             }
-            
+        }
+
+        function beginScoring() {
+            // Only allow if no search filter is active
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                alert("Please clear your search before you begin scoring.");
+                return;
+            }
+            isScoringMode = true;
             updateUIState();
         }
 
-        async function confirmOrder() {
-            const btn = document.getElementById('confirmOrderBtn');
+        function cancelScoring() {
+            isScoringMode = false;
+            updateUIState();
+        }
+
+        function buildSplitScoringView() {
+            const inputContainer = document.getElementById('scoringInputContainer');
+            const resultContainer = document.getElementById('scoringResultContainer');
+            
+            // Get data for the current domain
+            const dataArray = getFilteredData();
+            
+            // Ensure data is sorted by current order first
+            dataArray.sort((a, b) => a.ideaForgeMeta.order - b.ideaForgeMeta.order);
+
+            let inputHtml = "";
+            let resultHtml = "";
+
+            dataArray.forEach((item, index) => {
+                let teamName = "Individual";
+                let domain = "";
+                let membersArr = [];
+                
+                if (item.teamMembersByEvent && item.teamMembersByEvent['Idea Forge']) {
+                    const ifData = item.teamMembersByEvent['Idea Forge'];
+                    teamName = ifData.teamName || teamName;
+                    domain = ifData.domain || "";
+                    if (ifData.members && Array.isArray(ifData.members)) {
+                        membersArr = ifData.members.map(m => m.name);
+                    }
+                } else if (item.domain) {
+                    domain = item.domain;
+                }
+
+                if (membersArr.length === 0 && item.teamMembers && Array.isArray(item.teamMembers)) {
+                    membersArr = item.teamMembers.map(m => m.name);
+                }
+
+                const membersHtml = membersArr.length > 0 ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">👤 ${membersArr.join(', ')}</div>` : '';
+
+                // If no pre-existing order, give them the numerical index + 1
+                const currentOrder = item.ideaForgeMeta.order === 99999 ? index + 1 : item.ideaForgeMeta.order;
+
+                inputHtml += `
+                    <div class="score-row">
+                        <div class="score-row-info">
+                            <div class="score-row-name">${teamName} <span style="font-weight:normal; font-size:0.8rem; color:var(--text-muted);">(${item.name})</span></div>
+                            <div class="score-row-sub">${item.regId} | ${domain}</div>
+                            ${membersHtml}
+                        </div>
+                        <input type="number" class="arrangement-num-input" data-id="${item.id}" value="${currentOrder}" min="1" />
+                    </div>
+                `;
+
+                resultHtml += `
+                    <div class="result-row">
+                        <div class="result-rank">${currentOrder}</div>
+                        <div class="score-row-info">
+                            <div class="score-row-name">${teamName}</div>
+                            <div class="score-row-sub">${item.regId}</div>
+                            ${membersHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            inputContainer.innerHTML = inputHtml;
+            resultContainer.innerHTML = resultHtml;
+        }
+
+        function updateLiveArrangement() {
+            // Read all inputs, sort them, and render the right side
+            const inputs = document.querySelectorAll('.arrangement-num-input');
+            const arrangementData = [];
+            
+            inputs.forEach(inp => {
+                const id = inp.dataset.id;
+                const orderVal = Number(inp.value) || 99999;
+                
+                // Find item
+                const item = allData.find(d => d.id === id);
+                if (item) {
+                    arrangementData.push({ item, orderVal });
+                }
+            });
+
+            // Sort ascending by the entered orderVal
+            arrangementData.sort((a, b) => a.orderVal - b.orderVal);
+
+            let resultHtml = "";
+            arrangementData.forEach(({item, orderVal}) => {
+                let teamName = "Individual";
+                let membersArr = [];
+                if (item.teamMembersByEvent && item.teamMembersByEvent['Idea Forge']) {
+                    const ifData = item.teamMembersByEvent['Idea Forge'];
+                    teamName = ifData.teamName || teamName;
+                    if (ifData.members && Array.isArray(ifData.members)) {
+                        membersArr = ifData.members.map(m => m.name);
+                    }
+                }
+                if (membersArr.length === 0 && item.teamMembers && Array.isArray(item.teamMembers)) {
+                    membersArr = item.teamMembers.map(m => m.name);
+                }
+                const membersHtml = membersArr.length > 0 ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-top:3px;">👤 ${membersArr.join(', ')}</div>` : '';
+
+                resultHtml += `
+                    <div class="result-row">
+                        <div class="result-rank">${orderVal}</div>
+                        <div class="score-row-info">
+                            <div class="score-row-name">${teamName}</div>
+                            <div class="score-row-sub">${item.regId}</div>
+                            ${membersHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('scoringResultContainer').innerHTML = resultHtml;
+        }
+
+        async function saveScoringArrangement() {
+            const btn = document.querySelector('#actionBtns .btn-confirm');
             btn.disabled = true;
             btn.innerHTML = '⏳ Saving...';
 
-            // Extract order from DOM directly in case search was not used, otherwise rely on the sorted allData
-            // If they searched, we shouldn't confirm a partial list. Let's warn them if there is a search filter.
-            const query = document.getElementById('searchInput').value.trim();
-            if (query) {
-                alert("Please clear your search before confirming the order.");
-                btn.disabled = false;
-                btn.innerHTML = '✔️ Confirm Order & Start Scoring';
-                return;
-            }
+            // Read arrangement from inputs
+            const inputs = document.querySelectorAll('.arrangement-num-input');
+            const updates = [];
 
-            // Sync visual order to allData
-            const rows = document.querySelectorAll('#tableBody tr');
-            const orderedIds = Array.from(rows).map(r => r.dataset.id);
-
-            const newData = [];
-            orderedIds.forEach((id, idx) => {
+            inputs.forEach(inp => {
+                const id = inp.dataset.id;
+                const orderVal = Number(inp.value) || 99999;
                 const item = allData.find(d => d.id === id);
                 if (item) {
-                    item.ideaForgeMeta.order = idx + 1;
-                    item.ideaForgeMeta.locked = true;
-                    newData.push(item);
+                    item.ideaForgeMeta.order = orderVal;
+                    updates.push(item);
                 }
             });
-            
-            // Add any missing rows at the end (shouldn't happen without search but just in case)
-            allData.forEach(item => {
-                if(!orderedIds.includes(item.id)) {
-                    item.ideaForgeMeta.locked = true;
-                    newData.push(item);
-                }
-            });
-            allData = newData;
 
             try {
                 const batch = db.batch();
-                allData.forEach(item => {
+                updates.forEach(item => {
                     const ref = db.collection('registrations').doc(item.id);
                     batch.update(ref, { ideaForgeMeta: item.ideaForgeMeta });
                 });
                 await batch.commit();
+
+                // Successfully saved!
+                isScoringMode = false;
                 
-                toggleMode(true);
+                // Re-sort data globally using the new explicit order
+                sortData(); 
+                
+                updateUIState();
+                
             } catch (err) {
-                console.error("Save order error", err);
-                alert("Could not save order. Please try again.");
+                console.error("Save arrangement error", err);
+                alert("Could not save the arrangement. Please try again.");
                 btn.disabled = false;
-                btn.innerHTML = '✔️ Confirm Order & Start Scoring';
+                btn.innerHTML = '💾 Save Final Arrangement';
             }
         }
 
@@ -381,7 +818,6 @@
                 const batch = db.batch();
                 allData.forEach(item => {
                     const ref = db.collection('registrations').doc(item.id);
-                    // Update only what changed, though entire object replaces is fine here
                     batch.update(ref, { ideaForgeMeta: item.ideaForgeMeta });
                 });
                 await batch.commit();
@@ -389,89 +825,16 @@
                 btn.innerHTML = '✅ Saved';
                 setTimeout(() => {
                     btn.disabled = false;
-                    btn.innerHTML = '💾 Save All Points';
+                    btn.innerHTML = '💾 Save Scores';
                 }, 2000);
             } catch (err) {
                 console.error("Save points error", err);
                 alert("Could not save points. Please try again.");
                 btn.disabled = false;
-                btn.innerHTML = '💾 Save All Points';
+                btn.innerHTML = '💾 Save Scores';
             }
         }
 
-        // --- Drag & Drop Handlers ---
-        function handleDragStart(e) {
-            if (isScoringMode) return e.preventDefault();
-            dragSrcEl = this;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-            this.classList.add('dragging');
-        }
-
-        function handleDragOver(e) {
-            if (isScoringMode) return;
-            if (e.preventDefault) e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            
-            const bounding = this.getBoundingClientRect();
-            const offset = bounding.y + (bounding.height / 2);
-            if ( e.clientY - offset > 0 ) {
-                this.classList.add('drag-over-bottom');
-                this.classList.remove('drag-over');
-            } else {
-                this.classList.add('drag-over');
-                this.classList.remove('drag-over-bottom');
-            }
-            return false;
-        }
-
-        function handleDragEnter(e) { /* visual cue */ }
-
-        function handleDragLeave(e) {
-            this.classList.remove('drag-over');
-            this.classList.remove('drag-over-bottom');
-        }
-
-        function handleDrop(e) {
-            if (isScoringMode) return;
-            if (e.stopPropagation) e.stopPropagation();
-
-            this.classList.remove('drag-over');
-            this.classList.remove('drag-over-bottom');
-
-            if (dragSrcEl !== this) {
-                // To keep JS array purely synced, we just manipulate the DOM here,
-                // then run a resync function to update visual numbers immediately.
-                
-                const bounding = this.getBoundingClientRect();
-                const offset = bounding.y + (bounding.height / 2);
-                
-                if ( e.clientY - offset > 0 ) {
-                    this.parentNode.insertBefore(dragSrcEl, this.nextSibling);
-                } else {
-                    this.parentNode.insertBefore(dragSrcEl, this);
-                }
-                updateVisualRanks();
-            }
-            return false;
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-            let rows = document.querySelectorAll('#tableBody tr');
-            [].forEach.call(rows, function (row) {
-                row.classList.remove('drag-over');
-                row.classList.remove('drag-over-bottom');
-            });
-        }
-
-        function updateVisualRanks() {
-            const rows = document.querySelectorAll('#tableBody tr');
-            rows.forEach((row, idx) => {
-                const numSpan = row.querySelector('.rank-num');
-                if (numSpan) numSpan.textContent = idx + 1;
-            });
-        }
 
         function renderTable(dataArray) {
             const tbody = document.getElementById('tableBody');
@@ -494,15 +857,6 @@
             dataArray.forEach((item, index) => {
                 const tr = document.createElement('tr');
                 tr.dataset.id = item.id;
-                tr.draggable = !isScoringMode;
-
-                // Bind drag events
-                tr.addEventListener('dragstart', handleDragStart, false);
-                tr.addEventListener('dragenter', handleDragEnter, false);
-                tr.addEventListener('dragover', handleDragOver, false);
-                tr.addEventListener('dragleave', handleDragLeave, false);
-                tr.addEventListener('drop', handleDrop, false);
-                tr.addEventListener('dragend', handleDragEnd, false);
                 
                 let paymentBadge = `<span class="status-badge status-pending">${item.paymentStatus || 'Pending'}</span>`;
                 if(item.paymentStatus === 'Paid') paymentBadge = `<span class="status-badge status-paid">Paid</span>`;
@@ -538,11 +892,10 @@
 
                 tr.innerHTML = `
                     <td class="rank-col">
-                        <span class="drag-handle">☰</span>
                         <span class="rank-num">${visualRank}</span>
                     </td>
                     <td class="points-col">
-                        <input type="number" class="points-input" data-id="${item.id}" value="${item.ideaForgeMeta.points}" placeholder="0"/>
+                        <input type="number" class="points-input" data-id="${item.id}" value="${item.ideaForgeMeta.points || ''}" placeholder="0"/>
                     </td>
                     <td><strong>${item.regId || 'N/A'}</strong></td>
                     <td>
@@ -564,10 +917,65 @@
             });
         }
 
+        // Domain-aware team card renderer
+        function renderCards(dataArray) {
+            const section = document.getElementById('teamCardsSection');
+            const wrap = document.getElementById('teamCardsWrap');
+            if (!section || !wrap) return;
+
+            if (currentDomain === 'all') {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = 'block';
+
+            if (dataArray.length === 0) {
+                wrap.innerHTML = '<div style="color:var(--text-muted);padding:30px;text-align:center;">No teams registered for this domain yet.</div>';
+                return;
+            }
+
+            const domainClassMap = { EV: 'domain-ev', AIML: 'domain-aiml', EMERGING: 'domain-emerging', EMBEDDED: 'domain-embedded' };
+
+            wrap.innerHTML = dataArray.map((item, idx) => {
+                let teamName = '', domain = '', members = [];
+                if (item.teamMembersByEvent && item.teamMembersByEvent['Idea Forge']) {
+                    const ifData = item.teamMembersByEvent['Idea Forge'];
+                    teamName = ifData.teamName || '';
+                    domain = (ifData.domain || '').toUpperCase();
+                    if (ifData.members && Array.isArray(ifData.members)) {
+                        members = ifData.members.filter(m => (m.email || '').toLowerCase() !== (item.email || '').toLowerCase());
+                    }
+                }
+                const domCls = domainClassMap[domain] || 'domain-other';
+                const paidBadge = item.paymentStatus === 'Paid'
+                    ? '<span class="team-card-status" style="background:rgba(22,163,74,.1);color:#16a34a;">Paid</span>'
+                    : '<span class="team-card-status" style="background:rgba(245,158,11,.1);color:#d97706;">Pending</span>';
+                const rank = item.ideaForgeMeta.order === 99999 ? idx + 1 : item.ideaForgeMeta.order;
+                const memberItems = members.map(m =>
+                    `<li>${m.name || '-'}<span style="color:var(--text-muted);font-size:0.75rem;margin-left:4px;">${m.email ? '· ' + m.email : ''}</span></li>`
+                ).join('');
+
+                return `<div class="team-card">
+                    <div class="team-card-header">
+                        <div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;margin-bottom:2px;">#${rank}</div>
+                            <div class="team-card-name">${teamName || 'Unnamed Team'}</div>
+                        </div>
+                        <span class="team-card-domain ${domCls}">${domain || 'N/A'}</span>
+                    </div>
+                    <div class="team-card-leader">👑 ${item.name || 'N/A'} ${paidBadge}</div>
+                    <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">${item.email || ''} · ${item.phone || ''}</div>
+                    ${members.length > 0 ? `<ul class="team-card-members">${memberItems}</ul>` : '<div style="font-size:0.78rem;color:var(--text-muted);font-style:italic;">No additional members listed</div>'}
+                    <div class="team-card-regid">${item.regId || 'N/A'} · ${item.college || 'N/A'}</div>
+                </div>`;
+            }).join('');
+        }
+
         // Search
         document.getElementById('searchInput').addEventListener('input', function (e) {
             const q = e.target.value.toLowerCase();
-            const filtered = allData.filter(d => {
+            const domainFiltered = getFilteredData();
+            const filtered = domainFiltered.filter(d => {
                 const s = Object.values(d).join(' ').toLowerCase();
                 let memS = '';
                 if(d.teamMembers) {
@@ -581,20 +989,118 @@
                 }
                 return s.includes(q) || memS.includes(q) || teamNameS.includes(q) || domainS.includes(q);
             });
+            renderCards(filtered);
             renderTable(filtered);
         });
 
-        // PDF Download
+        let currentExportFormat = '';
+        
         document.getElementById('downloadPdfBtn')?.addEventListener('click', () => {
-            if (allData.length === 0) return alert('No data to export.');
-            generatePDF(allData, 'Idea Forge Registrations');
+            currentExportFormat = 'pdf';
+            document.getElementById('exportModal').classList.add('active');
         });
 
-        function generatePDF(regs, title) {
+        document.getElementById('downloadCsvBtn')?.addEventListener('click', () => {
+            currentExportFormat = 'csv';
+            document.getElementById('exportModal').classList.add('active');
+        });
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        document.getElementById('exportIndividualBtn')?.addEventListener('click', () => handleExportChoice('individual'));
+        document.getElementById('exportTeamBtn')?.addEventListener('click', () => handleExportChoice('team'));
+
+        function handleExportChoice(type) {
+            closeExportModal();
+            const data = getFilteredData(currentDomain);
+            if (data.length === 0) return alert('No data to export for this domain.');
+            
+            const title = `Idea Forge - ${currentDomain} - ${type.toUpperCase()}`;
+            
+            let exportHeaders = [];
+            let exportRows = [];
+
+            if (type === 'individual') {
+                exportHeaders = ['Name', 'Email', 'Phone', 'College', 'Domain', 'Team Name', 'Payment Status'];
+                
+                // Flatten teams into individuals
+                data.forEach(r => {
+                    let tName = 'Individual';
+                    let dom = r.domain || '';
+                    let members = [];
+                    
+                    if (r.teamMembersByEvent && r.teamMembersByEvent['Idea Forge']) {
+                        const ifData = r.teamMembersByEvent['Idea Forge'];
+                        tName = ifData.teamName || tName;
+                        dom = ifData.domain || dom;
+                        if (ifData.members && Array.isArray(ifData.members)) {
+                            members = ifData.members;
+                        }
+                    } else if (r.teamMembers && Array.isArray(r.teamMembers)) {
+                        members = r.teamMembers;
+                    }
+                    
+                    // Add leader
+                    exportRows.push([
+                        r.name || '-', r.email || '-', r.phone ? `'${r.phone}` : '-', r.college || '-', dom || '-', tName, r.paymentStatus || 'Pending'
+                    ]);
+                    
+                    // Add members
+                    members.forEach(m => {
+                        if ((m.email || '').toLowerCase() === (r.email || '').toLowerCase()) return;
+                        exportRows.push([
+                            m.name || '-', m.email || '-', m.phone ? `'${m.phone}` : '-', m.college || r.college || '-', dom || '-', tName, r.paymentStatus || 'Pending'
+                        ]);
+                    });
+                });
+            } else {
+                // Team Details
+                exportHeaders = ['Rank', 'Reg ID', 'Team Name', 'Domain', 'Leader', 'Members', 'Email', 'Phone', 'College', 'Points', 'Status'];
+                
+                data.forEach(r => {
+                    let tName = 'Individual';
+                    let dom = r.domain || '';
+                    let members = [];
+                    
+                    if (r.teamMembersByEvent && r.teamMembersByEvent['Idea Forge']) {
+                        const ifData = r.teamMembersByEvent['Idea Forge'];
+                        tName = ifData.teamName || tName;
+                        dom = ifData.domain || dom;
+                        if (ifData.members && Array.isArray(ifData.members)) {
+                            members = ifData.members;
+                        }
+                    } else if (r.teamMembers && Array.isArray(r.teamMembers)) {
+                        members = r.teamMembers;
+                    }
+                    
+                    const memberNames = members.filter(m => (m.email || '').toLowerCase() !== (r.email || '').toLowerCase())
+                                             .map(m => m.name).join(', ');
+                                             
+                    exportRows.push([
+                        r.ideaForgeMeta.order === 99999 ? '-' : r.ideaForgeMeta.order,
+                        r.regId ? `'${r.regId}` : '-', tName, dom || '-',
+                        r.name || '-', memberNames || 'None',
+                        r.email || '-', r.phone ? `'${r.phone}` : '-', r.college || '-',
+                        r.ideaForgeMeta.points !== undefined ? r.ideaForgeMeta.points : '-',
+                        r.paymentStatus || 'Pending'
+                    ]);
+                });
+            }
+
+            if (currentExportFormat === 'pdf') {
+                generatePDF(exportHeaders, exportRows, title);
+            } else {
+                generateExcel(exportHeaders, exportRows, title);
+            }
+        }
+
+        function generatePDF(headers, rows, title) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'pt', 'a4');
 
-            doc.setFontSize(18);
+            doc.setFontSize(16);
             doc.setTextColor(198, 12, 48);
             doc.text(`ELEXSIYA 26 - ${title.toUpperCase()}`, 40, 40);
 
@@ -603,50 +1109,41 @@
             const dateStr = new Date().toLocaleString('en-IN');
             doc.text(`Generated on: ${dateStr}`, 40, 55);
 
-            const headers = [['Rank', 'Reg ID', 'Team Name', 'Domain', 'Leader', 'Email', 'Phone', 'College', 'Status']];
-            const data = regs.map(r => {
-                let teamName = '';
-                let domain = '';
-                if (r.teamMembersByEvent && r.teamMembersByEvent['Idea Forge']) {
-                    teamName = r.teamMembersByEvent['Idea Forge'].teamName || '';
-                    domain = r.teamMembersByEvent['Idea Forge'].domain || '';
-                }
-                return [
-                    r.ideaForgeMeta.order === 99999 ? '-' : r.ideaForgeMeta.order,
-                    r.regId || '-',
-                    teamName || 'Individual',
-                    domain || '-',
-                    r.name || '-',
-                    r.email || '-',
-                    r.phone || '-',
-                    r.college || '-',
-                    r.paymentStatus || 'Pending'
-                ];
-            });
-
             doc.autoTable({
                 startY: 70,
-                head: headers,
-                body: data,
+                head: [headers],
+                body: rows,
                 theme: 'striped',
                 headStyles: { fillColor: [198, 12, 48], textColor: 255, fontSize: 9 },
-                bodyStyles: { fontSize: 8 },
-                columnStyles: {
-                    0: { cellWidth: 35 },
-                    1: { cellWidth: 60 },
-                    2: { cellWidth: 80 },
-                    3: { cellWidth: 80 },
-                    4: { cellWidth: 90 },
-                    5: { cellWidth: 130 },
-                    6: { cellWidth: 70 },
-                    7: { cellWidth: 90 },
-                    8: { cellWidth: 50 },
-                },
-                styles: { overflow: 'linebreak', cellPadding: 4 },
+                bodyStyles: { fontSize: 8, cellPadding: 4 },
+                styles: { overflow: 'linebreak' },
                 margin: { left: 30, right: 30 }
             });
 
-            doc.save(`Elexsiya_IdeaForge_${new Date().toISOString().slice(0, 10)}.pdf`);
+            doc.save(`Elexsiya_IdeaForge_${title.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+
+        function generateExcel(headers, rows, title) {
+            // Create a worksheet from the array of arrays
+            const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+            
+            // Set row heights for more row spacing
+            const rowHeights = [{ hpt: 25 }]; // Header row
+            for (let i = 0; i < rows.length; i++) {
+                rowHeights.push({ hpt: 22 }); // Data rows have 22pt height for extra spacing
+            }
+            worksheet['!rows'] = rowHeights;
+            
+            // Auto format some visual column widths
+            const colWidths = headers.map(h => ({ wch: Math.max(15, h.length + 5) }));
+            worksheet['!cols'] = colWidths;
+
+            // Build the workbook
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Registrations");
+            
+            // Trigger download of actual formatted .xlsx
+            XLSX.writeFile(workbook, `Elexsiya_IdeaForge_${title.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`);
         }
 
         // ══ LIVE NOTIFY ENGINE ══
@@ -736,14 +1233,12 @@
             }, 800);
         }
 
-        // Init
+        // waitForDb: called by domain gate only — NOT auto-invoked on page load
         async function waitForDb(cb, n = 25) {
             if (typeof db !== 'undefined' && db) cb();
             else if (n > 0) setTimeout(() => waitForDb(cb, n - 1), 200);
             else document.getElementById('loadingState').textContent = '❌ Database not available. Check connection.';
         }
-
-        waitForDb(fetchData);
     </script>
 </body>
 

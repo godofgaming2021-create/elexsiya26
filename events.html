@@ -335,6 +335,31 @@
             pointer-events: none;
         }
 
+        /* ── Registration-closed ── */
+        .event-select-card.registration-closed {
+            opacity: .6;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(.8);
+        }
+
+        .event-select-card.registration-closed::after {
+            content: '🔒 Registration Closed';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--emirates-red);
+            background: rgba(255, 255, 255, .8);
+            border-radius: inherit;
+            letter-spacing: .04em;
+            pointer-events: none;
+            z-index: 10;
+        }
+
         /* ── Team size picker ── */
         .team-size-row {
             display: none;
@@ -555,8 +580,15 @@
 
     <script src="shared.js?v=1.1"></script>
     <script>
-        (function () {
+        (async function () {
             const container = document.getElementById('pageContent');
+
+            let closedEvents = [];
+            try {
+                closedEvents = await getClosedEvents();
+            } catch (err) {
+                console.warn('Could not load closed events', err);
+            }
 
             /* ── Event catalogue ── */
             const EVENTS = {
@@ -582,9 +614,11 @@
             /* ── Build card HTML ── */
             function buildCards(list, type) {
                 const tagClass = type === 'nt' ? 'nt' : type === 'sp' ? 'sp' : '';
-                const cardClass = type === 'nt' ? 'nt-card' : type === 'sp' ? 'sp-card' : '';
 
                 return list.map(ev => {
+                    const isClosed = closedEvents.includes(ev.name);
+                    const cardClass = (type === 'nt' ? 'nt-card' : type === 'sp' ? 'sp-card' : '') + (isClosed ? ' registration-closed' : '');
+
                     const teamOnly = ev.teamOnly === true;
                     const isChess = ev.isChess === true;
                     const teamLabel = isChess ? 'Individual / Multi-Entry'
@@ -727,6 +761,7 @@
             /* ── Card click ── */
             document.querySelectorAll('.event-select-card').forEach(card => {
                 card.addEventListener('click', function (e) {
+                    if (this.classList.contains('registration-closed')) return;
                     if (e.target.closest('.participation-panel')) return;
                     const id = this.dataset.id;
                     const name = this.dataset.name;

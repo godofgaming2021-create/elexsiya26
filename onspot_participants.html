@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>On-Spot Participants Dashboard – Elexsiya 26</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" /></noscript>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --emirates-red: #c60c30;
+            --emirates-red-light: rgba(198, 12, 48, 0.08);
+        }
+        body { background: #f8fafc; font-family: 'Poppins', sans-serif; }
+
+        .ci-header {
+            background: linear-gradient(135deg, #c60c30 0%, #a00a26 100%);
+            color: white;
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .ci-header h1 { font-family: 'Cinzel', serif; font-size: 1.6rem; margin: 0; letter-spacing: 0.05em; }
+        .ci-header .subtitle { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
+        .back-btn {
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .back-btn:hover { background: rgba(255,255,255,0.22); }
+
+        .ci-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            padding: 24px 32px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .stat-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+        }
+        .stat-box .val { font-size: 2rem; font-weight: 800; font-family: 'Cinzel', serif; color: var(--emirates-red); }
+        .stat-box .lbl { font-size: 0.78rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+
+        .ci-toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding: 16px 32px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .ci-toolbar input, .ci-toolbar select {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .ci-toolbar input:focus, .ci-toolbar select:focus { border-color: var(--emirates-red); }
+        .ci-toolbar input { flex: 1; min-width: 220px; }
+        .ci-btn {
+            padding: 10px 18px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+            transition: 0.2s;
+        }
+        .ci-btn:hover { background: #f1f5f9; }
+        .ci-btn.primary { background: var(--emirates-red); color: white; border-color: transparent; }
+        .ci-btn.primary:hover { background: #a00a26; }
+        .ci-btn.green { background: #16a34a; color: white; border-color: transparent; }
+
+        .ci-main { padding: 24px 32px; }
+
+        /* Table */
+        .ci-table-wrap {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .ci-table { width: 100%; border-collapse: collapse; }
+        .ci-table thead tr { background: linear-gradient(135deg, #c60c30 0%, #a00a26 100%); color: white; }
+        .ci-table thead th { padding: 14px 16px; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        .ci-table tbody tr { border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
+        .ci-table tbody tr:hover { background: #f8fafc; }
+        .ci-table tbody td { padding: 14px 16px; font-size: 0.88rem; color: #334155; vertical-align: middle; }
+        .ci-table tbody tr:last-child { border-bottom: none; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .badge-paid { background: rgba(22,163,74,.1); color: #16a34a; border: 1px solid rgba(22,163,74,.25); }
+        .badge-pending { background: rgba(234,179,8,.1); color: #92400e; border: 1px solid rgba(234,179,8,.3); }
+        .badge-vr { background: rgba(59,130,246,.1); color: #1d4ed8; border: 1px solid rgba(59,130,246,.3); }
+
+        .action-btn {
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+            transition: 0.15s;
+            margin-right: 4px;
+        }
+        .action-btn:hover { background: #e2e8f0; }
+        .action-btn.approve { background: rgba(22,163,74,.08); color: #16a34a; border-color: rgba(22,163,74,.25); }
+        .action-btn.approve:hover { background: rgba(22,163,74,.18); }
+        .action-btn.reject { background: rgba(239,68,68,.06); color: #dc2626; border-color: rgba(239,68,68,.2); }
+        .action-btn.reject:hover { background: rgba(239,68,68,.14); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+
+        /* Payment screenshot modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 520px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-box h3 { margin-bottom: 16px; color: #1e293b; }
+        .modal-box img { max-width: 100%; max-height: 400px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .modal-close {
+            margin-top: 16px;
+            padding: 10px 24px;
+            background: #64748b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+
+        @media(max-width: 768px) {
+            .ci-header, .ci-toolbar, .ci-main, .ci-stats { padding-left: 16px; padding-right: 16px; }
+            .ci-table thead { display: none; }
+            .ci-table tbody td { display: block; border: none; padding: 6px 14px; }
+            .ci-table tbody td::before { content: attr(data-label) ': '; font-weight: 700; color: #64748b; }
+            .ci-table tbody tr { border-bottom: 2px solid #f1f5f9; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="ci-header">
+        <div>
+            <h1>🎟️ On-Spot Participants Dashboard</h1>
+            <div class="subtitle">Elexsiya 26 – On-Spot Registrations Tracking</div>
+        </div>
+        <div>
+            <a href="onspot_dashboard.html" class="back-btn" style="margin-right: 10px;">← Back to Registration</a>
+            <a href="dashboard.html" class="back-btn">← Back to Main</a>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="ci-stats" id="statsRow">
+        <div class="stat-box"><div class="val" id="statTotal">—</div><div class="lbl">Total Registered</div></div>
+        <div class="stat-box"><div class="val" id="statPaid" style="color:#16a34a;">—</div><div class="lbl">Paid</div></div>
+        <div class="stat-box"><div class="val" id="statPending" style="color:#d97706;">—</div><div class="lbl">Pending</div></div>
+        <div class="stat-box"><div class="val" id="statRevenue" style="color:#c60c30;">—</div><div class="lbl">Total Revenue</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="ci-toolbar">
+        <input type="text" id="ciSearch" placeholder="🔍 Search by name, email, phone, ID, event..." oninput="filterTable()" />
+        <select id="ciStatus" onchange="filterTable()">
+            <option value="all">All Status</option>
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+            <option value="Verification Required">Verification Required</option>
+        </select>
+        <button class="ci-btn green" onclick="downloadCSV()">📥 Download CSV</button>
+        <button class="ci-btn primary" onclick="downloadPDF()">📥 Download PDF</button>
+        <button class="ci-btn" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;" onclick="loadData()">🔄 Refresh</button>
+    </div>
+
+    <!-- Main Table -->
+    <div class="ci-main">
+        <div class="ci-table-wrap">
+            <table class="ci-table" id="ciTable">
+                <thead>
+                    <tr>
+                        <th>Reg ID</th>
+                        <th>Name</th>
+                        <th>College</th>
+                        <th>Events</th>
+                        <th>Phone</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ciTableBody">
+                    <tr><td colspan="9" style="text-align:center; padding:40px; color:#94a3b8;">⏳ Loading data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="ciCount" style="text-align:right; margin-top:10px; font-size:0.82rem; color:#94a3b8;"></div>
+    </div>
+
+    <!-- Screenshot Modal -->
+    <div class="modal-overlay" id="screenshotModal">
+        <div class="modal-box">
+            <h3>📸 Payment Screenshot</h3>
+            <div id="modalContent"><!-- screenshot --></div>
+            <button class="modal-close" onclick="document.getElementById('screenshotModal').classList.remove('open')">Close</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+    <script src="firebase-config.js?v=1.1"></script>
+    <script src="shared.js?v=1.1"></script>
+
+    <script>
+        // Authentication Check
+        window.onload = () => {
+             waitForDb(() => {
+                 const isAdmin = sessionStorage.getItem('adminLoggedIn') === 'true';
+                 const isChessAdmin = sessionStorage.getItem('chessAdminLoggedIn') === 'true';
+                 const isIdeaForgeAdmin = sessionStorage.getItem('ideaForgeAdminLoggedIn') === 'true';
+
+                 if (!isAdmin && !isChessAdmin && !isIdeaForgeAdmin) {
+                     window.location.href = 'index.html';
+                 } else {
+                     loadData();
+                 }
+             });
+        };
+
+        let allData = [];
+        let filteredData = [];
+
+        function waitForDb(cb, n = 30) {
+            if (window.db) cb();
+            else if (n > 0) setTimeout(() => waitForDb(cb, n - 1), 200);
+            else console.error('DB not available.');
+        }
+
+        async function loadData() {
+            document.getElementById('ciTableBody').innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;">⏳ Loading...</td></tr>';
+            try {
+                // Fetch ALL registrations and filter client-side to be bulletproof against type/index issues
+                const fetchOp = window.db.collection('registrations').get();
+                const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 15000));
+                const snap = await Promise.race([fetchOp, timeout]);
+                
+                let rawData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                window._rawDbLength = rawData.length;
+                
+                // Keep only on-spot registrations, catching both boolean and string variants just in case
+                allData = rawData.filter(r => r.onSpot === true || r.onSpot === 'true' || String(r.onSpot).toLowerCase() === 'true');
+                
+                console.log(`[DB] Fetched ${rawData.length} total registrations, filtered to ${allData.length} On-Spot.`);
+
+                allData.sort((a, b) => (b.registeredAt || '').localeCompare(a.registeredAt || ''));
+
+                updateStats();
+                filterTable();
+            } catch (err) {
+                document.getElementById('ciTableBody').innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#ef4444;">❌ Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        function updateStats() {
+            const total = allData.length;
+            const paid = allData.filter(r => r.paymentStatus === 'Paid').length;
+            const pending = allData.filter(r => r.paymentStatus !== 'Paid').length;
+            
+            // Calculate total revenue from on-spot registrations that are 'Paid'
+            const revenue = allData.reduce((sum, r) => {
+                return (r.paymentStatus === 'Paid') ? sum + (Number(r.amount) || 0) : sum;
+            }, 0);
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statPaid').textContent = paid;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statRevenue').textContent = '₹' + revenue;
+        }
+
+        function filterTable() {
+            const query = document.getElementById('ciSearch').value.toLowerCase().trim();
+            const status = document.getElementById('ciStatus').value;
+            filteredData = allData.filter(r => {
+                const matchStatus = status === 'all' || r.paymentStatus === status;
+                const matchQuery = !query || [r.name, r.email, r.phone, r.regId, r.college, r.allEvents]
+                    .some(v => String(v || '').toLowerCase().includes(query));
+                return matchStatus && matchQuery;
+            });
+            renderTable(filteredData);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('ciTableBody');
+            document.getElementById('ciCount').textContent = `Showing ${data.length} On-Spot registrations (Filtered from ${window._rawDbLength || 0} total DB records)`;
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="icon">🎟️</div><p style="font-size:1.2rem; font-weight:bold; color:red;">No on-spot registrations found.</p><p style="margin-top:10px;">Total records in your database: <b>${window._rawDbLength || 0}</b></p><p style="font-size:0.85rem; margin-top:5px; color:#64748b;">(If Total DB records is 0, your test registration didn't save to Firebase.)</p></div></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(r => {
+                const statusClass = r.paymentStatus === 'Paid' ? 'badge-paid' : r.paymentStatus === 'Verification Required' ? 'badge-vr' : 'badge-pending';
+                const dateStr = r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                const amountStr = r.amount ? `₹${Number(r.amount)}` : '₹0';
+
+                return `<tr>
+                    <td data-label="Reg ID"><span style="font-family:monospace;color:#c60c30;font-weight:700;">${r.regId || '—'}</span></td>
+                    <td data-label="Name"><strong>${r.name || '—'}</strong></td>
+                    <td data-label="College">${r.college || '—'}</td>
+                    <td data-label="Events">${r.allEvents || '—'}</td>
+                    <td data-label="Phone">${r.phone || '—'}</td>
+                    <td data-label="Amount" style="font-weight:700; color:#16a34a;">${amountStr}</td>
+                    <td data-label="Status"><span class="status-badge ${statusClass}">${r.paymentStatus || 'Pending'}</span></td>
+                    <td data-label="Date" style="font-size:0.82rem;">${dateStr}</td>
+                    <td data-label="Actions">
+                        ${r.paymentStatus !== 'Paid' ? `<button class="action-btn approve" onclick="updateStatus('${r.id}', 'Paid')">✅ Approve</button>` : ''}
+                        <button class="action-btn reject" onclick="deleteReg('${r.id}', '${(r.name||'').replace(/'/g,"\\'")}')">🗑</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function updateStatus(docId, status) {
+            try {
+                await window.db.collection('registrations').doc(docId).update({ paymentStatus: status });
+                const item = allData.find(r => r.id === docId);
+                if (item) item.paymentStatus = status;
+                updateStats();
+                filterTable();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteReg(docId, name) {
+            if (!confirm(`Delete registration for "${name}"? This cannot be undone.`)) return;
+            try {
+                await window.db.collection('registrations').doc(docId).delete();
+                allData = allData.filter(r => r.id !== docId);
+                updateStats();
+                filterTable();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function downloadCSV() {
+            if (filteredData.length === 0) { alert('No data to export.'); return; }
+            const headers = ['Reg ID', 'Name', 'College', 'Events', 'Phone', 'Amount', 'Status', 'Registered At'];
+            const rows = filteredData.map(r => [
+                r.regId || '', r.name || '', r.college || '', r.allEvents || '',
+                r.phone || '', r.amount || '0', r.paymentStatus || '', r.registeredAt || ''
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+            const csv = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `onspot_participants_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+
+        function downloadPDF() {
+            const data = (filteredData && filteredData.length > 0) ? filteredData : allData;
+            if (data.length === 0) { alert('No data to export.'); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'pt', 'a4');
+
+            doc.setFontSize(18);
+            doc.setTextColor(198, 12, 48); // Emirates Red
+            doc.text('ELEXSIYA 26 - ON-SPOT REGISTRATIONS', 40, 40);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            const dateStr = new Date().toLocaleString('en-IN');
+            doc.text(`Generated on: ${dateStr} | Total: ${data.length}`, 40, 55);
+
+            const headers = [['Reg ID', 'Name', 'College', 'Events', 'Phone', 'Amount', 'Status', 'Date']];
+            const body = data.map(r => [
+                r.regId || '-',
+                r.name || '-',
+                r.college || '-',
+                r.allEvents || '-',
+                r.phone || '-',
+                `Rs. ${r.amount || 0}`,
+                r.paymentStatus || 'Pending',
+                r.registeredAt ? new Date(r.registeredAt).toLocaleDateString() : '-'
+            ]);
+
+            doc.autoTable({
+                startY: 70,
+                head: headers,
+                body: body,
+                theme: 'striped',
+                headStyles: { fillColor: [198, 12, 48], textColor: 255, fontSize: 9 },
+                bodyStyles: { fontSize: 8 },
+                columnStyles: {
+                    0: { cellWidth: 70 },
+                    1: { cellWidth: 100 },
+                    2: { cellWidth: 100 },
+                    3: { cellWidth: 120 },
+                    4: { cellWidth: 80 },
+                    5: { cellWidth: 60 },
+                    6: { cellWidth: 70 },
+                    7: { cellWidth: 70 }
+                },
+                styles: { overflow: 'linebreak', cellPadding: 4 },
+                margin: { left: 40, right: 40 }
+            });
+
+            doc.save(`onspot_participants_${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+    </script>
+</body>
+</html>

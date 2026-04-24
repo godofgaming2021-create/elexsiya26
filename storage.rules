@@ -9,6 +9,13 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
+    // Allow uploading and reading generated certificates
+    match /certificates/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+
     // Block everything else
     match /{allPaths=**} {
       allow read, write: if false;

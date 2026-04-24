@@ -9,18 +9,20 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
     <title>My Participant Portal - Elexsiya 26</title>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800&family=Pinyon+Script&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Montserrat:wght@300;400;600;700&family=Poppins:wght@300;400;500;600&family=Great+Vibes&family=Sacramento&display=swap"
         rel="stylesheet">
     <style>
         :root {
-            --emirates-red: #C60C30;
-            --text-dark: #1a1a1a;
+            --red: #cc0000;
+            --red-dark: #990000;
             --gold: #C8A951;
+            --gold-dark: #A88B3A;
+            --text-dark: #1a1a1a;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background: #f0f2f5;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f0e8 0%, #e8ddd0 100%);
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -34,8 +36,8 @@
         .entry-pass-card {
             background: white;
             border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(198, 12, 48, 0.12);
-            border: 2px solid rgba(198, 12, 48, 0.15);
+            box-shadow: 0 10px 40px rgba(204, 0, 0, 0.12);
+            border: 2px solid rgba(204, 0, 0, 0.15);
             width: 100%;
             max-width: 420px;
             overflow: hidden;
@@ -43,7 +45,7 @@
         }
 
         .pass-header {
-            background: linear-gradient(135deg, var(--emirates-red), #8B0020);
+            background: linear-gradient(135deg, #cc0000, #990000);
             color: white;
             padding: 20px;
         }
@@ -74,16 +76,16 @@
 
         .pass-event {
             font-size: 0.85rem;
-            color: var(--emirates-red);
+            color: #cc0000;
             font-weight: 700;
             margin-bottom: 18px;
         }
 
         .pass-id-badge {
             display: inline-block;
-            background: rgba(198, 12, 48, 0.07);
-            border: 1.5px dashed rgba(198, 12, 48, 0.4);
-            color: var(--emirates-red);
+            background: rgba(204, 0, 0, 0.07);
+            border: 1.5px dashed rgba(204, 0, 0, 0.4);
+            color: #cc0000;
             font-family: 'Outfit', sans-serif;
             font-size: 1.1rem;
             font-weight: 800;
@@ -96,7 +98,7 @@
         .pass-qr-img {
             width: 200px;
             height: 200px;
-            border: 3px solid rgba(198, 12, 48, 0.15);
+            border: 3px solid rgba(204, 0, 0, 0.15);
             border-radius: 14px;
             padding: 8px;
             background: white;
@@ -108,14 +110,60 @@
             font-size: 0.78rem;
             color: #666;
             font-weight: 600;
-            letter-spacing: 0.5px;
         }
 
         .pass-footer {
-            border-top: 1px dashed rgba(198, 12, 48, 0.2);
+            border-top: 1px dashed rgba(204, 0, 0, 0.2);
             padding: 12px 24px;
             font-size: 0.76rem;
             color: #888;
+        }
+
+        /* ── Certificate ── */
+        .cert-wrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-top: 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .cert-wrapper canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* ── Cert Not Ready Banner ── */
+        .cert-pending-banner {
+            background: white;
+            border-radius: 16px;
+            border: 1.5px solid rgba(200, 162, 42, 0.3);
+            padding: 32px 40px;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .cert-pending-banner .icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .cert-pending-banner h3 {
+            margin: 0 0 8px;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+        }
+
+        .cert-pending-banner p {
+            margin: 0;
+            color: #888;
+            font-size: 0.88rem;
+            line-height: 1.5;
         }
 
         /* ── Controls ── */
@@ -141,9 +189,23 @@
             font-size: 0.95rem;
         }
 
-        .btn-print {
-            background: var(--emirates-red);
+        .btn-generate {
+            background: linear-gradient(135deg, #cc0000, #990000);
             color: white;
+            box-shadow: 0 4px 20px rgba(204,0,0,0.35);
+            font-size: 1.05rem;
+            padding: 14px 32px;
+        }
+
+        .btn-print {
+            background: #cc0000;
+            color: white;
+        }
+
+        .btn-download {
+            background: #C8A951;
+            color: #1a1a1a;
+            font-weight: 800;
         }
 
         .btn-logout {
@@ -154,110 +216,42 @@
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
         }
 
-        /* ── Certificate section ── */
-        .cert-container {
+        /* ── Generate button banner ── */
+        #generateBanner {
             background: white;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
-            position: relative;
-            width: 100%;
-            max-width: 1000px;
-            aspect-ratio: 1.414/1;
-            overflow: hidden;
-            border-radius: 4px;
-        }
-
-        .cert-bg {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .cert-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
-
-        .cert-name {
-            font-family: 'Pinyon Script', cursive;
-            font-size: 4rem;
-            color: #1a1a1a;
-            margin-top: 20px;
-        }
-
-        .cert-details {
-            font-size: 1.2rem;
-            color: #444;
-            margin-top: 10px;
-            font-weight: 500;
+            border-radius: 20px;
+            border: 2px solid rgba(204,0,0,0.15);
+            padding: 36px 40px;
             text-align: center;
-            max-width: 80%;
-        }
-
-        /* ── Cert Not Ready Banner ── */
-        .cert-pending-banner {
-            background: white;
-            border-radius: 16px;
-            border: 1.5px solid rgba(200, 169, 81, 0.3);
-            padding: 24px 32px;
-            text-align: center;
+            max-width: 520px;
             width: 100%;
-            max-width: 500px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 8px 32px rgba(204,0,0,0.08);
         }
-
-        .cert-pending-banner .icon {
-            font-size: 2.5rem;
-            margin-bottom: 12px;
-        }
-
-        .cert-pending-banner h3 {
-            margin: 0 0 8px;
-            color: var(--text-dark);
-            font-size: 1.1rem;
-        }
-
-        .cert-pending-banner p {
-            margin: 0;
-            color: #888;
-            font-size: 0.88rem;
-            line-height: 1.5;
-        }
+        #generateBanner .gen-icon { font-size: 3rem; margin-bottom: 14px; }
+        #generateBanner h3 { margin: 0 0 8px; color: var(--text-dark); font-size: 1.2rem; font-family:'Cinzel', serif; }
+        #generateBanner p  { margin: 0 0 24px; color: #777; font-size: 0.9rem; line-height: 1.6; }
 
         @media print {
             body {
                 background: white;
                 padding: 0;
+                gap: 0;
             }
 
-            .controls {
-                display: none;
+            .controls,
+            .entry-pass-card,
+            .cert-pending-banner,
+            #generateBanner {
+                display: none !important;
             }
 
-            .cert-pending-banner {
-                display: none;
-            }
-
-            .pass-footer .no-print {
-                display: none;
-            }
-
-            .cert-container {
+            .cert-wrapper {
                 box-shadow: none;
-                border: none;
-                max-width: none;
-                width: 100%;
-                height: 100vh;
+                border-radius: 0;
+                max-width: 100%;
             }
         }
 
@@ -267,7 +261,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.97);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -281,7 +275,7 @@
     <div id="loadingOverlay">
         <div style="text-align:center;">
             <div style="font-size:2rem; margin-bottom:10px;">🎫</div>
-            <p>Loading your participant portal...</p>
+            <p style="font-weight:600;">Loading your participant portal...</p>
         </div>
     </div>
 
@@ -295,9 +289,7 @@
             <div class="pass-name" id="passName">—</div>
             <div class="pass-event" id="passEvent">—</div>
             <div class="pass-id-badge" id="passRegId">—</div>
-            <div>
-                <img id="passQrImg" class="pass-qr-img" src="" alt="Entry QR Code" />
-            </div>
+            <div><img id="passQrImg" class="pass-qr-img" src="" alt="Entry QR Code" /></div>
             <div class="pass-qr-label">📱 Show this QR at the registration desk for entry</div>
         </div>
         <div class="pass-footer">Scan QR to verify · Team Elexsiya · Do not share</div>
@@ -311,17 +303,28 @@
             it.</p>
     </div>
 
-    <!-- Certificate (when released) -->
-    <div class="cert-container" id="certFrame" style="display:none;">
-        <img id="templateImg" class="cert-bg" src="" alt="Certificate Template">
-        <div class="cert-overlay">
-            <div class="cert-name" id="userName">Participant Name</div>
-            <div class="cert-details" id="userEvent">For participating in Event Name</div>
-        </div>
+    <!-- Generate Certificate Banner (shown when cert is released but not yet drawn) -->
+    <div id="generateBanner" style="display:none;">
+        <div class="gen-icon">🎓</div>
+        <h3>Your Certificate is Ready!</h3>
+        <p>Click the button below to generate and preview your official certificate of appreciation for <strong id="genEventNames"></strong>.</p>
+        <button class="btn btn-generate" id="generateBtn" onclick="onGenerateClick()">
+            🏅 Generate My Certificate
+        </button>
+    </div>
+
+    <div style="font-family: 'Cinzel'; visibility: hidden; position: absolute;">Preload</div>
+    <div style="font-family: 'Montserrat'; visibility: hidden; position: absolute;">Preload</div>
+    <div style="font-family: 'Poppins'; visibility: hidden; position: absolute;">Preload</div>
+    <div style="font-family: 'Sacramento'; visibility: hidden; position: absolute;">Preload</div>
+
+    <!-- Certificates Container for Multiple Events (Dynamically injected) -->
+    <div id="certificatesContainer"
+        style="display:none; flex-direction:column; gap:40px; align-items:center; width:100%; margin-bottom: 20px;">
     </div>
 
     <div class="controls">
-        <button class="btn btn-print" onclick="window.print()">🖨️ Download / Print Pass</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ Print Page</button>
         <a href="login.html" class="btn btn-logout" onclick="sessionStorage.clear()">✕ Logout</a>
     </div>
 
@@ -330,39 +333,209 @@
     <script src="firebase-config.js"></script>
     <script src="shared.js"></script>
     <script>
-        async function initPortal() {
-            const user = JSON.parse(sessionStorage.getItem('partUser'));
 
-            // 30-minute session timeout fix
-            let sessionLoginTime = parseInt(sessionStorage.getItem('partLoginTime') || '0');
-            const now = Date.now();
-            if (!sessionLoginTime && user) {
-                sessionLoginTime = now;
-                sessionStorage.setItem('partLoginTime', now.toString());
-            }
-            if (!user || now - sessionLoginTime > 30 * 60 * 1000) {
-                sessionStorage.clear();
-                window.location.href = 'login.html';
-                return;
+        // ── Global state for certificate generation ──
+        let _certData = null;
+
+        // ── Draw the certificate using pp.jpeg as template ──
+        async function drawCertificate(canvas, participantName, eventName, year, regId, collegeName) {
+            // Canvas dimensions matching pp.jpeg aspect ratio (landscape)
+            const W = 1414, H = 1000;
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            // ── Load template: try Firestore upload first, then final.jpeg ──
+            let templateSrc = 'final.jpeg';
+            try {
+                // You can keep the getCertTemplate fallback if you want, but for now we default to pp.jpeg
+                // If getCertTemplate exists in shared.js and returns a valid URL, it can override it.
+            } catch (e) {
+                console.warn('Firestore template logic error:', e);
             }
 
-            // Verify signature (Vuln 24 Fix)
-            const expectedSig = await _calcChecksum({
-                regId: user.regId,
-                email: user.email,
-                event: user.event,
-                amount: user.amount,
-                registeredAt: user.registeredAt
+            const templateImg = await new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = templateSrc;
             });
-            if (user.signature !== expectedSig) {
-                alert("Session tampering detected. Please log in again.");
-                sessionStorage.clear();
-                window.location.href = 'login.html';
-                return;
+
+            if (templateImg) {
+                ctx.drawImage(templateImg, 0, 0, W, H);
+            } else {
+                // Fallback plain background
+                ctx.fillStyle = '#fdf8f0';
+                ctx.fillRect(0, 0, W, H);
+                ctx.strokeStyle = '#8B0000';
+                ctx.lineWidth = 8;
+                ctx.strokeRect(20, 20, W - 40, H - 40);
+                ctx.fillStyle = '#8B0000';
+                ctx.font = "bold 60px 'Cinzel', serif";
+                ctx.textAlign = 'center';
+                ctx.fillText('CERTIFICATE OF APPRECIATION', W / 2, H / 2);
             }
+
+            // ─────────────────────────────────────────────────────────────
+            // TEXT OVERLAY — positioned to align with pp.jpeg blank lines
+            // Template layout (1414 × 1000 canvas):
+            //   Line 1 (y≈496): "This is to certify that Mr/Ms. [NAME]  of  [YEAR]"
+            //   Line 2 (y≈563): "[COLLEGE NAME]" (long underline)
+            //   Line 3 (y≈635): "has actively participated in the event of [EVENT]"
+            // ─────────────────────────────────────────────────────────────
+
+            ctx.textBaseline = 'alphabetic';
+            ctx.fillStyle = '#1a0a00';   // Dark near-black matching printed text
+
+            // ── 1. Participant Name (after "Mr/Ms.") ──
+            ctx.textAlign = 'left';
+            ctx.font = "bold 32px 'Cinzel', serif";
+            ctx.fillText(participantName, 580, 490);
+
+            // ── 2. Year (after "of") on the same line ──
+            ctx.textAlign = 'left';
+            ctx.font = "bold 30px 'Cinzel', serif";
+            ctx.fillText(year, 1110, 490);
+
+            // ── 3. College Name (second blank line) ──
+            if (collegeName) {
+                ctx.textAlign = 'center';
+                ctx.font = "bold 30px 'Cinzel', serif";
+                // Clamp college name to fit within blank line width
+                ctx.fillText(collegeName, W / 2, 550, 1060);
+            }
+
+            // ── 4. Event Name (after "has actively participated in the event of") ──
+            ctx.textAlign = 'left';
+            ctx.font = "bold 28px 'Cinzel', serif";
+            ctx.fillText(eventName, 760, 610, 500);
+
+            // ── 5. Event Quote (Centered Below Event Name) ──
+            const fallbackQuote = `"Success is not final, failure is not fatal: it is the courage to continue that counts."`;
+            let quoteText = fallbackQuote;
+            for (const key in EVENT_QUOTES) {
+                if (eventName.toLowerCase().includes(key.toLowerCase())) {
+                    quoteText = EVENT_QUOTES[key];
+                    break;
+                }
+            }
+            ctx.textAlign = 'center';
+            ctx.font = "italic bold 24px Montserrat, sans-serif";
+            ctx.fillStyle = '#A88B3A'; // Elexsiya Gold-Dark Title Theme
+            ctx.fillText(quoteText, W / 2, 745, 1200);
+        }
+
+        function downloadCertificate(canvasId, eventName, participantName) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            const userName = participantName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+            const safeEvent = eventName.replace(/[^a-zA-Z0-9 ]/g, '').trim().substring(0, 30);
+            link.download = `Elexsiya26_${safeEvent}_Certificate_${userName}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        const EVENT_QUOTES = {
+            "Project Expo": `"Innovation distinguishes between a leader and a follower."`,
+            "Idea Forge": `"Ideas are the currency of the future. Never stop forging them."`,
+            "Tazky Among Uz": `"In the game of strategy, trust your instincts and outwit the rest."`,
+            "CurrentClash": `"Electricity is really just organized lightning."`,
+            "Clever Hunt": `"Every puzzle is a conversation with the person who made it."`,
+            "Bug Arena": `"A good programmer looks both ways before crossing a one-way street."`,
+            "Upside Down": `"Sometimes you have to turn everything upside down to find the right perspective."`,
+            "Mindfusion": `"Great minds don't think alike, they think together."`,
+            "Unmuted": `"Your voice and your story possess the power to change the world."`,
+            "Ideart": `"Art is not what you see, but what you make others see."`,
+            "Chess": `"Chess is the gymnasium of the mind. Every move is a new puzzle."`
+        };
+
+        // ── Called when user clicks "Generate My Certificate" button ──
+        async function onGenerateClick() {
+            if (!_certData) return;
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Generating...';
+
+            const { participantName, eventsList, year, college } = _certData;
+            const container = document.getElementById('certificatesContainer');
+            container.innerHTML = '';
 
             try {
-                // 1. Populate Entry Pass immediately from session data
+                await Promise.all([
+                    document.fonts.load("bold 32px 'Cinzel'"),
+                    document.fonts.load("bold 30px 'Cinzel'"),
+                    document.fonts.load("bold 28px 'Cinzel'")
+                ]);
+            } catch (e) { /* fonts may still be available */ }
+
+            for (let i = 0; i < eventsList.length; i++) {
+                const ev = eventsList[i];
+
+                const flexCol = document.createElement('div');
+                flexCol.style.cssText = 'display:flex; flex-direction:column; align-items:center; width:100%;';
+
+                const wrap = document.createElement('div');
+                wrap.className = 'cert-wrapper';
+                wrap.style.display = 'block';
+
+                const can = document.createElement('canvas');
+                can.id = `certCanvas_${i}`;
+                wrap.appendChild(can);
+
+                const dlBtn = document.createElement('button');
+                dlBtn.className = 'btn btn-download';
+                dlBtn.innerHTML = `📥 Download Certificate — ${ev}`;
+                dlBtn.style.marginTop = '15px';
+                dlBtn.onclick = () => downloadCertificate(`certCanvas_${i}`, ev, participantName);
+
+                flexCol.appendChild(wrap);
+                flexCol.appendChild(dlBtn);
+                container.appendChild(flexCol);
+
+                await drawCertificate(can, participantName, ev, year, null, college);
+            }
+
+            container.style.display = 'flex';
+            document.getElementById('generateBanner').style.display = 'none';
+
+            // Scroll to the first certificate
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ── Main Portal Init ──
+        async function initPortal() {
+            try {
+                const user = JSON.parse(sessionStorage.getItem('partUser'));
+
+                // Session timeout check
+                let sessionLoginTime = parseInt(sessionStorage.getItem('partLoginTime') || '0');
+                const now = Date.now();
+                if (!sessionLoginTime && user) {
+                    sessionLoginTime = now;
+                    sessionStorage.setItem('partLoginTime', now.toString());
+                }
+                if (!user || now - sessionLoginTime > 30 * 60 * 1000) {
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Verify session signature
+                const expectedSig = await _calcChecksum({
+                    regId: user.regId, email: user.email, event: user.event,
+                    amount: user.amount, registeredAt: user.registeredAt
+                });
+                if (user.signature !== expectedSig) {
+                    alert("Session tampering detected. Please log in again.");
+                    sessionStorage.clear();
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Populate Entry Pass
                 document.getElementById('passName').textContent = user.name || '—';
                 document.getElementById('passEvent').textContent = user.event || 'Elexsiya 26';
                 document.getElementById('passRegId').textContent = user.regId || '—';
@@ -370,30 +543,39 @@
                     `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(user.regId)}`;
                 document.getElementById('entryPassCard').style.display = 'block';
 
-                // 2. Check certificate status
-                const regDoc = await db.collection('registrations').doc(user.regId).get();
+                // Check certificate status from Firestore
+                const fetchOp = db.collection('registrations').doc(user.regId).get();
+                const fetchTimeout = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('FETCH_TIMEOUT')), 10000)
+                );
+                const regDoc = await Promise.race([fetchOp, fetchTimeout]);
 
                 if (regDoc.exists && regDoc.data().certReleased) {
-                    // Cert is released — show it
-                    const template = await getCertTemplate();
-                    if (template) {
-                        document.getElementById('templateImg').src = template;
-                        document.getElementById('userName').textContent = user.name;
-                        document.getElementById('userEvent').textContent =
-                            `For successfully participating in ${user.event || 'Elexsiya 26'}`;
-                        document.getElementById('certFrame').style.display = 'block';
-                    }
+                    const data = regDoc.data();
+                    const participantName = user.name || 'Participant';
+                    const rawEventString = data.event || user.event || 'Elexsiya 26';
+                    const eventsList = rawEventString.split(',').map(e => e.trim()).filter(e => e.length > 0);
+
+                    const year = sessionStorage.getItem('partYear') || '2nd Year';
+                    const college = data.college || data.collegeName || '';
+
+                    // Store cert data and show the "Generate" banner
+                    _certData = { participantName, eventsList, year, college };
+                    document.getElementById('genEventNames').textContent = eventsList.join(', ');
+                    document.getElementById('generateBanner').style.display = 'block';
+
                 } else {
-                    // Cert not ready — show friendly banner
                     document.getElementById('certPendingBanner').style.display = 'block';
                 }
 
                 document.getElementById('loadingOverlay').style.display = 'none';
+
             } catch (err) {
                 console.error(err);
-                // Even on error, still show the pass from session data
-                document.getElementById('certPendingBanner').style.display = 'block';
                 document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('certPendingBanner').style.display = 'block';
+                document.getElementById('certPendingBanner').innerHTML =
+                    `<div class="icon">⚠️</div><h3>Error Loading Data</h3><p>${err.message}</p>`;
             }
         }
 

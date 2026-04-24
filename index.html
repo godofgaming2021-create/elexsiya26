@@ -151,6 +151,8 @@
           <a href="brochure.pdf" class="btn btn-outline-white btn-lg"
             style="border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.9);" download>📄 Download Brochure</a>
         </div>
+        <!-- Sponsors strip – first 2 with logos -->
+        <div id="heroSponsorStrip" style="display:none; margin-top:28px; text-align:center;"></div>
       </div>
       <div class="scroll-indicator">
         <span>Scroll Down</span>
@@ -831,6 +833,9 @@
       </div>
     </div>
   </section>
+
+  <!-- Sponsors strip – 3rd logo onwards -->
+  <div id="extraSponsorStrip" style="display:none; padding:40px 0; text-align:center;"></div>
 
   <script>
     /* ── FAQ Accordion Logic ──────────────────────────────────── */
@@ -2042,6 +2047,66 @@
             }
           } catch (e) {
             console.error('Timeline feedback failed:', e);
+          }
+        });
+      });
+
+      // --- Sponsor Logos Listener ---
+      waitForDb(() => {
+        window.db.collection('sponsorships').orderBy('timestamp','asc').onSnapshot(snap => {
+          try {
+            const logoSponsors = snap.docs
+              .map(d => ({ id: d.id, ...d.data() }))
+              .filter(s => s.logoBase64); // Only those with a logo
+              
+            const heroEl = document.getElementById('heroSponsorStrip');
+            const extraEl = document.getElementById('extraSponsorStrip');
+            
+            const heroSponsors = logoSponsors.slice(0, 2);
+            const extraSponsors = logoSponsors.slice(2);
+            
+            const renderStrip = (el, sponsors, label) => {
+              if (!sponsors.length) { el.style.display = 'none'; return; }
+              el.style.display = 'block';
+              el.innerHTML = `
+                <p style="font-size:.75rem;color:rgba(255,255,255,.6);letter-spacing:.1em;
+                   text-transform:uppercase;margin-bottom:14px;">${label}</p>
+                <div style="display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;">
+                  ${sponsors.map(s => `
+                    <div style="text-align:center;">
+                      <img src="${s.logoBase64}" alt="${s.name}"
+                        style="max-height:60px;max-width:140px;object-fit:contain;
+                          background:rgba(255,255,255,.9);border-radius:8px;padding:6px 12px;">
+                      <div style="font-size:.75rem;margin-top:6px;color:rgba(255,255,255,.8);">${s.name}</div>
+                    </div>`).join('')}
+                </div>`;
+            };
+            
+            if (heroEl) renderStrip(heroEl, heroSponsors, 'Our Sponsors');
+            
+            if (extraEl) {
+              if (extraSponsors.length) {
+                extraEl.style.display = 'block';
+                extraEl.innerHTML = `
+                  <div class="container">
+                    <p style="font-size:.75rem;color:var(--text-muted);letter-spacing:.1em;
+                       text-transform:uppercase;margin-bottom:16px;text-align:center;">Additional Sponsors</p>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;">
+                      ${extraSponsors.map(s => `
+                        <div style="text-align:center;">
+                          <img src="${s.logoBase64}" alt="${s.name}"
+                            style="max-height:64px;max-width:150px;object-fit:contain;
+                              border:1px solid var(--border-light);border-radius:8px;padding:8px 14px;background:#fff;">
+                          <div style="font-size:.78rem;color:var(--text-muted);margin-top:6px;">${s.name}</div>
+                        </div>`).join('')}
+                    </div>
+                  </div>`;
+              } else {
+                extraEl.style.display = 'none';
+              }
+            }
+          } catch (err) {
+            console.error('Sponsor logo rendering failed:', err);
           }
         });
       });
